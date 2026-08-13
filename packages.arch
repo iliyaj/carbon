@@ -1,0 +1,56 @@
+# Core compositor and shell
+hyprland
+hyprlock
+hypridle
+quickshell
+matugen
+awww
+
+# Desktop integration used by enabled Carbon modules
+cava
+pipewire
+wireplumber
+networkmanager
+cliphist
+wl-clipboard
+brightnessctl
+ddcutil
+grim
+slurp
+swappy
+imagemagick
+wf-recorder
+ffmpeg
+jq
+curl
+playerctl
+gammastep
+hyprpicker
+hyprshot
+fuzzel
+rofimoji
+ydotool
+xdg-user-dirs
+libnotify
+translate-shell
+libqalculate
+sassc
+polkit-kde-agent
+uv
+
+# Build tools for the per-user Hyprbars plugin installed by install.sh
+cmake
+cpio
+glaze
+hyprland-protocols
+meson
+
+# Default applications and fonts
+kitty
+dolphin
+ttf-material-symbols-variable
+ttf-jetbrains-mono-nerd
+
+# Optional integrations are intentionally not installed by the base manifest:
+# bluez-utils, plasma-nm, bluedevil, wlogout, easyeffects, fcitx5, logiops,
+# kde-material-you-colors, pavucontrol, and mission-center.

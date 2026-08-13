@@ -1,0 +1,18 @@
+[Unit]
+Description=awww Wayland wallpaper daemon for Carbon
+Documentation=https://codeberg.org/LGFae/awww
+After=graphical-session.target
+Wants=graphical-session.target
+PartOf=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/sh -c 'for i in $(seq 1 60); do if [ -n "$WAYLAND_DISPLAY" ] && [ -S "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY" ]; then exec /usr/bin/awww-daemon --format argb; fi; for socket in "$XDG_RUNTIME_DIR"/wayland-*; do [ -S "$socket" ] || continue; export WAYLAND_DISPLAY="${socket##*/}"; exec /usr/bin/awww-daemon --format argb; done; sleep 0.5; done; exit 1'
+ExecStartPost=/usr/bin/sh -c 'wallpaper=$(cat "${XDG_STATE_HOME:-$HOME/.local/state}/quickshell/user/current-wallpaper" 2>/dev/null); [ -f "$wallpaper" ] || exit 0; for i in $(seq 1 30); do /usr/bin/awww img "$wallpaper" --transition-type none && exit 0; sleep 0.5; done; exit 0'
+Restart=always
+RestartSec=2
+CacheDirectory=awww
+NoNewPrivileges=true
+
+[Install]
+WantedBy=graphical-session.target

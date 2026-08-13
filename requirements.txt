@@ -1,0 +1,5 @@
+# Tested with CPython 3.12.11.
+materialyoucolor==2.0.10
+numpy==2.2.2
+opencv-contrib-python==4.11.0.86
+Pillow==11.1.0

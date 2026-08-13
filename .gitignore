@@ -1,0 +1,21 @@
+# Local agent and project-management context
+CLAUDE.md
+AGENTS.md
+RELEASE_CHECKLIST.md
+/.akira/
+/docs/
+
+# Secrets and machine-specific settings
+.env
+.env.*
+!.env.example
+/.config/hypr/user.env
+
+# Python/editor/runtime output
+__pycache__/
+*.py[cod]
+*.log
+*.swp
+*~
+.DS_Store
+.venv/
