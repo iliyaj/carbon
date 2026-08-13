@@ -4,10 +4,11 @@ Documentation=https://github.com/iliyaj/carbon
 After=graphical-session.target
 Wants=graphical-session.target
 PartOf=graphical-session.target
+ConditionEnvironment=WAYLAND_DISPLAY
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/sh -c 'for i in $(seq 1 60); do if [ -n "$WAYLAND_DISPLAY" ] && [ -S "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY" ]; then exec /usr/bin/quickshell; fi; for socket in "$XDG_RUNTIME_DIR"/wayland-*; do [ -S "$socket" ] || continue; export WAYLAND_DISPLAY="${socket##*/}"; exec /usr/bin/quickshell; done; sleep 0.5; done; exit 1'
+ExecStart=/usr/bin/quickshell
 Restart=on-failure
 RestartSec=2
 Environment=QT_QPA_PLATFORM=wayland

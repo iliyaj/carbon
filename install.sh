@@ -124,70 +124,6 @@ install_nagame() {
     printf '    installed: Nagame %s (service remains disabled until configured)\n' "$NAGAME_VERSION"
 }
 
-hyprpm_cache_dir() {
-    printf '/var/cache/hyprpm/%s' "$(id -un)"
-}
-
-hyprpm_headers_current() {
-    local cache_dir cache_state
-    local installed_abi cached_abi
-
-    cache_dir="$(hyprpm_cache_dir)"
-    cache_state="$cache_dir/state.toml"
-    [[ -f "$cache_state" && -f "$cache_dir/headersRoot/share/pkgconfig/hyprland.pc" ]] || return 1
-    installed_abi="$(Hyprland --version-json | jq -r '.abiHash // empty')"
-    cached_abi="$(sed -n "s/^hash = '\\(.*\\)'$/\\1/p" "$cache_state")"
-    [[ -n "$installed_abi" && "$cached_abi" == "$installed_abi" ]]
-}
-
-hyprbars_enabled() {
-    local repo_dir repo_state
-
-    repo_dir="$(hyprpm_cache_dir)/hyprland-plugins"
-    repo_state="$repo_dir/state.toml"
-    [[ -f "$repo_dir/hyprbars.so" && -f "$repo_state" ]] || return 1
-    awk '
-        /^\[hyprbars\]$/ { in_hyprbars = 1; next }
-        /^\[/ { in_hyprbars = 0 }
-        in_hyprbars && /^enabled = true$/ { found = 1 }
-        END { exit !found }
-    ' "$repo_state"
-}
-
-install_hyprbars() {
-    local hyprpm_state enable_output
-
-    # Hyprpm installs headers and plugin binaries through sudo. Keep this work
-    # in the foreground while the installer already has the user's attention.
-    sudo -v || return 1
-
-    hyprpm_state="$(hyprpm list 2>&1 || true)"
-    if ! hyprpm_headers_current; then
-        # Outside Hyprland, Hyprpm prepares valid headers but exits nonzero when
-        # its final live-plugin reload has no compositor socket. Verify the ABI
-        # directly so that expected TTY behavior is not reported as failure.
-        hyprpm update -f 2>&1 | sed -u '/PluginManager: no \$HOME or \$HYPRLAND_INSTANCE_SIGNATURE/d' || true
-        hyprpm_headers_current || return 1
-    elif [[ "$hyprpm_state" == *"Repository hyprland-plugins"* ]]; then
-        hyprpm update 2>&1 | sed -u '/PluginManager: no \$HOME or \$HYPRLAND_INSTANCE_SIGNATURE/d' || true
-        hyprpm_headers_current || return 1
-    fi
-
-    if [[ "$hyprpm_state" != *"Repository hyprland-plugins"* ]]; then
-        # The URL is fixed to Hyprland's official repository, so the installer
-        # can answer Hyprpm's generic third-party trust prompt on the user's behalf.
-        printf 'y\n' | hyprpm add https://github.com/hyprwm/hyprland-plugins || return 1
-    fi
-
-    enable_output="$(hyprpm enable hyprbars 2>&1 || true)"
-    if ! hyprbars_enabled; then
-        [[ -z "$enable_output" ]] || printf '%s\n' "$enable_output" >&2
-        return 1
-    fi
-
-    printf '    installed: Hyprbars (loads when Hyprland starts)\n'
-}
-
 [[ -f /etc/arch-release ]] || die "Carbon currently supports Arch Linux only"
 [[ "$(id -u)" -ne 0 ]] || die "run this installer as your normal user, not as root"
 command -v sudo >/dev/null || die "sudo is required"
@@ -204,9 +140,6 @@ uv pip install --python "$venv_dir/bin/python" -r "$REPO_DIR/requirements.txt"
 
 info "Installing Nagame"
 install_nagame
-
-info "Installing Hyprbars for this user"
-install_hyprbars || warn "Hyprbars could not be installed; Carbon will continue without window title bars"
 
 info "Linking Carbon configuration"
 link_config "$REPO_DIR/.config/hypr" "$CONFIG_HOME/hypr"
@@ -227,12 +160,11 @@ systemctl --user enable awww-daemon.service quickshell.service hypridle.service
 if command -v hyprctl >/dev/null && hyprctl monitors >/dev/null 2>&1; then
     systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE
     systemctl --user restart awww-daemon.service quickshell.service hypridle.service
-    hyprpm reload || warn "Hyprbars could not be loaded"
     hyprctl reload
     info "Carbon is installed and running"
 else
     info "Carbon is installed"
-    printf 'Start or restart Hyprland to enter Carbon.\n'
+    printf 'Start or restart Hyprland to enter Carbon by typing "start-hyprland".\n'
 fi
 
 if ((${#backups[@]} > 0)); then

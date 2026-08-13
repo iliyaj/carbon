@@ -50,18 +50,6 @@ systemctl --user enable --now nagame.service
 
 The example contains placeholder monitor names and wallpaper paths; replace them with values for this machine. See [Nagame's instructions](https://github.com/iliyaj/nagame/blob/v0.0.1/INSTRUCTIONS.md) for the profile format.
 
-### Hyprbars
-
-The installer prepares matching Hyprland headers, registers Hyprland's official plugin repository, builds Hyprbars, and enables it for the current user. This works from a text console; Hyprbars loads when Hyprland starts. Carbon remains usable without window title bars if the optional build genuinely fails.
-
-After Hyprland is upgraded, rebuild the existing plugin for the new compositor version:
-
-```bash
-hyprpm update
-hyprpm reload
-hyprctl reload
-```
-
 ## Verify or troubleshoot
 
 Run the built-in checks after starting Carbon:

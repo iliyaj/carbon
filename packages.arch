@@ -38,13 +38,6 @@ sassc
 polkit-kde-agent
 uv
 
-# Build tools for the per-user Hyprbars plugin installed by install.sh
-cmake
-cpio
-glaze
-hyprland-protocols
-meson
-
 # Default applications and fonts
 kitty
 dolphin
