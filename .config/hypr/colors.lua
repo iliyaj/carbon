@@ -63,7 +63,7 @@ if hl.plugin.hyprbars then
     end
 else
     hl.notification.create({
-        text = "Hyprbars unavailable; run: hyprpm update && hyprpm reload && hyprctl reload",
+        text = "Hyprbars unavailable; rerun ~/carbon/install.sh from a terminal",
         duration = 12000,
     })
 end

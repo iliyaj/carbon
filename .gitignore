@@ -1,9 +1,9 @@
 # Local agent and project-management context
 CLAUDE.md
 AGENTS.md
-RELEASE_CHECKLIST.md
 /.akira/
 /docs/
+/working_docs/
 
 # Secrets and machine-specific settings
 .env
