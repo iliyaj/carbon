@@ -97,7 +97,7 @@ def atomic_write(path: Path, content: str) -> None:
 
 
 def virtualenv_python() -> Path:
-    configured = os.environ.get("ILLOGICAL_IMPULSE_VIRTUAL_ENV", str(STATE_DIR / ".venv"))
+    configured = os.environ.get("CARBON_VIRTUAL_ENV", str(STATE_DIR / ".venv"))
     candidate = Path(os.path.expandvars(os.path.expanduser(configured))) / "bin/python"
     if not candidate.exists():
         raise RuntimeError(f"Python environment not found: {candidate}")
@@ -132,7 +132,7 @@ def current_awww_wallpaper() -> str:
 
 
 def configured_scheme() -> str:
-    config_path = CONFIG_HOME / "illogical-impulse/config.json"
+    config_path = CONFIG_HOME / "carbon/config.json"
     try:
         return json.loads(config_path.read_text()).get("appearance", {}).get("palette", {}).get("type", "auto")
     except (OSError, json.JSONDecodeError):

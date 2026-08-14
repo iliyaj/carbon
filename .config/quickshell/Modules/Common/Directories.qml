@@ -21,7 +21,7 @@ Singleton {
     property string favicons: FileUtils.trimFileProtocol(`${Directories.cache}/media/favicons`)
     property string coverArt: FileUtils.trimFileProtocol(`${Directories.cache}/media/coverart`)
     property string latexOutput: FileUtils.trimFileProtocol(`${Directories.cache}/media/latex`)
-    property string shellConfig: FileUtils.trimFileProtocol(`${Directories.config}/illogical-impulse`)
+    property string shellConfig: FileUtils.trimFileProtocol(`${Directories.config}/carbon`)
     property string shellConfigName: "config.json"
     property string shellConfigPath: `${Directories.shellConfig}/${Directories.shellConfigName}`
     property string mimeappsPath: FileUtils.trimFileProtocol(`${Directories.config}/mimeapps.list`)

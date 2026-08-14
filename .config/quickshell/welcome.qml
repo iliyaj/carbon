@@ -26,7 +26,7 @@ ApplicationWindow {
     property bool showNextTime: false
     visible: true
     onClosing: Qt.quit()
-    title: "illogical-impulse Welcome"
+    title: "Carbon Welcome"
 
     Component.onCompleted: {
         MaterialThemeLoader.reapplyTheme()

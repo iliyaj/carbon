@@ -3,23 +3,22 @@ pragma ComponentBehavior: Bound
 
 import "root:/Modules/Common"
 import "root:/Modules/Common/Functions/file_utils.js" as FileUtils
-import "root:/Modules/Common/Functions/string_utils.js" as StringUtils
 import "root:/Modules/Common/Functions/object_utils.js" as ObjectUtils
 import QtQuick
 import Quickshell
 import Quickshell.Io
-import Quickshell.Hyprland
-import Qt.labs.platform
 
 /**
  * Loads and manages the shell configuration file.
- * The config file is by default at XDG_CONFIG_HOME/illogical-impulse/config.json.
+ * The config file is by default at XDG_CONFIG_HOME/carbon/config.json.
  * Automatically reloaded when the file changes.
  */
 Singleton {
     id: root
     property string filePath: Directories.shellConfigPath
+    property string legacyFilePath: FileUtils.trimFileProtocol(`${Directories.config}/illogical-impulse/config.json`)
     property bool firstLoad: true
+    property bool migrationRequested: false
     property bool preventNextLoad: false
     property var preventNextNotification: false
 
@@ -29,11 +28,11 @@ Singleton {
 
     function applyConfig(fileContent) {
         try {
-            if (fileContent.trim() === "") {
-                console.warn("[ConfigLoader] Config file is empty, skipping load.");
-                return;
-            }
+            if (fileContent.trim() === "")
+                throw new Error("Config file is empty")
             const json = JSON.parse(fileContent);
+            if (json === null || Array.isArray(json) || typeof json !== "object")
+                throw new Error("Config root must be an object")
 
             ObjectUtils.applyToQtObject(ConfigOptions, json);
             if (root.firstLoad) {
@@ -43,8 +42,7 @@ Singleton {
             }
         } catch (e) {
             console.error("[ConfigLoader] Error reading file:", e);
-            console.log("[ConfigLoader] File content was:", fileContent);
-            Quickshell.execDetached(["bash", "-c", `notify-send '${qsTr("Shell configuration failed to load")}' '${root.filePath}'`])
+            Quickshell.execDetached(["notify-send", qsTr("Shell configuration failed to load"), root.filePath])
             return;
         }
     }
@@ -81,12 +79,23 @@ Singleton {
 
     function saveConfig() {
         const plainConfig = ObjectUtils.toPlainObject(ConfigOptions)
-        const configPath = FileUtils.trimFileProtocol(root.filePath)
-        const tempPath = configPath + '.tmp.' + Date.now()
         const jsonContent = JSON.stringify(plainConfig, null, 2)
-        // Write to temp file first using base64 to avoid escaping issues, then atomically move it
-        const base64Content = Qt.btoa(jsonContent)
-        Quickshell.execDetached(["bash", "-c", `echo '${base64Content}' | base64 -d > '${tempPath}' && mv -f '${tempPath}' '${configPath}'`])
+        configFileView.setText(jsonContent)
+    }
+
+    function migrateLegacyConfig(fileContent) {
+        root.migrationRequested = false
+        try {
+            const json = JSON.parse(fileContent)
+            if (json === null || Array.isArray(json) || typeof json !== "object")
+                throw new Error("Config root must be an object")
+            console.log("[ConfigLoader] Migrating legacy configuration to", root.filePath)
+            configFileView.setText(fileContent)
+        } catch (error) {
+            console.error("[ConfigLoader] Legacy configuration is invalid:", error)
+            Quickshell.execDetached(["notify-send", qsTr("Previous shell configuration could not be migrated"), root.legacyFilePath])
+            root.saveConfig()
+        }
     }
 
     function setConfigValueAndSave(nestedKey, value, preventNextNotification = true) {
@@ -120,6 +129,8 @@ Singleton {
 	FileView {
         id: configFileView
         path: Qt.resolvedUrl(root.filePath)
+        atomicWrites: true
+        printErrors: false
         watchChanges: true
         onFileChanged: {
             this.reload()
@@ -131,12 +142,37 @@ Singleton {
         }
         onLoadFailed: (error) => {
             if(error == FileViewError.FileNotFound) {
-                console.log("[ConfigLoader] File not found, creating new file.")
-                root.saveConfig()
-                Quickshell.execDetached(["bash", "-c", `notify-send '${qsTr("Shell configuration created")}' '${root.filePath}'`])
+                console.log("[ConfigLoader] File not found, checking for a previous configuration.")
+                root.migrationRequested = true
             } else {
-                Quickshell.execDetached(["bash", "-c", `notify-send '${qsTr("Shell configuration failed to load")}' '${root.filePath}'`])
+                Quickshell.execDetached(["notify-send", qsTr("Shell configuration failed to load"), root.filePath])
             }
+        }
+        onSaveFailed: (error) => {
+            console.error("[ConfigLoader] Error saving file:", error)
+            Quickshell.execDetached(["notify-send", qsTr("Shell configuration failed to save"), root.filePath])
+        }
+    }
+
+    FileView {
+        id: legacyConfigFileView
+        path: Qt.resolvedUrl(root.legacyFilePath)
+        preload: root.migrationRequested
+        printErrors: false
+        onLoaded: {
+            if (root.migrationRequested)
+                root.migrateLegacyConfig(legacyConfigFileView.text())
+        }
+        onLoadFailed: (error) => {
+            if (!root.migrationRequested)
+                return
+
+            root.migrationRequested = false
+            if (error != FileViewError.FileNotFound) {
+                console.error("[ConfigLoader] Error reading previous configuration:", error)
+                Quickshell.execDetached(["notify-send", qsTr("Previous shell configuration could not be migrated"), root.legacyFilePath])
+            }
+            root.saveConfig()
         }
     }
 }

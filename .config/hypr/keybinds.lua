@@ -330,7 +330,7 @@ hl.bind("SUPER + ALT + Equal", hl.dsp.exec_cmd(
 --------------------------------------------------------------------------------
 
 hl.bind("CTRL + SUPER + Slash",
-    hl.dsp.exec_cmd("xdg-open " .. home .. "/.config/illogical-impulse/config.json"),
+    hl.dsp.exec_cmd("xdg-open " .. home .. "/.config/carbon/config.json"),
     { description = "User: Edit shell config" })
 hl.bind("CTRL + SUPER + ALT + Slash",
     hl.dsp.exec_cmd("xdg-open " .. home .. "/.config/hypr/keybinds.lua"),

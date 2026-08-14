@@ -18,4 +18,4 @@ hl.env("QT_STYLE_OVERRIDE", "Breeze")
 hl.env("AG_PROVIDERS", "/usr/share/accounts/providers/kde")
 hl.env("AG_SERVICES", "/usr/share/accounts/services/kde")
 
-hl.env("ILLOGICAL_IMPULSE_VIRTUAL_ENV", lib.home .. "/.local/state/quickshell/.venv")
+hl.env("CARBON_VIRTUAL_ENV", lib.home .. "/.local/state/quickshell/.venv")
