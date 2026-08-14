@@ -65,4 +65,4 @@ If Quickshell fails, inspect it with:
 journalctl --user -u quickshell.service -b --no-pager
 ```
 
-Carbon configures the Hyprland desktop session; it does not install a display manager, graphics drivers, networking, user groups, or a base operating system. KDE/Kvantum color syncing and some hardware or desktop integrations need the optional packages listed in [`packages.arch`](packages.arch).
+Carbon configures the Hyprland desktop session; it does not install a display manager, graphics drivers, networking, user groups, or a base operating system. Some hardware and desktop integrations need the optional packages listed in [`packages.arch`](packages.arch).

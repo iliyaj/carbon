@@ -4,6 +4,8 @@
 from __future__ import annotations
 
 import argparse
+import configparser
+import io
 import json
 import os
 from pathlib import Path
@@ -23,16 +25,6 @@ SCHEMES = {
     "scheme-neutral",
     "scheme-rainbow",
     "scheme-tonal-spot",
-}
-KDE_SCHEME_IDS = {
-    "scheme-content": 0,
-    "scheme-expressive": 1,
-    "scheme-fidelity": 2,
-    "scheme-monochrome": 3,
-    "scheme-neutral": 4,
-    "scheme-tonal-spot": 5,
-    "scheme-rainbow": 7,
-    "scheme-fruit-salad": 8,
 }
 VIDEO_EXTENSIONS = {".mp4", ".mkv", ".webm"}
 VIDEO_OPTIONS = (
@@ -57,6 +49,8 @@ TERM_SCHEME = QUICKSHELL_DIR / "Scripts/Terminal/scheme-base.toml"
 MATUGEN_CONFIG = SCRIPT_DIR / "matugen.toml"
 HYPRLOCK_CONFIG = GENERATED_DIR / "hyprlock.conf"
 HYPRLOCK_TEMPLATE = CONFIG_HOME / "hypr/hyprlock.conf.template"
+KDE_GLOBALS = CONFIG_HOME / "kdeglobals"
+KDE_SCHEME_DIR = Path("/usr/share/color-schemes")
 THUMBNAIL_DIR = Path("/tmp/mpvpaper_thumbnails")
 
 
@@ -279,42 +273,47 @@ def apply_terminal(colors: dict[str, str]) -> None:
     atomic_write(TERMINAL_DIR / "ghostty-colors.conf", "\n".join(ghostty_lines))
 
 
-def apply_kvantum(mode: str) -> None:
-    colloid = CONFIG_HOME / "Kvantum/Colloid"
-    material = CONFIG_HOME / "Kvantum/MaterialAdw"
-    if not colloid.is_dir():
-        notify("Colloid-kde theme required", f"The folder '{colloid}' does not exist.")
-        return
-    material.mkdir(parents=True, exist_ok=True)
-    source_config = colloid / ("ColloidDark.kvconfig" if mode == "dark" else "Colloid.kvconfig")
-    shutil.copyfile(source_config, material / "MaterialAdw.kvconfig")
-    svg_script = QUICKSHELL_DIR / "Scripts/Kvantum" / ("adw_svg_dark.py" if mode == "dark" else "adw_svg.py")
-    run([sys.executable, svg_script])
-    run([sys.executable, QUICKSHELL_DIR / "Scripts/Kvantum/change_adw_colors.py"])
+def kconfig() -> configparser.ConfigParser:
+    parser = configparser.ConfigParser(interpolation=None, strict=False)
+    parser.optionxform = str
+    return parser
 
 
-def apply_kde(mode: str, scheme: str) -> None:
-    executable = shutil.which("kde-material-you-colors")
-    color_file = GENERATED_DIR / "color.txt"
-    if not executable or not color_file.is_file():
-        return
-    dependency = run(
-        [sys.executable, "-c", "import materialyoucolor"],
-        check=False,
-        capture=True,
-    )
-    if dependency.returncode != 0:
-        message = "Install python-materialyoucolor3 to enable KDE color-scheme syncing"
-        print(message, file=sys.stderr)
-        notify("KDE color update skipped", message, "-c", "im.warning")
-        return
-    color = color_file.read_text().strip()
-    detached([
-        executable,
-        "-d" if mode == "dark" else "-l",
-        "--color", color,
-        "-sv", str(KDE_SCHEME_IDS.get(scheme, 5)),
-    ])
+def apply_kde(mode: str) -> None:
+    scheme_name = "BreezeDark" if mode == "dark" else "BreezeLight"
+    scheme_path = KDE_SCHEME_DIR / f"{scheme_name}.colors"
+    if not scheme_path.is_file():
+        raise RuntimeError(f"KDE Breeze color scheme not found: {scheme_path}")
+
+    scheme = kconfig()
+    settings = kconfig()
+    try:
+        scheme.read(scheme_path)
+        if KDE_GLOBALS.is_file():
+            settings.read(KDE_GLOBALS)
+    except configparser.Error as error:
+        raise RuntimeError(f"could not read KDE color settings: {error}") from error
+
+    for section in scheme.sections():
+        if not settings.has_section(section):
+            settings.add_section(section)
+        if section == "General":
+            settings[section]["ColorScheme"] = scheme[section]["ColorScheme"]
+            settings.remove_option(section, "ColorSchemeHash")
+            continue
+        for key, value in scheme.items(section):
+            settings[section][key] = value
+
+    settings["KDE"]["widgetStyle"] = "Breeze"
+    output = io.StringIO()
+    settings.write(output, space_around_delimiters=False)
+    atomic_write(KDE_GLOBALS, output.getvalue())
+
+    if shutil.which("dbus-send"):
+        run([
+            "dbus-send", "--session", "--type=signal", "/KGlobalSettings",
+            "org.kde.KGlobalSettings.notifyChange", "int32:0", "int32:0",
+        ], check=False)
 
 
 def update_hyprlock(palette_source: str) -> None:
@@ -412,8 +411,7 @@ def main() -> int:
     generate_scss(source_kind, source, mode, scheme)
     colors = scss_colors()
     apply_terminal(colors)
-    apply_kvantum(mode)
-    apply_kde(mode, scheme)
+    apply_kde(mode)
     update_hyprlock(palette_source)
     if palette_source:
         generate_least_busy_region(palette_source, monitors)

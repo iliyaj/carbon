@@ -11,7 +11,9 @@ hl.env("SDL_IM_MODULE", "fcitx")
 hl.env("GLFW_IM_MODULE", "ibus")
 hl.env("INPUT_METHOD", "fcitx")
 hl.env("QT_QPA_PLATFORM", "wayland")
-hl.env("QT_QPA_PLATFORMTHEME", "kde")
+-- Follow Carbon's GTK light/dark preference without pulling in Plasma Workspace.
+hl.env("QT_QPA_PLATFORMTHEME", "gtk3")
+hl.env("QT_STYLE_OVERRIDE", "Breeze")
 
 hl.env("AG_PROVIDERS", "/usr/share/accounts/providers/kde")
 hl.env("AG_SERVICES", "/usr/share/accounts/services/kde")

@@ -145,6 +145,8 @@ info "Linking Carbon configuration"
 link_config "$REPO_DIR/.config/hypr" "$CONFIG_HOME/hypr"
 link_config "$REPO_DIR/.config/quickshell" "$CONFIG_HOME/quickshell"
 link_config "$REPO_DIR/.config/matugen" "$CONFIG_HOME/matugen"
+link_config "$REPO_DIR/.config/fuzzel/fuzzel.ini" "$CONFIG_HOME/fuzzel/fuzzel.ini"
+link_config "$REPO_DIR/.config/kitty/kitty.conf" "$CONFIG_HOME/kitty/kitty.conf"
 link_config "$REPO_DIR/systemd/user/quickshell.service" "$CONFIG_HOME/systemd/user/quickshell.service"
 link_config "$REPO_DIR/systemd/user/awww-daemon.service" "$CONFIG_HOME/systemd/user/awww-daemon.service"
 

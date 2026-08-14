@@ -46,6 +46,7 @@ The cheatsheet reads Hyprland's live bind inventory and is the authoritative lis
 - `.config/hypr/` - modular Hyprland Lua configuration and safe machine override example
 - `.config/quickshell/` - shell, settings app, QML modules, services, scripts, and bundled default wallpaper
 - `.config/matugen/` - templates used by Carbon's Material color pipeline
+- `.config/fuzzel/` and `.config/kitty/` - application configs that load generated colors
 - `systemd/user/` - portable Quickshell and wallpaper-daemon user units
 - `requirements.txt` and `packages.arch` - pinned Python and Arch package inputs
 

@@ -38,12 +38,14 @@ sassc
 polkit-kde-agent
 uv
 
-# Default applications and fonts
+# Default applications, themes, and fonts
 kitty
 dolphin
+breeze
+adw-gtk-theme
 ttf-material-symbols-variable
 ttf-jetbrains-mono-nerd
 
 # Optional integrations are intentionally not installed by the base manifest:
 # bluez-utils, plasma-nm, bluedevil, wlogout, easyeffects, fcitx5, logiops,
-# kde-material-you-colors, pavucontrol, and mission-center.
+# pavucontrol, and mission-center.

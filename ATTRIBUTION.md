@@ -24,7 +24,7 @@ The remaining QML, JavaScript, Python, shell, Matugen template, and Hyprland con
 
 ## External software and themes
 
-Hyprland, Quickshell, Matugen, awww, Qt, system utilities, optional KDE/Kvantum themes, and optional desktop applications are dependencies rather than redistributed source. Their own packages and licenses govern them.
+Hyprland, Quickshell, Matugen, awww, Qt, the KDE Breeze theme, system utilities, and optional desktop applications are dependencies rather than redistributed source. Their own packages and licenses govern them.
 
 ## Audit record
 
