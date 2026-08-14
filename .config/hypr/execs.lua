@@ -22,10 +22,9 @@ local autostart = {
     "gnome-keyring-daemon --start --components=secrets",
 
     "dbus-update-activation-environment --all",
-    -- Enabled units may have missed an already-active graphical target during
-    -- TTY installation. Restarting after the import also replaces stale socket
-    -- values left by an earlier session.
-    "sleep 1 && systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE && systemctl --user restart awww-daemon.service quickshell.service hypridle.service",
+    -- These compositor-bound units stay disabled at user-manager startup. Start
+    -- them only after Hyprland has exported the current Wayland socket.
+    "systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE && systemctl --user restart awww-daemon.service quickshell.service hypridle.service",
 
     "easyeffects --gapplication-service",
 

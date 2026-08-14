@@ -10,9 +10,8 @@ hl.monitor({
     mode     = lib.setting("MONITOR_MODE", "preferred"),
     position = lib.setting("MONITOR_POSITION", "auto"),
     scale    = lib.setting_number("MONITOR_SCALE", 1),
+    transform = 0,
 })
-
-hl.monitor({ output = "", mode = "preferred", position = "auto", scale = 1, transform = 0 })
 
 hl.config({
     general = {

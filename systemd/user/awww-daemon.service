@@ -1,9 +1,6 @@
 [Unit]
 Description=awww Wayland wallpaper daemon for Carbon
 Documentation=https://codeberg.org/LGFae/awww
-After=graphical-session.target
-Wants=graphical-session.target
-PartOf=graphical-session.target
 ConditionEnvironment=WAYLAND_DISPLAY
 
 [Service]
@@ -14,6 +11,3 @@ Restart=always
 RestartSec=2
 CacheDirectory=awww
 NoNewPrivileges=true
-
-[Install]
-WantedBy=graphical-session.target

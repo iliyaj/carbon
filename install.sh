@@ -155,9 +155,12 @@ if [[ ! -e "$REPO_DIR/.config/hypr/user.env" ]]; then
     printf '    created: %s\n' "$REPO_DIR/.config/hypr/user.env"
 fi
 
-info "Enabling Carbon services"
+info "Configuring Carbon services"
 systemctl --user daemon-reload
-systemctl --user enable awww-daemon.service quickshell.service hypridle.service
+# Hyprland starts these after importing its live Wayland environment. Keeping
+# them disabled also removes stale default.target links from older installs,
+# which otherwise launch Quickshell once before the compositor is ready.
+systemctl --user disable awww-daemon.service quickshell.service hypridle.service
 
 if command -v hyprctl >/dev/null && hyprctl monitors >/dev/null 2>&1; then
     systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE

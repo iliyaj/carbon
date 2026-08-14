@@ -130,16 +130,16 @@ Singleton {
         id: configFileView
         path: Qt.resolvedUrl(root.filePath)
         atomicWrites: true
+        // A watched async self-write can reload the previous in-memory value
+        // before the save completes, undoing changes such as newly pinned apps.
+        blockWrites: true
+        preload: true
         printErrors: false
         watchChanges: true
-        onFileChanged: {
-            this.reload()
-            delayedFileRead.start()
-        }
-        onLoadedChanged: {
-            const fileContent = configFileView.text()
-            delayedFileRead.start()
-        }
+        onFileChanged: this.reload()
+        // loadedChanged also fires when an asynchronous read starts. Wait for
+        // loaded so defaults cannot be saved before disk content is available.
+        onLoaded: delayedFileRead.start()
         onLoadFailed: (error) => {
             if(error == FileViewError.FileNotFound) {
                 console.log("[ConfigLoader] File not found, checking for a previous configuration.")

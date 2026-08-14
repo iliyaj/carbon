@@ -1,9 +1,6 @@
 [Unit]
 Description=Carbon Quickshell desktop shell
 Documentation=https://github.com/iliyaj/carbon
-After=graphical-session.target
-Wants=graphical-session.target
-PartOf=graphical-session.target
 ConditionEnvironment=WAYLAND_DISPLAY
 
 [Service]
@@ -13,6 +10,3 @@ Restart=on-failure
 RestartSec=2
 Environment=QT_QPA_PLATFORM=wayland
 Environment=QT_WAYLAND_DISABLE_WINDOWDECORATION=1
-
-[Install]
-WantedBy=graphical-session.target
