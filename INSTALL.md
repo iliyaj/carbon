@@ -36,7 +36,7 @@ nano ~/.config/hypr/user.env
 
 ### Nagame display profiles
 
-The installer downloads the pinned Linux x86_64 binary from [Nagame's GitHub release](https://github.com/iliyaj/nagame/releases/tag/v0.0.1), verifies its SHA-256, and installs its example files. Nagame remains disabled because monitor layouts and wallpaper paths are machine-specific.
+The installer downloads the pinned Linux x86_64 binary from [Nagame's GitHub release](https://github.com/iliyaj/nagame/releases/tag/v0.0.2), verifies its SHA-256, and installs its example files. Nagame remains disabled because monitor layouts and wallpaper paths are machine-specific.
 
 To use it, copy and edit the example before enabling the service:
 
@@ -48,7 +48,7 @@ nagame --test-only
 systemctl --user enable --now nagame.service
 ```
 
-The example contains placeholder monitor names and wallpaper paths; replace them with values for this machine. See [Nagame's instructions](https://github.com/iliyaj/nagame/blob/v0.0.1/INSTRUCTIONS.md) for the profile format.
+The example contains placeholder monitor names and wallpaper paths; replace them with values for this machine. See [Nagame's instructions](https://github.com/iliyaj/nagame/blob/v0.0.2/INSTRUCTIONS.md) for the profile format.
 
 ## Verify or troubleshoot
 

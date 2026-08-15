@@ -8,9 +8,9 @@ readonly REPO_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 readonly CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
 readonly STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
 readonly BACKUP_STAMP="$(date +%Y%m%d-%H%M%S)"
-readonly NAGAME_VERSION="0.0.1"
+readonly NAGAME_VERSION="0.0.2"
 readonly NAGAME_TARGET="x86_64-unknown-linux-gnu"
-readonly NAGAME_SHA256="d7eafa35decf572a1cf5af8ef4d24c208549220f3adafc44fad156bcec957791"
+readonly NAGAME_SHA256="bf978d5ed2bc8ddf4222b9d73f53562e4170d0163a6f8b7e099beb9b86226eca"
 
 backups=()
 nagame_tmp_dir=""
