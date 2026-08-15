@@ -51,7 +51,7 @@ hl.on("hyprland.start", function()
     hl.timer(function()
         local services = table.concat(compositor_services, " ")
         hl.exec_cmd("systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE"
-            .. " && systemctl --user reset-failed " .. services
+            .. " && { systemctl --user reset-failed " .. services .. " || :; }"
             .. " && systemctl --user restart " .. services)
     end, { timeout = 1000, type = "oneshot" })
 

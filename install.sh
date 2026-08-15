@@ -86,6 +86,29 @@ link_config() {
     printf '    linked: %s -> %s\n' "$target" "$source"
 }
 
+install_config_file() {
+    local source="$1"
+    local target="$2"
+    local backup
+
+    mkdir -p -- "$(dirname -- "$target")"
+
+    if [[ -f "$target" && ! -L "$target" ]] && cmp -s -- "$source" "$target"; then
+        printf '    already installed: %s\n' "$target"
+        return
+    fi
+
+    if [[ -e "$target" || -L "$target" ]]; then
+        backup="$(backup_path "$target")"
+        mv -- "$target" "$backup"
+        backups+=("$backup")
+        printf '    backed up: %s -> %s\n' "$target" "$backup"
+    fi
+
+    install -m 0644 -- "$source" "$target"
+    printf '    installed: %s\n' "$target"
+}
+
 install_nagame() {
     local asset="nagame-v${NAGAME_VERSION}-${NAGAME_TARGET}.tar.gz"
     local release_url="https://github.com/iliyaj/nagame/releases/download/v${NAGAME_VERSION}"
@@ -147,8 +170,11 @@ link_config "$REPO_DIR/.config/quickshell" "$CONFIG_HOME/quickshell"
 link_config "$REPO_DIR/.config/matugen" "$CONFIG_HOME/matugen"
 link_config "$REPO_DIR/.config/fuzzel/fuzzel.ini" "$CONFIG_HOME/fuzzel/fuzzel.ini"
 link_config "$REPO_DIR/.config/kitty/kitty.conf" "$CONFIG_HOME/kitty/kitty.conf"
-link_config "$REPO_DIR/systemd/user/quickshell.service" "$CONFIG_HOME/systemd/user/quickshell.service"
-link_config "$REPO_DIR/systemd/user/awww-daemon.service" "$CONFIG_HOME/systemd/user/awww-daemon.service"
+# systemctl disable removes linked unit files from its search path along with
+# enablement links. Install regular copies so disabling stale startup links does
+# not also erase Carbon's unit definitions.
+install_config_file "$REPO_DIR/systemd/user/quickshell.service" "$CONFIG_HOME/systemd/user/quickshell.service"
+install_config_file "$REPO_DIR/systemd/user/awww-daemon.service" "$CONFIG_HOME/systemd/user/awww-daemon.service"
 
 if [[ ! -e "$REPO_DIR/.config/hypr/user.env" ]]; then
     install -m 600 "$REPO_DIR/.config/hypr/user.env.example" "$REPO_DIR/.config/hypr/user.env"
