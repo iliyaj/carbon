@@ -50,7 +50,7 @@ ContentPage {
                 ? Appearance.colors.colSecondaryContainer
                 : Appearance.m3colors.m3surfaceContainer
 
-            RowLayout {
+            ColumnLayout {
                 id: previewContent
                 anchors {
                     fill: parent
@@ -58,41 +58,58 @@ ContentPage {
                 }
                 spacing: Appearance.spacing.md
 
-                MaterialSymbol {
-                    text: NagameDisplay.previewActive ? "timer" : "shield"
-                    iconSize: 28
-                    color: NagameDisplay.previewActive
-                        ? Appearance.colors.colOnSecondaryContainer
-                        : Appearance.m3colors.m3primary
-                }
-
-                ColumnLayout {
+                RowLayout {
                     Layout.fillWidth: true
-                    spacing: 2
-                    StyledText {
-                        Layout.fillWidth: true
-                        text: NagameDisplay.previewActive
-                            ? qsTr("%1 seconds remaining").arg(NagameDisplay.remainingSeconds)
-                            : qsTr("Changes always revert")
-                        font.pixelSize: Appearance.font.pixelSize.larger
-                        font.weight: Font.Medium
+                    spacing: Appearance.spacing.md
+
+                    MaterialSymbol {
+                        text: NagameDisplay.previewActive ? "timer" : "shield"
+                        iconSize: 28
+                        color: NagameDisplay.previewActive
+                            ? Appearance.colors.colOnSecondaryContainer
+                            : Appearance.m3colors.m3primary
                     }
-                    StyledText {
+
+                    ColumnLayout {
                         Layout.fillWidth: true
-                        text: NagameDisplay.previewActive
-                            ? NagameDisplay.statusMessage
-                            : qsTr("Nagame tests the complete configuration, previews it for 15 seconds, and never writes it to disk.")
-                        color: Appearance.m3colors.m3outline
-                        wrapMode: Text.Wrap
+                        spacing: 2
+                        StyledText {
+                            Layout.fillWidth: true
+                            text: NagameDisplay.previewActive
+                                ? qsTr("Keep these display settings? · %1 seconds").arg(NagameDisplay.remainingSeconds)
+                                : qsTr("Safe display changes")
+                            font.pixelSize: Appearance.font.pixelSize.larger
+                            font.weight: Font.Medium
+                        }
+                        StyledText {
+                            Layout.fillWidth: true
+                            text: NagameDisplay.previewActive
+                                ? NagameDisplay.statusMessage
+                                : qsTr("Nagame tests the complete configuration before previewing it. Unconfirmed changes revert automatically.")
+                            color: Appearance.m3colors.m3outline
+                            wrapMode: Text.Wrap
+                        }
                     }
                 }
 
-                RippleButtonWithIcon {
+                RowLayout {
+                    Layout.alignment: Qt.AlignRight
                     visible: NagameDisplay.previewActive
-                    materialIcon: "undo"
-                    mainText: qsTr("Revert now")
-                    enabled: !NagameDisplay.loading
-                    onClicked: NagameDisplay.revert()
+                    spacing: Appearance.spacing.sm
+
+                    RippleButtonWithIcon {
+                        materialIcon: "undo"
+                        mainText: qsTr("Revert")
+                        enabled: !NagameDisplay.confirming && !NagameDisplay.reverting
+                        onClicked: NagameDisplay.revert()
+                    }
+
+                    RippleButtonWithIcon {
+                        materialIcon: "check"
+                        mainText: NagameDisplay.confirming ? qsTr("Saving…") : qsTr("Keep changes")
+                        enabled: !NagameDisplay.confirming && !NagameDisplay.reverting
+                        onClicked: NagameDisplay.confirm()
+                    }
                 }
             }
         }
@@ -138,12 +155,24 @@ ContentPage {
 
         StyledText {
             Layout.fillWidth: true
-            visible: NagameDisplay.outputs.length === 0
-            text: qsTr("Nagame did not report any connected displays.")
+            visible: !NagameDisplay.outputManagementSupported || NagameDisplay.outputs.length === 0
+            text: NagameDisplay.outputManagementSupported
+                ? qsTr("Nagame did not report any connected displays.")
+                : qsTr("This compositor does not provide the output-management protocol Nagame needs.")
             color: Appearance.m3colors.m3outline
+            wrapMode: Text.Wrap
+        }
+
+        StyledText {
+            Layout.fillWidth: true
+            visible: NagameDisplay.outputs.length > 0 && NagameDisplay.activeProfile.length === 0
+            text: qsTr("No Nagame profile matches the connected displays. Choose or create a matching profile before applying changes.")
+            color: Appearance.m3colors.m3error
+            wrapMode: Text.Wrap
         }
 
         Repeater {
+            visible: NagameDisplay.outputManagementSupported
             model: NagameDisplay.outputs
             delegate: DisplayOutputCard {
                 id: outputCard
@@ -158,9 +187,11 @@ ContentPage {
         RippleButtonWithIcon {
             Layout.alignment: Qt.AlignRight
             materialIcon: "preview"
-            mainText: qsTr("Preview selected mode")
+            mainText: qsTr("Apply")
             enabled: {
-                if (NagameDisplay.previewActive || NagameDisplay.loading)
+                if (NagameDisplay.previewActive || NagameDisplay.loading || !NagameDisplay.outputManagementSupported)
+                    return false
+                if (NagameDisplay.activeProfile.length === 0 || NagameDisplay.configRevision.length === 0)
                     return false
                 return NagameDisplay.outputs.some(output => {
                     const selected = root.selectedModes[output.connector]
