@@ -16,16 +16,18 @@ local geoclue_agent = lib.first_existing({
     "/usr/libexec/geoclue-2.0/demos/agent",
 })
 
+local compositor_services = {
+    "awww-daemon.service",
+    "quickshell.service",
+    "hypridle.service",
+}
+
 local autostart = {
     "fcitx5",
 
     "gnome-keyring-daemon --start --components=secrets",
 
     "dbus-update-activation-environment --all",
-    -- The start event precedes the compositor environment becoming usable on a
-    -- fresh TTY login. Delay the import so ConditionEnvironment does not skip
-    -- Quickshell and awww while still starting all three units in this session.
-    "sleep 1 && systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE && systemctl --user restart awww-daemon.service quickshell.service hypridle.service",
 
     "easyeffects --gapplication-service",
 
@@ -42,6 +44,17 @@ hl.on("hyprland.start", function()
         hl.exec_cmd(cmd)
     end
 
+    -- Commands spawned during the start event inherit Hyprland's pre-socket
+    -- environment even if the child sleeps. Spawn this child from a timer so it
+    -- receives the live Wayland variables, and clear failures left by logout
+    -- before restarting the compositor-bound services.
+    hl.timer(function()
+        local services = table.concat(compositor_services, " ")
+        hl.exec_cmd("systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE"
+            .. " && systemctl --user reset-failed " .. services
+            .. " && systemctl --user restart " .. services)
+    end, { timeout = 1000, type = "oneshot" })
+
     if polkit_agent then
         hl.exec_cmd(polkit_agent)
     else
@@ -54,4 +67,8 @@ hl.on("hyprland.start", function()
             hl.exec_cmd("gammastep")
         end, { timeout = 1000, type = "oneshot" })
     end
+end)
+
+hl.on("hyprland.shutdown", function()
+    hl.exec_cmd("systemctl --user stop " .. table.concat(compositor_services, " "))
 end)
