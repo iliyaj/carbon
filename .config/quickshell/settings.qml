@@ -16,6 +16,7 @@ import Quickshell.Hyprland
 import "root:/Services/"
 import "root:/Modules/Common/"
 import "root:/Modules/Common/Widgets/"
+import "root:/Modules/Settings/"
 import "root:/Modules/Common/Functions/color_utils.js" as ColorUtils
 import "root:/Modules/Common/Functions/file_utils.js" as FileUtils
 import "root:/Modules/Common/Functions/string_utils.js" as StringUtils
@@ -36,6 +37,11 @@ ApplicationWindow {
             name: "Interface",
             icon: "cards",
             component: "Modules/Settings/InterfaceConfig.qml"
+        },
+        {
+            name: "Display",
+            icon: "desktop_windows",
+            component: "Modules/Settings/DisplayConfig.qml"
         },
         {
             name: "Services",
@@ -59,10 +65,10 @@ ApplicationWindow {
         ConfigLoader.loadConfig()
     }
 
-    // Wide enough for the four tabs at their 160px minimum, since content only needs 606
-    minimumWidth: 680
+    // Wide enough for the five tabs at their 160px minimum, since content only needs 606
+    minimumWidth: 820
     minimumHeight: 400
-    width: 700
+    width: 840
     height: 900
     color: Appearance.m3colors.m3background
 
