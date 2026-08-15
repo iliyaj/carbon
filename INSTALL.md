@@ -36,19 +36,11 @@ nano ~/.config/hypr/user.env
 
 ### Nagame display profiles
 
-The installer downloads the pinned Linux x86_64 binary from [Nagame's GitHub release](https://github.com/iliyaj/nagame/releases/tag/v0.0.2), verifies its SHA-256, and installs its example files. Nagame remains disabled because monitor layouts and wallpaper paths are machine-specific.
+The installer downloads the pinned Linux x86_64 binary from [Nagame's GitHub release](https://github.com/iliyaj/nagame/releases/tag/v0.0.3), verifies its SHA-256, and installs its example files. Nagame remains inactive until it has a profile for this machine.
 
-To use it, copy and edit the example before enabling the service:
+To use it without a terminal, open **Carbon Settings → Display** and choose **Set up Nagame**. Nagame captures the connected displays and their current modes, position, scale, orientation, and adaptive-sync state into a private initial profile, validates it, and starts the service. Carbon starts configured Nagame automatically in later sessions.
 
-```bash
-mkdir -p ~/.config/nagame
-cp /usr/local/share/nagame/config.toml.example ~/.config/nagame/config.toml
-nano ~/.config/nagame/config.toml
-nagame --test-only
-systemctl --user enable --now nagame.service
-```
-
-The example contains placeholder monitor names and wallpaper paths; replace them with values for this machine. See [Nagame's instructions](https://github.com/iliyaj/nagame/blob/v0.0.2/INSTRUCTIONS.md) for the profile format.
+Advanced users can still create named docked layouts, wallpapers, and activation commands manually. The installed example contains placeholders and is never copied over user configuration automatically. See [Nagame's instructions](https://github.com/iliyaj/nagame/blob/v0.0.3/INSTRUCTIONS.md) for the profile format.
 
 ## Verify or troubleshoot
 

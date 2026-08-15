@@ -8,9 +8,9 @@ readonly REPO_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 readonly CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
 readonly STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
 readonly BACKUP_STAMP="$(date +%Y%m%d-%H%M%S)"
-readonly NAGAME_VERSION="0.0.2"
+readonly NAGAME_VERSION="0.0.3"
 readonly NAGAME_TARGET="x86_64-unknown-linux-gnu"
-readonly NAGAME_SHA256="bf978d5ed2bc8ddf4222b9d73f53562e4170d0163a6f8b7e099beb9b86226eca"
+readonly NAGAME_SHA256="2f2344da00a3111f894b958e5021ef223ad8892970d78e15fb8d0f92c92af6fa"
 
 backups=()
 nagame_tmp_dir=""
@@ -204,4 +204,4 @@ if ((${#backups[@]} > 0)); then
 fi
 
 printf '\nUse Super+Return to open Kitty. Use Super+/ to view all keybinds.\n'
-printf 'Nagame is installed but disabled; configure it only if you want automatic display profiles.\n'
+printf 'Nagame is installed but disabled; set it up graphically from Carbon Settings → Display.\n'

@@ -20,6 +20,8 @@ Singleton {
     property bool previewActive: false
     property bool confirming: false
     property bool reverting: false
+    property bool setupRunning: false
+    property string backendState: "unknown"
     property string transactionId: ""
     property int remainingMilliseconds: 0
     property int remainingSeconds: 0
@@ -28,7 +30,7 @@ Singleton {
     property string statusMessage: ""
 
     function refresh(clearError = true, showLoading = true) {
-        if (outputsProcess.running)
+        if (outputsProcess.running || root.setupRunning)
             return
         if (showLoading)
             root.loading = true
@@ -37,6 +39,48 @@ Singleton {
             root.errorMessage = ""
         }
         outputsProcess.running = true
+    }
+
+    function detectBackendState() {
+        if (!versionProcess.running)
+            versionProcess.running = true
+    }
+
+    function setup() {
+        if (root.setupRunning)
+            return
+        root.setupRunning = true
+        root.errorCode = ""
+        root.errorMessage = ""
+        root.statusMessage = qsTr("Creating a Nagame profile from the connected displays…")
+        initProcess.running = true
+    }
+
+    function start() {
+        if (root.setupRunning)
+            return
+        root.setupRunning = true
+        root.errorCode = ""
+        root.errorMessage = ""
+        root.statusMessage = qsTr("Starting Nagame…")
+        startProcess.running = true
+    }
+
+    function handleInitEvent(line: string) {
+        if (line.trim().length === 0)
+            return
+        try {
+            const event = JSON.parse(line)
+            if (event.event === "initialized") {
+                root.backendState = "configured"
+            } else if (event.event === "error") {
+                root.errorCode = event.code ?? "init_failed"
+                root.errorMessage = event.message ?? qsTr("Nagame setup failed.")
+            }
+        } catch (error) {
+            root.errorCode = "invalid_response"
+            root.errorMessage = qsTr("Nagame returned an invalid setup response: %1").arg(error)
+        }
     }
 
     function preview(output: string, modeId: string) {
@@ -116,6 +160,7 @@ Singleton {
             root.configRevision = event.revision ?? ""
             root.outputManagementSupported = event.supported ?? false
             root.available = true
+            root.backendState = "running"
             root.loading = false
             if (root.errorCode === "daemon_unavailable" || root.errorCode === "invalid_response" || root.errorCode === "invalid_data") {
                 root.errorCode = ""
@@ -218,12 +263,81 @@ Singleton {
             root.loading = false
             if (exitCode !== 0 && root.outputs.length === 0) {
                 root.available = false
-                if (root.errorMessage.length === 0) {
-                    root.errorCode = "daemon_unavailable"
-                    root.errorMessage = qsTr("Nagame is not available. Carbon's display fallback remains active.")
-                }
+                root.detectBackendState()
             }
         }
+    }
+
+    Process {
+        id: versionProcess
+        command: ["nagame", "--version"]
+        onExited: (exitCode, exitStatus) => {
+            if (exitCode !== 0) {
+                root.backendState = "not_installed"
+                root.errorCode = "not_installed"
+                root.errorMessage = ""
+            } else {
+                configProcess.running = true
+            }
+        }
+    }
+
+    Process {
+        id: configProcess
+        command: ["test", "-e", Quickshell.env("HOME") + "/.config/nagame/config.toml"]
+        onExited: (exitCode, exitStatus) => {
+            if (exitCode === 0) {
+                root.backendState = "stopped"
+                root.errorCode = "stopped"
+            } else {
+                root.backendState = "unconfigured"
+                root.errorCode = "unconfigured"
+            }
+            root.errorMessage = ""
+        }
+    }
+
+    Process {
+        id: initProcess
+        command: ["nagame", "init"]
+        stdout: SplitParser {
+            onRead: data => root.handleInitEvent(data)
+        }
+        onExited: (exitCode, exitStatus) => {
+            if (exitCode === 0 && root.backendState === "configured") {
+                startProcess.running = true
+                return
+            }
+            root.setupRunning = false
+            if (root.errorMessage.length === 0) {
+                root.errorCode = "init_failed"
+                root.errorMessage = qsTr("Nagame could not create its initial display profile.")
+            }
+        }
+    }
+
+    Process {
+        id: startProcess
+        command: ["systemctl", "--user", "start", "nagame.service"]
+        onExited: (exitCode, exitStatus) => {
+            root.setupRunning = false
+            if (exitCode === 0) {
+                root.backendState = "starting"
+                root.statusMessage = qsTr("Nagame setup complete. Connecting…")
+                refreshTimer.restart()
+            } else {
+                root.backendState = "stopped"
+                root.errorCode = "start_failed"
+                root.errorMessage = qsTr("Nagame is configured but could not be started. Check the user service logs.")
+            }
+        }
+    }
+
+    Timer {
+        id: refreshTimer
+        interval: 750
+        repeat: false
+        onTriggered: root.refresh(false, true)
     }
 
     Process {

@@ -22,6 +22,10 @@ local compositor_services = {
     "hypridle.service",
 }
 
+if lib.in_path("nagame") and lib.file_exists(home .. "/.config/nagame/config.toml") then
+    table.insert(compositor_services, "nagame.service")
+end
+
 local autostart = {
     "fcitx5",
 

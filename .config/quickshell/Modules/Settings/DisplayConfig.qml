@@ -117,6 +117,9 @@ ContentPage {
         StyledText {
             Layout.fillWidth: true
             visible: NagameDisplay.errorMessage.length > 0
+                && NagameDisplay.errorCode !== "unconfigured"
+                && NagameDisplay.errorCode !== "stopped"
+                && NagameDisplay.errorCode !== "not_installed"
             text: NagameDisplay.errorMessage
             color: Appearance.m3colors.m3error
             wrapMode: Text.Wrap
@@ -136,15 +139,38 @@ ContentPage {
                 Layout.fillWidth: true
                 text: NagameDisplay.loading
                     ? qsTr("Reading connected outputs from Nagame…")
-                    : qsTr("Nagame is optional. Carbon's static Hyprland display fallback is still active.")
+                    : NagameDisplay.backendState === "unconfigured"
+                        ? qsTr("Nagame is installed but not configured. Set it up from the displays connected now.")
+                        : NagameDisplay.backendState === "stopped"
+                            ? qsTr("Nagame is configured but not running.")
+                            : NagameDisplay.backendState === "starting"
+                                ? qsTr("Nagame is starting…")
+                                : NagameDisplay.backendState === "not_installed"
+                                    ? qsTr("Nagame is not installed. Carbon's static Hyprland display fallback is active.")
+                                    : qsTr("Checking the Nagame service…")
                 color: Appearance.m3colors.m3outline
                 wrapMode: Text.Wrap
             }
             RippleButtonWithIcon {
-                materialIcon: "refresh"
-                mainText: qsTr("Retry")
-                enabled: !NagameDisplay.loading
-                onClicked: NagameDisplay.refresh()
+                materialIcon: NagameDisplay.backendState === "unconfigured"
+                    ? "settings_suggest"
+                    : NagameDisplay.backendState === "stopped"
+                        ? "play_arrow"
+                        : "refresh"
+                mainText: NagameDisplay.backendState === "unconfigured"
+                    ? qsTr("Set up Nagame")
+                    : NagameDisplay.backendState === "stopped"
+                        ? qsTr("Start Nagame")
+                        : qsTr("Retry")
+                enabled: !NagameDisplay.loading && !NagameDisplay.setupRunning
+                onClicked: {
+                    if (NagameDisplay.backendState === "unconfigured")
+                        NagameDisplay.setup()
+                    else if (NagameDisplay.backendState === "stopped")
+                        NagameDisplay.start()
+                    else
+                        NagameDisplay.refresh()
+                }
             }
         }
     }
