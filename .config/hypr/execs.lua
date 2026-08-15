@@ -22,9 +22,10 @@ local autostart = {
     "gnome-keyring-daemon --start --components=secrets",
 
     "dbus-update-activation-environment --all",
-    -- These compositor-bound units stay disabled at user-manager startup. Start
-    -- them only after Hyprland has exported the current Wayland socket.
-    "systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE && systemctl --user restart awww-daemon.service quickshell.service hypridle.service",
+    -- The start event precedes the compositor environment becoming usable on a
+    -- fresh TTY login. Delay the import so ConditionEnvironment does not skip
+    -- Quickshell and awww while still starting all three units in this session.
+    "sleep 1 && systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE && systemctl --user restart awww-daemon.service quickshell.service hypridle.service",
 
     "easyeffects --gapplication-service",
 
