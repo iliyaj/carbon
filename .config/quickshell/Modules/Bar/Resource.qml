@@ -1,38 +1,99 @@
 import "root:/Modules/Common"
 import "root:/Modules/Common/Widgets"
 import QtQuick
-import QtQuick.Layouts
 
 Item {
+    id: root
+
     required property string label
     required property double percentage
-    property bool shown: true
-    clip: true
-    visible: width > 0 && height > 0
-    implicitWidth: resourceRowLayout.x < 0 ? 0 : childrenRect.width
-    implicitHeight: childrenRect.height
+    readonly property real boundedPercentage: Math.max(0, Math.min(1, percentage))
+    readonly property int percentageValue: Math.round(boundedPercentage * 100)
+    readonly property int severity: percentageValue >= 90 ? 3
+        : percentageValue > 50 ? 2
+        : percentageValue === 50 ? 1 : 0
+    readonly property color fillColor: severity === 3 ? Appearance.colors.colResourceCritical
+        : severity === 2 ? Appearance.colors.colResourceWarning
+        : severity === 1 ? Appearance.colors.colResourceNeutral
+        : Appearance.colors.colResourceNormal
+    readonly property color filledTextColor: severity === 3 ? Appearance.colors.colOnResourceCritical
+        : severity === 2 ? Appearance.colors.colOnResourceWarning
+        : severity === 1 ? Appearance.colors.colOnResourceNeutral
+        : Appearance.colors.colOnResourceNormal
 
-    RowLayout {
-        id: resourceRowLayout
-        x: shown ? 0 : -resourceRowLayout.width
+    clip: true
+    implicitWidth: baseLabel.implicitWidth + Appearance.spacing.sm * 2
+    implicitHeight: 24
+
+    Rectangle {
+        id: pill
+
+        anchors.fill: parent
+        radius: Appearance.rounding.full
+        color: Appearance.colors.colSurfaceContainerHigh
+        clip: true
+
+        Item {
+            id: fillMask
+
+            anchors.left: parent.left
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            width: root.percentageValue / 100 * parent.width
+            clip: true
+
+            Rectangle {
+                id: fill
+
+                width: pill.width
+                height: pill.height
+                radius: pill.radius
+                color: root.fillColor
+
+                Behavior on color {
+                    animation: Appearance.animation.elementMoveFast.colorAnimation.createObject(this)
+                }
+            }
+
+            Behavior on width {
+                animation: Appearance.animation.elementMove.numberAnimation.createObject(this)
+            }
+        }
 
         StyledText {
-            Layout.alignment: Qt.AlignVCenter
-            color: Appearance.colors.colOnLayer1
-            text: `${label} ${Math.round(percentage * 100)}%`
+            id: baseLabel
+
+            anchors.centerIn: parent
+            anchors.verticalCenterOffset: -1
+            font.weight: Font.Bold
+            color: Appearance.m3colors.m3onSurface
+            text: `${root.label} ${root.percentageValue}`
         }
 
-        Behavior on x {
-            animation: Appearance.animation.elementMove.numberAnimation.createObject(this)
+        Item {
+            anchors.left: parent.left
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            width: fillMask.width
+            clip: true
+
+            StyledText {
+                width: pill.width
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.verticalCenterOffset: -1
+                horizontalAlignment: Text.AlignHCenter
+                font.weight: baseLabel.font.weight
+                color: root.filledTextColor
+                text: baseLabel.text
+            }
         }
 
-    }
-
-    Behavior on implicitWidth {
-        NumberAnimation {
-            duration: Appearance.animation.elementMove.duration
-            easing.type: Appearance.animation.elementMove.type
-            easing.bezierCurve: Appearance.animation.elementMove.bezierCurve
+        Rectangle {
+            anchors.fill: parent
+            radius: parent.radius
+            color: "transparent"
+            border.width: 2
+            border.color: Appearance.colors.colOutlineVariant
         }
     }
 }

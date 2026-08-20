@@ -45,9 +45,6 @@ Singleton {
         property bool borderless: false // true for no grouping of items
         property bool showBackground: true
         property bool verbose: true
-        property QtObject resources: QtObject {
-            property bool alwaysShowSwap: true
-        }
         property list<string> screenList: [] // List of names, like "eDP-1", find out with 'hyprctl monitors' command
         property QtObject utilButtons: QtObject {
             property bool showScreenSnip: true

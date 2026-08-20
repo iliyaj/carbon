@@ -156,7 +156,6 @@ Scope {
                         Layout.fillHeight: true
 
                         Resources {
-                            alwaysShowAllResources: barRoot.useShortenedForm === 2
                             Layout.fillWidth: barRoot.useShortenedForm === 2
                         }
 

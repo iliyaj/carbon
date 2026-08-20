@@ -146,6 +146,14 @@ Singleton {
         property color colScrim: ColorUtils.transparentize(m3colors.m3scrim, 0.5)
         property color colShadow: ColorUtils.transparentize(m3colors.m3shadow, 0.7)
         property color colOutlineVariant: m3colors.m3outlineVariant
+        property color colResourceNormal: "#34C759"
+        property color colOnResourceNormal: "#FFFFFF"
+        property color colResourceNeutral: "#FFFFFF"
+        property color colOnResourceNeutral: "#1B1B1B"
+        property color colResourceWarning: "#FFCC0A"
+        property color colOnResourceWarning: "#1B1B1B"
+        property color colResourceCritical: "#FF3B30"
+        property color colOnResourceCritical: "#FFFFFF"
     }
 
     rounding: QtObject {
