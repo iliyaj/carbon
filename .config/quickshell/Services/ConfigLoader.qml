@@ -19,10 +19,13 @@ Singleton {
     property string legacyFilePath: FileUtils.trimFileProtocol(`${Directories.config}/illogical-impulse/config.json`)
     property bool firstLoad: true
     property bool migrationRequested: false
-    property bool preventNextLoad: false
     property var preventNextNotification: false
 
     function loadConfig() {
+        // FileView.preload already starts the initial asynchronous read. Calling
+        // reload while that read is active disowns it and can apply/save defaults.
+        if (root.firstLoad)
+            return
         configFileView.reload()
     }
 
@@ -35,11 +38,8 @@ Singleton {
                 throw new Error("Config root must be an object")
 
             ObjectUtils.applyToQtObject(ConfigOptions, json);
-            if (root.firstLoad) {
+            if (root.firstLoad)
                 root.firstLoad = false;
-                root.preventNextLoad = true;
-                root.saveConfig(); // Make sure new properties are added to the user's config file
-            }
         } catch (e) {
             console.error("[ConfigLoader] Error reading file:", e);
             Quickshell.execDetached(["notify-send", qsTr("Shell configuration failed to load"), root.filePath])
@@ -99,6 +99,10 @@ Singleton {
     }
 
     function setConfigValueAndSave(nestedKey, value, preventNextNotification = true) {
+        // Settings controls emit change signals while their defaults are being
+        // constructed. Ignore those until the persisted config has been applied.
+        if (root.firstLoad)
+            return
         setLiveConfigValue(nestedKey, value);
         root.preventNextNotification = preventNextNotification;
         saveConfig();
@@ -109,10 +113,6 @@ Singleton {
         interval: ConfigOptions.hacks.arbitraryRaceConditionDelay
         running: false
         onTriggered: {
-            if (root.preventNextLoad) {
-                root.preventNextLoad = false;
-                return;
-            }
             if (root.firstLoad) {
                 root.applyConfig(configFileView.text())
             } else {
