@@ -1,10 +1,7 @@
 import "root:/Modules/Common"
-import "root:/Modules/Common/Widgets"
 import "root:/Services"
 import QtQuick
 import QtQuick.Layouts
-import Quickshell
-import Quickshell.Io
 import Quickshell.Services.Mpris
 
 Item {
@@ -23,12 +20,12 @@ Item {
         anchors.rightMargin: 4
 
         Resource {
-            iconName: "memory"
+            label: qsTr("RAM")
             percentage: ResourceUsage.memoryUsedPercentage
         }
 
         Resource {
-            iconName: "swap_horiz"
+            label: qsTr("Swap")
             percentage: ResourceUsage.swapUsedPercentage
             shown: (ConfigOptions.bar.resources.alwaysShowSwap && percentage > 0) ||
                 (MprisController.activePlayer?.trackTitle == null) ||
@@ -37,12 +34,9 @@ Item {
         }
 
         Resource {
-            iconName: "settings_slow_motion"
+            label: qsTr("CPU")
             percentage: ResourceUsage.cpuUsage
-            shown: ConfigOptions.bar.resources.alwaysShowCpu ||
-                !(MprisController.activePlayer?.trackTitle?.length > 0) ||
-                root.alwaysShowAllResources
-            Layout.leftMargin: shown ? 4 : 0
+            Layout.leftMargin: 4
         }
 
     }
