@@ -2,6 +2,7 @@ import "root:/Services"
 import "root:/Modules/Common"
 import "root:/Modules/Common/Widgets"
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
 
 /**
@@ -17,8 +18,10 @@ Item {
     id: root
     property real spacing: 20
     property real titleSpacing: 7
-    implicitWidth: flow.implicitWidth
-    implicitHeight: flow.implicitHeight
+    property real maximumWidth: 0
+    property real maximumHeight: 0
+    implicitWidth: Math.min(maximumWidth, flow.implicitWidth + Appearance.rounding.small * 2)
+    implicitHeight: maximumHeight
 
     property var keyBlacklist: ["Super_L"]
     property var keySubstitutions: ({
@@ -46,70 +49,87 @@ Item {
         return entries;
     }
 
-    Flow {
-        id: flow
-        flow: Flow.TopToBottom
-        spacing: root.spacing
+    Flickable {
+        id: flickable
+        anchors.fill: parent
+        anchors.margins: Appearance.rounding.small
+        clip: true
+        contentWidth: Math.max(width, flow.implicitWidth)
+        contentHeight: height
+        flickableDirection: Flickable.HorizontalFlick
+        boundsBehavior: Flickable.StopAtBounds
 
-        Repeater {
-            model: HyprlandKeybinds.sections
+        ScrollBar.horizontal: ScrollBar {
+            policy: flickable.contentWidth > flickable.width
+                ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
+        }
 
-            delegate: ColumnLayout {
-                id: section
-                required property var modelData
-                spacing: root.titleSpacing
+        Flow {
+            id: flow
+            height: flickable.height
+            flow: Flow.TopToBottom
+            spacing: root.spacing
 
-                StyledText {
-                    font.family: Appearance.font.family.title
-                    font.pixelSize: Appearance.font.pixelSize.huge
-                    color: Appearance.colors.colOnLayer0
-                    text: section.modelData.name
-                }
+            Repeater {
+                model: HyprlandKeybinds.sections
 
-                GridLayout {
-                    columns: 2
+                delegate: ColumnLayout {
+                    id: section
+                    required property var modelData
+                    spacing: root.titleSpacing
 
-                    Repeater {
-                        // A GridLayout delegate can only produce one item, so each
-                        // bind becomes two entries: its keys, then its label.
-                        model: root.flattenBinds(section.modelData.binds)
+                    StyledText {
+                        font.family: Appearance.font.family.title
+                        font.pixelSize: Appearance.font.pixelSize.huge
+                        color: Appearance.colors.colOnLayer0
+                        text: section.modelData.name
+                    }
 
-                        delegate: Loader {
-                            required property var modelData
-                            sourceComponent: modelData.isKeys ? keysRow : labelText
+                    GridLayout {
+                        columns: 2
 
-                            Component {
-                                id: keysRow
-                                RowLayout {
-                                    spacing: 4
-                                    Repeater {
-                                        model: modelData.bind.mods
-                                        delegate: KeyboardKey {
-                                            required property var modelData
-                                            key: root.pretty(modelData)
+                        Repeater {
+                            // A GridLayout delegate can only produce one item, so each
+                            // bind becomes two entries: its keys, then its label.
+                            model: root.flattenBinds(section.modelData.binds)
+
+                            delegate: Loader {
+                                required property var modelData
+                                sourceComponent: modelData.isKeys ? keysRow : labelText
+
+                                Component {
+                                    id: keysRow
+                                    RowLayout {
+                                        spacing: 4
+                                        Repeater {
+                                            model: modelData.bind.mods
+                                            delegate: KeyboardKey {
+                                                required property var modelData
+                                                key: root.pretty(modelData)
+                                            }
+                                        }
+                                        StyledText {
+                                            visible: modelData.bind.mods.length > 0
+                                                && !root.keyBlacklist.includes(modelData.bind.key)
+                                            Layout.alignment: Qt.AlignVCenter
+                                            text: "+"
+                                        }
+                                        KeyboardKey {
+                                            visible: !root.keyBlacklist.includes(modelData.bind.key)
+                                            key: root.pretty(modelData.bind.key)
+                                            color: Appearance.colors.colOnLayer0
                                         }
                                     }
-                                    StyledText {
-                                        visible: modelData.bind.mods.length > 0
-                                            && !root.keyBlacklist.includes(modelData.bind.key)
-                                        Layout.alignment: Qt.AlignVCenter
-                                        text: "+"
-                                    }
-                                    KeyboardKey {
-                                        visible: !root.keyBlacklist.includes(modelData.bind.key)
-                                        key: root.pretty(modelData.bind.key)
-                                        color: Appearance.colors.colOnLayer0
-                                    }
                                 }
-                            }
 
-                            Component {
-                                id: labelText
-                                StyledText {
-                                    leftPadding: 8
-                                    rightPadding: 8
-                                    font.pixelSize: Appearance.font.pixelSize.smaller
-                                    text: modelData.bind.label
+                                Component {
+                                    id: labelText
+                                    StyledText {
+                                        leftPadding: 8
+                                        rightPadding: 8
+                                        font.pixelSize: Appearance.font.pixelSize.smaller
+                                        text: modelData.bind.label
+                                    }
                                 }
                             }
                         }

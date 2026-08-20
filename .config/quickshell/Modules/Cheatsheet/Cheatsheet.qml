@@ -109,9 +109,12 @@ Scope { // Scope
                         Layout.alignment: Qt.AlignHCenter
                         font.family: Appearance.font.family.title
                         font.pixelSize: Appearance.font.pixelSize.title
-                        text: qsTr("Cheat sheet")
+                        text: qsTr("Shortcuts")
                     }
-                    CheatsheetKeybinds {}
+                    CheatsheetKeybinds {
+                        maximumWidth: cheatsheetRoot.screen.width * 0.7
+                        maximumHeight: cheatsheetRoot.screen.height * 0.7
+                    }
                 }
             }
 
