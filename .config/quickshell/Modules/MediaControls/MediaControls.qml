@@ -28,6 +28,31 @@ Scope {
     property real artRounding: Appearance.rounding.verysmall
     property list<real> visualizerPoints: []
 
+    function normalizedTitle(player: MprisPlayer): string {
+        return String(player.trackTitle ?? "").trim().toLowerCase()
+    }
+
+    function areDuplicatePlayers(first: MprisPlayer, second: MprisPlayer): bool {
+        const firstTitle = normalizedTitle(first)
+        const secondTitle = normalizedTitle(second)
+        if (firstTitle.length === 0 || secondTitle.length === 0)
+            return false
+
+        const shorterTitle = firstTitle.length <= secondTitle.length ? firstTitle : secondTitle
+        const longerTitle = firstTitle.length > secondTitle.length ? firstTitle : secondTitle
+        const titlesMatch = firstTitle === secondTitle
+            || (shorterTitle.length >= 8 && longerTitle.includes(shorterTitle))
+        if (!titlesMatch)
+            return false
+
+        // Matching titles with substantially different durations can be
+        // different recordings, not duplicate MPRIS endpoints.
+        if (first.length > 0 && second.length > 0)
+            return Math.abs(first.length - second.length) <= 2
+
+        return true
+    }
+
     function filterDuplicatePlayers(players) {
         let filtered = [];
         let used = new Set();
@@ -37,13 +62,10 @@ Scope {
             let p1 = players[i];
             let group = [i];
 
-            // Find duplicates by trackTitle prefix
+            // Match the same track symmetrically, independent of model order.
             for (let j = i + 1; j < players.length; ++j) {
                 let p2 = players[j];
-                if (p1.trackTitle && p2.trackTitle &&
-                    (p1.trackTitle.includes(p2.trackTitle)
-                        || p2.trackTitle.includes(p1.trackTitle))
-                        || (p1.position - p2.position <= 2 && p1.length - p2.length <= 2)) {
+                if (areDuplicatePlayers(p1, p2)) {
                     group.push(j);
                 }
             }

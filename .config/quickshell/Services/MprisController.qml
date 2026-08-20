@@ -33,15 +33,29 @@ Singleton {
         return player.dbusName.startsWith("org.mpris.MediaPlayer2.plasma-browser-integration")
     }
 
+    function hasMeaningfulMetadata(player: MprisPlayer): bool {
+        return String(player.trackTitle ?? "").trim().length > 0
+            || String(player.trackArtist ?? "").trim().length > 0
+            || String(player.trackAlbum ?? "").trim().length > 0
+            || String(player.trackArtUrl ?? "").trim().length > 0
+            || player.length > 0
+    }
+
     function filterPlayers(discoveredPlayers): var {
         const directPlayers = discoveredPlayers.filter(player => !isPlayerctld(player))
         const hasNativeBrowser = directPlayers.some(player => isNativeBrowser(player))
 
         // Plasma Browser Integration is valuable for browsers without native MPRIS,
         // but represents the same browser twice when a native service is present.
-        return directPlayers.filter(player =>
-            !hasNativeBrowser || !isPlasmaBrowserIntegration(player)
-        )
+        return directPlayers.filter(player => {
+            if (hasNativeBrowser && isPlasmaBrowserIntegration(player))
+                return false
+
+            // Some Electron apps leave behind a stopped Chromium endpoint with
+            // no track data alongside their real MPRIS player.
+            return player.playbackState !== MprisPlaybackState.Stopped
+                || hasMeaningfulMetadata(player)
+        })
     }
 
     function containsPlayer(player: MprisPlayer): bool {
