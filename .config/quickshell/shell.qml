@@ -72,7 +72,7 @@ ShellRoot {
     Recorder {}
 
     LazyLoader { active: enableBar; component: Bar {} }
-    LazyLoader { active: enableBackgroundWidgets; component: BackgroundWidgets {} }
+    LazyLoader { active: enableBackgroundWidgets && ConfigOptions.background.showClock; component: BackgroundWidgets {} }
     LazyLoader { active: enableCheatsheet; component: Cheatsheet {} }
     LazyLoader { active: enableDock; component: Dock {} }
     LazyLoader { active: enableMediaControls; component: MediaControls {} }

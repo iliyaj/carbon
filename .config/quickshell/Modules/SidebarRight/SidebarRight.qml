@@ -168,6 +168,7 @@ Scope {
                             NightLight {}
                             GameMode {}
                             IdleInhibitor {}
+                            WindowControls {}
                         }
 
                         // Center widget group

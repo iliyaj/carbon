@@ -7,6 +7,21 @@ import "root:/Modules/Common/Widgets/"
 
 ContentPage {
     forceWidth: true
+
+    ContentSection {
+        title: "Desktop"
+
+        ConfigRow {
+            ConfigSwitch {
+                text: "Clock and date"
+                checked: ConfigOptions.background.showClock
+                onCheckedChanged: {
+                    ConfigLoader.setConfigValueAndSave("background.showClock", checked);
+                }
+            }
+        }
+    }
+
     ContentSection {
         title: "Bar"
 
