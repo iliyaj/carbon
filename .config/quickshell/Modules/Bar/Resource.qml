@@ -20,6 +20,7 @@ Item {
         : severity === 2 ? Appearance.colors.colOnResourceWarning
         : severity === 1 ? Appearance.colors.colOnResourceNeutral
         : Appearance.colors.colOnResourceNormal
+    readonly property int outlineWidth: 2
 
     clip: true
     implicitWidth: baseLabel.implicitWidth + Appearance.spacing.sm * 2
@@ -37,17 +38,20 @@ Item {
             id: fillMask
 
             anchors.left: parent.left
+            anchors.leftMargin: root.outlineWidth
             anchors.top: parent.top
+            anchors.topMargin: root.outlineWidth
             anchors.bottom: parent.bottom
-            width: root.percentageValue / 100 * parent.width
+            anchors.bottomMargin: root.outlineWidth
+            width: root.percentageValue / 100 * (parent.width - root.outlineWidth * 2)
             clip: true
 
             Rectangle {
                 id: fill
 
-                width: pill.width
-                height: pill.height
-                radius: pill.radius
+                width: pill.width - root.outlineWidth * 2
+                height: fillMask.height
+                radius: height / 2
                 color: root.fillColor
 
                 Behavior on color {
@@ -72,12 +76,14 @@ Item {
 
         Item {
             anchors.left: parent.left
+            anchors.leftMargin: root.outlineWidth
             anchors.top: parent.top
             anchors.bottom: parent.bottom
             width: fillMask.width
             clip: true
 
             StyledText {
+                x: -root.outlineWidth
                 width: pill.width
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.verticalCenterOffset: -1
@@ -92,7 +98,7 @@ Item {
             anchors.fill: parent
             radius: parent.radius
             color: "transparent"
-            border.width: 2
+            border.width: root.outlineWidth
             border.color: Appearance.colors.colOutlineVariant
         }
     }
