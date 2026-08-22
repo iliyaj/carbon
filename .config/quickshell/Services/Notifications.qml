@@ -169,35 +169,33 @@ Singleton {
         }
     }
 
-    function discardNotification(id) {
-        const index = root.list.findIndex((notif) => notif.id === id);
-        const notifServerIndex = notifServer.trackedNotifications.values.findIndex((notif) => notif.id + root.idOffset === id);
-        if (index !== -1) {
-            const notif = root.list[index];
-            root.list.splice(index, 1);
-            notifFileView.setText(stringifyList(root.list));
-            triggerListChange()
+    function discardNotifications(ids) {
+        const idSet = new Set(ids);
+        const discarded = root.list.filter(notif => idSet.has(notif.id));
+        if (discarded.length === 0)
+            return;
+
+        // One assignment prevents groups from rendering every intermediate count.
+        root.list = root.list.filter(notif => !idSet.has(notif.id));
+        notifFileView.setText(stringifyList(root.list));
+
+        notifServer.trackedNotifications.values
+            .filter(notif => idSet.has(notif.id + root.idOffset))
+            .forEach(notif => notif.dismiss());
+
+        discarded.forEach(notif => {
+            root.discard(notif.id);
             if (notif.timer) notif.timer.destroy();
-            notif.destroy();
-        }
-        if (notifServerIndex !== -1) {
-            notifServer.trackedNotifications.values[notifServerIndex].dismiss()
-        }
-        root.discard(id);
+            Qt.callLater(() => notif.destroy());
+        });
+    }
+
+    function discardNotification(id) {
+        discardNotifications([id]);
     }
 
     function discardAllNotifications() {
-        const oldList = root.list.slice(0);
-        root.list = []
-        triggerListChange()
-        notifFileView.setText(stringifyList(root.list));
-        notifServer.trackedNotifications.values.forEach((notif) => {
-            notif.dismiss()
-        })
-        oldList.forEach((notif) => {
-            if (notif.timer) notif.timer.destroy();
-            notif.destroy();
-        });
+        discardNotifications(root.list.map(notif => notif.id));
         root.discardAll();
     }
 
@@ -228,10 +226,6 @@ Singleton {
             console.log("Notification not found in server: " + id)
             root.discardNotification(id);
         }
-    }
-
-    function triggerListChange() {
-        root.list = root.list.slice(0)
     }
 
     function refresh() {

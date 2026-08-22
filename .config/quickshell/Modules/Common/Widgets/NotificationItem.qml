@@ -18,10 +18,23 @@ import Quickshell.Services.Notifications
 Item { // Notification item area
     id: root
     property var notificationObject
+    // Preserve display data while ListView finishes removing an invalidated model row.
+    property var notificationData: ({
+        "id": -1,
+        "actions": [],
+        "appIcon": "",
+        "appName": "",
+        "body": "",
+        "image": "",
+        "summary": "",
+        "time": 0,
+        "urgency": NotificationUrgency.Normal.toString(),
+    })
     property bool expanded: false
     property bool onlyNotification: false
     property real fontSize: Appearance.font.pixelSize.small
     property real padding: onlyNotification ? 0 : 8
+    signal dismissGroupRequested
 
     // Resolve the saved screenshot path for Hyprshot notifications so we can offer
     // an "Annotate" action that opens the annotator on that capture.
@@ -35,10 +48,10 @@ Item { // Notification item area
         if (m) return m[1];
         return "";
     }
-    property string screenshotPath: screenshotPathFor(notificationObject)
+    property string screenshotPath: screenshotPathFor(notificationData)
     property bool isScreenshot: screenshotPath.length > 0 &&
-        (String(notificationObject.appName).toLowerCase().includes("hyprshot")
-         || String(notificationObject.summary).toLowerCase().includes("screenshot")
+        (String(notificationData.appName).toLowerCase().includes("hyprshot")
+         || String(notificationData.summary).toLowerCase().includes("screenshot")
          || screenshotPath.includes("/Screenshots/"))
 
     // Always-present icon buttons (Close, Copy, and Annotate for screenshots) share
@@ -47,7 +60,7 @@ Item { // Notification item area
 
     property real dragConfirmThreshold: 70 // Drag further to discard notification
     property real dismissOvershoot: notificationIcon.implicitWidth + 20 // Account for gaps and bouncy animations
-    property var qmlParent: root?.parent?.parent // There's something between this and the parent ListView
+    property var qmlParent: root.ListView.view
     property var parentDragIndex: qmlParent?.dragIndex ?? -1
     property var parentDragDistance: qmlParent?.dragDistance ?? 0
     property var dragIndexDiff: Math.abs(parentDragIndex - index)
@@ -57,6 +70,42 @@ Item { // Notification item area
         dragIndexDiff == 2 ? Math.max(0, parentDragDistance * 0.1) : 0
 
     implicitHeight: background.implicitHeight
+
+    function captureNotification(notification) {
+        if (!notification)
+            return;
+
+        root.notificationData = {
+            "id": notification.id,
+            "actions": (notification.actions ?? []).map(action => ({
+                "identifier": action.identifier,
+                "text": action.text,
+            })),
+            "appIcon": notification.appIcon ?? "",
+            "appName": notification.appName ?? "",
+            "body": notification.body ?? "",
+            "image": notification.image ?? "",
+            "summary": notification.summary ?? "",
+            "time": notification.time ?? 0,
+            "urgency": notification.urgency ?? NotificationUrgency.Normal.toString(),
+        };
+    }
+
+    onNotificationObjectChanged: captureNotification(notificationObject)
+    Component.onCompleted: captureNotification(notificationObject)
+
+    Connections {
+        target: root.notificationObject
+        ignoreUnknownSignals: true
+        function onActionsChanged() { root.captureNotification(root.notificationObject); }
+        function onAppIconChanged() { root.captureNotification(root.notificationObject); }
+        function onAppNameChanged() { root.captureNotification(root.notificationObject); }
+        function onBodyChanged() { root.captureNotification(root.notificationObject); }
+        function onImageChanged() { root.captureNotification(root.notificationObject); }
+        function onSummaryChanged() { root.captureNotification(root.notificationObject); }
+        function onTimeChanged() { root.captureNotification(root.notificationObject); }
+        function onUrgencyChanged() { root.captureNotification(root.notificationObject); }
+    }
 
     function processNotificationBody(body, appName) {
         let processedBody = body
@@ -87,6 +136,13 @@ Item { // Notification item area
     }
 
     function destroyWithAnimation() {
+        if (root.onlyNotification) {
+            root.dismissGroupRequested();
+            return;
+        }
+        if (destroyAnimation.running)
+            return;
+
         root.qmlParent.resetDrag()
         background.anchors.leftMargin = background.anchors.leftMargin; // Break binding
         destroyAnimation.running = true;
@@ -105,7 +161,7 @@ Item { // Notification item area
             easing.bezierCurve: Appearance.animation.elementMove.bezierCurve
         }
         onFinished: () => {
-            Notifications.discardNotification(notificationObject.id);
+            Notifications.discardNotification(notificationData.id);
         }
     }
 
@@ -113,7 +169,7 @@ Item { // Notification item area
         id: dragManager
         anchors.fill: root
         anchors.leftMargin: root.expanded ? -notificationIcon.implicitWidth : 0
-        interactive: expanded
+        interactive: expanded && !onlyNotification
         automaticallyReset: false
         acceptedButtons: Qt.LeftButton | Qt.MiddleButton
 
@@ -143,14 +199,14 @@ Item { // Notification item area
 
     NotificationAppIcon { // App icon
         id: notificationIcon
-        opacity: (!onlyNotification && notificationObject.image != "" && expanded) ? 1 : 0
+        opacity: (!onlyNotification && notificationData.image != "" && expanded) ? 1 : 0
         visible: opacity > 0
 
         Behavior on opacity {
             animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
         }
 
-        image: notificationObject.image
+        image: notificationData.image
         anchors.right: background.left
         anchors.top: background.top
         anchors.rightMargin: 10
@@ -173,7 +229,7 @@ Item { // Notification item area
         }
 
         color: (expanded && !onlyNotification) ?
-            (notificationObject.urgency == NotificationUrgency.Critical) ?
+            (notificationData.urgency == NotificationUrgency.Critical) ?
                 ColorUtils.mix(Appearance.colors.colSecondaryContainer, Appearance.colors.colLayer2, 0.35) :
                 (Appearance.colors.colSurfaceContainerHigh) :
             ColorUtils.transparentize(Appearance.colors.colSurfaceContainerHighest)
@@ -205,7 +261,7 @@ Item { // Notification item area
                     font.pixelSize: root.fontSize
                     color: Appearance.colors.colOnLayer2
                     elide: Text.ElideRight
-                    text: root.notificationObject.summary || ""
+                    text: root.notificationData.summary
                 }
                 StyledText {
                     opacity: !root.expanded ? 1 : 0
@@ -220,7 +276,7 @@ Item { // Notification item area
                     maximumLineCount: 1
                     textFormat: Text.StyledText
                     text: {
-                        return processNotificationBody(notificationObject.body, notificationObject.appName || notificationObject.summary).replace(/\n/g, "<br/>")
+                        return processNotificationBody(notificationData.body, notificationData.appName || notificationData.summary).replace(/\n/g, "<br/>")
                     }
                 }
             }
@@ -241,8 +297,9 @@ Item { // Notification item area
                     wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                     textFormat: Text.RichText
                     text: {
-                        return `<style>img{max-width:${notificationBodyText.width}px;}</style>` +
-                               `${processNotificationBody(notificationObject.body, notificationObject.appName || notificationObject.summary).replace(/\n/g, "<br/>")}`
+                        const availableWidth = Math.max(1, background.width - root.padding * 2);
+                        return `<style>img{max-width:${availableWidth}px;}</style>` +
+                               `${processNotificationBody(notificationData.body, notificationData.appName || notificationData.summary).replace(/\n/g, "<br/>")}`
                     }
 
                     onLinkActivated: (link) => {
@@ -277,8 +334,8 @@ Item { // Notification item area
                         NotificationActionButton {
                             Layout.fillWidth: true
                             buttonText: qsTr("Close")
-                            urgency: notificationObject.urgency
-                            implicitWidth: (notificationObject.actions.length == 0) ?
+                            urgency: notificationData.urgency
+                            implicitWidth: (notificationData.actions.length == 0) ?
                                 ((actionsFlickable.width - actionRowLayout.spacing * (root.fillerButtonCount - 1)) / root.fillerButtonCount) :
                                 (contentItem.implicitWidth + leftPadding + rightPadding)
 
@@ -289,7 +346,7 @@ Item { // Notification item area
                             contentItem: MaterialSymbol {
                                 iconSize: Appearance.font.pixelSize.large
                                 horizontalAlignment: Text.AlignHCenter
-                                color: (notificationObject.urgency == NotificationUrgency.Critical) ?
+                                color: (notificationData.urgency == NotificationUrgency.Critical) ?
                                     Appearance.m3colors.m3onSurfaceVariant : Appearance.m3colors.m3onSurface
                                 text: "close"
                             }
@@ -298,8 +355,8 @@ Item { // Notification item area
                         NotificationActionButton { // Annotate screenshot
                             visible: root.isScreenshot
                             Layout.fillWidth: true
-                            urgency: notificationObject.urgency
-                            implicitWidth: (notificationObject.actions.length == 0) ?
+                            urgency: notificationData.urgency
+                            implicitWidth: (notificationData.actions.length == 0) ?
                                 ((actionsFlickable.width - actionRowLayout.spacing * (root.fillerButtonCount - 1)) / root.fillerButtonCount) :
                                 (contentItem.implicitWidth + leftPadding + rightPadding)
                             onClicked: {
@@ -309,7 +366,7 @@ Item { // Notification item area
                             contentItem: MaterialSymbol {
                                 iconSize: Appearance.font.pixelSize.large
                                 horizontalAlignment: Text.AlignHCenter
-                                color: (notificationObject.urgency == NotificationUrgency.Critical) ?
+                                color: (notificationData.urgency == NotificationUrgency.Critical) ?
                                     Appearance.m3colors.m3onSurfaceVariant : Appearance.m3colors.m3onSurface
                                 text: "draw"
                             }
@@ -317,26 +374,26 @@ Item { // Notification item area
 
                         Repeater {
                             id: actionRepeater
-                            model: notificationObject.actions
+                            model: notificationData.actions
                             NotificationActionButton {
                                 Layout.fillWidth: true
                                 buttonText: modelData.text
-                                urgency: notificationObject.urgency
+                                urgency: notificationData.urgency
                                 onClicked: {
-                                    Notifications.attemptInvokeAction(notificationObject.id, modelData.identifier);
+                                    Notifications.attemptInvokeAction(notificationData.id, modelData.identifier);
                                 }
                             }
                         }
 
                         NotificationActionButton {
                             Layout.fillWidth: true
-                            urgency: notificationObject.urgency
-                            implicitWidth: (notificationObject.actions.length == 0) ?
+                            urgency: notificationData.urgency
+                            implicitWidth: (notificationData.actions.length == 0) ?
                                 ((actionsFlickable.width - actionRowLayout.spacing * (root.fillerButtonCount - 1)) / root.fillerButtonCount) :
                                 (contentItem.implicitWidth + leftPadding + rightPadding)
 
                             onClicked: {
-                                Quickshell.clipboardText = notificationObject.body
+                                Quickshell.clipboardText = notificationData.body
                                 copyIcon.text = "inventory"
                                 copyIconTimer.restart()
                             }
@@ -354,7 +411,7 @@ Item { // Notification item area
                                 id: copyIcon
                                 iconSize: Appearance.font.pixelSize.large
                                 horizontalAlignment: Text.AlignHCenter
-                                color: (notificationObject.urgency == NotificationUrgency.Critical) ?
+                                color: (notificationData.urgency == NotificationUrgency.Critical) ?
                                     Appearance.m3colors.m3onSurfaceVariant : Appearance.m3colors.m3onSurface
                                 text: "content_copy"
                             }

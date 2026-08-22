@@ -21,8 +21,7 @@ StyledListView { // Scrollable window
         required property int index
         required property var modelData
         popup: root.popup
-        anchors.left: parent?.left
-        anchors.right: parent?.right
+        width: ListView.view.width
         notificationGroup: popup ?
             Notifications.popupGroupsByAppName[modelData] :
             Notifications.groupsByAppName[modelData]

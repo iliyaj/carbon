@@ -27,79 +27,68 @@ Rectangle { // App icon
     implicitHeight: size
     radius: Appearance.rounding.full
     color: Appearance.colors.colSecondaryContainer
-    Loader {
-        id: materialSymbolLoader
-        active: root.appIcon == ""
+
+    // Keep every icon layer instantiated so source changes cannot rebuild the card in stages.
+    MaterialSymbol {
+        visible: root.image == "" && root.appIcon == ""
         anchors.fill: parent
-        sourceComponent: MaterialSymbol {
-            text: {
-                const defaultIcon = NotificationUtils.findSuitableMaterialSymbol("")
-                const guessedIcon = NotificationUtils.findSuitableMaterialSymbol(root.summary)
-                return (root.urgency == NotificationUrgency.Critical && guessedIcon === defaultIcon) ?
-                    "release_alert" : guessedIcon
-            }
-            anchors.fill: parent
-            color: (root.urgency == NotificationUrgency.Critical) ?
-                ColorUtils.mix(Appearance.m3colors.m3onSecondary, Appearance.m3colors.m3onSecondaryContainer, 0.1) :
-                Appearance.m3colors.m3onSecondaryContainer
-            iconSize: root.materialIconSize
-            horizontalAlignment: Text.AlignHCenter
-            verticalAlignment: Text.AlignVCenter
+        text: {
+            const defaultIcon = NotificationUtils.findSuitableMaterialSymbol("")
+            const guessedIcon = NotificationUtils.findSuitableMaterialSymbol(root.summary)
+            return (root.urgency == NotificationUrgency.Critical && guessedIcon === defaultIcon) ?
+                "release_alert" : guessedIcon
         }
+        color: (root.urgency == NotificationUrgency.Critical) ?
+            ColorUtils.mix(Appearance.m3colors.m3onSecondary, Appearance.m3colors.m3onSecondaryContainer, 0.1) :
+            Appearance.m3colors.m3onSecondaryContainer
+        iconSize: root.materialIconSize
+        horizontalAlignment: Text.AlignHCenter
+        verticalAlignment: Text.AlignVCenter
     }
-    Loader {
-        id: appIconLoader
-        active: root.image == "" && root.appIcon != ""
+
+    IconImage {
+        visible: root.image == "" && root.appIcon != ""
         anchors.centerIn: parent
-        sourceComponent: IconImage {
-            id: appIconImage
-            implicitSize: root.appIconSize
-            asynchronous: true
-            source: Quickshell.iconPath(root.appIcon, "image-missing")
-        }
+        implicitSize: root.appIconSize
+        asynchronous: false
+        source: visible ? Quickshell.iconPath(root.appIcon, "image-missing") : ""
     }
-    Loader {
-        id: notifImageLoader
-        active: root.image != ""
+
+    Item {
+        visible: root.image != ""
         anchors.fill: parent
-        sourceComponent: Item {
+        Image {
+            id: notifImage
             anchors.fill: parent
-            Image {
-                id: notifImage
-                anchors.fill: parent
-                readonly property int size: parent.width
+            readonly property int size: parent.width
 
-                source: root.image
-                fillMode: Image.PreserveAspectCrop
-                cache: false
-                antialiasing: true
-                asynchronous: true
+            source: root.image
+            fillMode: Image.PreserveAspectCrop
+            cache: false
+            antialiasing: true
+            asynchronous: false
 
-                width: size
-                height: size
-                sourceSize.width: size
-                sourceSize.height: size
+            width: size
+            height: size
+            sourceSize.width: size
+            sourceSize.height: size
 
-                layer.enabled: true
-                layer.effect: OpacityMask {
-                    maskSource: Rectangle {
-                        width: notifImage.size
-                        height: notifImage.size
-                        radius: Appearance.rounding.full
-                    }
+            layer.enabled: true
+            layer.effect: OpacityMask {
+                maskSource: Rectangle {
+                    width: notifImage.size
+                    height: notifImage.size
+                    radius: Appearance.rounding.full
                 }
             }
-            Loader {
-                id: notifImageAppIconLoader
-                active: root.appIcon != ""
-                anchors.bottom: parent.bottom
-                anchors.right: parent.right
-                sourceComponent: IconImage {
-                    implicitSize: root.smallAppIconSize
-                    asynchronous: true
-                    source: Quickshell.iconPath(root.appIcon, "image-missing")
-                }
-            }
+        }
+        IconImage {
+            visible: root.appIcon != ""
+            anchors.bottom: parent.bottom
+            anchors.right: parent.right
+            implicitSize: root.smallAppIconSize
+            asynchronous: false
+            source: visible ? Quickshell.iconPath(root.appIcon, "image-missing") : ""
         }
     }
 }

@@ -21,7 +21,18 @@ import Quickshell.Services.Notifications
 Item { // Notification group area
     id: root
     property var notificationGroup
-    property var notifications: notificationGroup?.notifications ?? []
+    // A removed ListView delegate outlives its model data during the exit transition.
+    property var displayGroup: ({
+        "appName": "",
+        "appIcon": "",
+        "time": 0,
+        "notifications": [],
+        "mainImage": "",
+        "iconSummary": "",
+        "latestImage": "",
+        "title": "",
+    })
+    property var notifications: displayGroup.notifications
     property int notificationCount: notifications.length
     property bool multipleNotifications: notificationCount > 1
     property bool expanded: false
@@ -31,7 +42,8 @@ Item { // Notification group area
 
     property real dragConfirmThreshold: 70 // Drag further to discard notification
     property real dismissOvershoot: 20 // Account for gaps and bouncy animations
-    property var qmlParent: root.parent?.parent // There's something between this and the parent ListView
+    property var dismissIds: []
+    property var qmlParent: root.ListView.view
     property var parentDragIndex: qmlParent?.dragIndex ?? -1
     property var parentDragDistance: qmlParent?.dragDistance ?? 0
     property var dragIndexDiff: Math.abs(parentDragIndex - (index ?? 0))
@@ -40,7 +52,34 @@ Item { // Notification group area
         dragIndexDiff == 1 ? Math.max(0, parentDragDistance * 0.3) :
         dragIndexDiff == 2 ? Math.max(0, parentDragDistance * 0.1) : 0
 
+    function captureGroup(group) {
+        if (!group || !group.notifications || group.notifications.length === 0)
+            return;
+
+        const notifications = group.notifications.slice();
+        const first = notifications[0];
+        const latest = notifications[notifications.length - 1];
+        const multiple = notifications.length > 1;
+        root.displayGroup = {
+            "appName": group.appName ?? "",
+            "appIcon": group.appIcon ?? "",
+            "time": group.time ?? 0,
+            "notifications": notifications,
+            "mainImage": multiple ? "" : (first?.image ?? ""),
+            "iconSummary": latest?.summary ?? "",
+            "latestImage": latest?.image ?? "",
+            "title": multiple ? (group.appName ?? "") : (first?.summary ?? ""),
+        };
+    }
+
+    onNotificationGroupChanged: captureGroup(notificationGroup)
+    Component.onCompleted: captureGroup(notificationGroup)
+
     function destroyWithAnimation() {
+        if (destroyAnimation.running)
+            return;
+
+        root.dismissIds = root.notifications.map(notif => notif.id);
         if (root.qmlParent) root.qmlParent.resetDrag()
         background.anchors.leftMargin = background.anchors.leftMargin; // Break binding
         destroyAnimation.running = true;
@@ -59,11 +98,7 @@ Item { // Notification group area
             easing.bezierCurve: Appearance.animation.elementMove.bezierCurve
         }
         onFinished: () => {
-            root.notifications.forEach((notif) => {
-                Qt.callLater(() => {
-                    Notifications.discardNotification(notif.id);
-                });
-            });
+            Notifications.discardNotifications(root.dismissIds);
         }
     }
 
@@ -76,7 +111,7 @@ Item { // Notification group area
     DragManager { // Drag manager
         id: dragManager
         anchors.fill: parent
-        interactive: !expanded
+        interactive: !expanded || notificationCount === 1
         automaticallyReset: false
         acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
 
@@ -147,15 +182,15 @@ Item { // Notification group area
             NotificationAppIcon { // Icons
                 Layout.alignment: Qt.AlignTop
                 Layout.fillWidth: false
-                image: root?.multipleNotifications ? "" : notificationGroup?.notifications[0]?.image ?? ""
-                appIcon: notificationGroup?.appIcon
-                summary: notificationGroup?.notifications[root.notificationCount - 1]?.summary
+                image: root.displayGroup.mainImage
+                appIcon: root.displayGroup.appIcon
+                summary: root.displayGroup.iconSummary
             }
 
             ColumnLayout { // Content
                 Layout.fillWidth: true
                 spacing: expanded ? (root.multipleNotifications ?
-                    (notificationGroup?.notifications[root.notificationCount - 1].image != "") ? 35 :
+                    (root.displayGroup.latestImage != "") ? 35 :
                     5 : 0) : 0
                 // spacing: 00
                 Behavior on spacing {
@@ -180,9 +215,7 @@ Item { // Notification group area
                             id: appName
                             elide: Text.ElideRight
                             Layout.fillWidth: true
-                            text: (topRow.showAppName ?
-                                notificationGroup?.appName :
-                                notificationGroup?.notifications[0]?.summary) || ""
+                            text: root.displayGroup.title
                             font.pixelSize: topRow.showAppName ?
                                 topRow.fontSize :
                                 Appearance.font.pixelSize.small
@@ -195,7 +228,7 @@ Item { // Notification group area
                             // Layout.fillWidth: true
                             Layout.rightMargin: 10
                             horizontalAlignment: Text.AlignLeft
-                            text: NotificationUtils.getFriendlyNotifTimeString(notificationGroup?.time)
+                            text: NotificationUtils.getFriendlyNotifTimeString(root.displayGroup.time)
                             font.pixelSize: topRow.fontSize
                             color: Appearance.colors.colSubtext
                         }
@@ -224,6 +257,7 @@ Item { // Notification group area
                     model: ScriptModel {
                         values: root.expanded ? root.notifications.slice().reverse() :
                             root.notifications.slice().reverse().slice(0, 2)
+                        objectProp: "id"
                     }
                     delegate: NotificationItem {
                         required property int index
@@ -233,8 +267,8 @@ Item { // Notification group area
                         onlyNotification: (root.notificationCount === 1)
                         opacity: (!root.expanded && index == 1 && root.notificationCount > 2) ? 0.5 : 1
                         visible: root.expanded || (index < 2)
-                        anchors.left: parent?.left
-                        anchors.right: parent?.right
+                        width: ListView.view.width
+                        onDismissGroupRequested: root.destroyWithAnimation()
                     }
                 }
 
