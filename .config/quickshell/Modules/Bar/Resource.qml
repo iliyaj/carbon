@@ -23,13 +23,24 @@ Item {
     readonly property int outlineWidth: 2
 
     clip: true
-    implicitWidth: baseLabel.implicitWidth + Appearance.spacing.sm * 2
+    implicitWidth: resourceLabel.implicitWidth + Appearance.spacing.sm + pill.implicitWidth
     implicitHeight: 24
+
+    StyledText {
+        id: resourceLabel
+
+        anchors.left: parent.left
+        anchors.verticalCenter: parent.verticalCenter
+        text: root.label
+    }
 
     Rectangle {
         id: pill
 
-        anchors.fill: parent
+        anchors.right: parent.right
+        anchors.verticalCenter: parent.verticalCenter
+        implicitWidth: baseLabel.implicitWidth + Appearance.spacing.sm * 3
+        height: root.implicitHeight
         radius: Appearance.rounding.full
         color: Appearance.colors.colSurfaceContainerHigh
         clip: true
@@ -69,9 +80,8 @@ Item {
 
             anchors.centerIn: parent
             anchors.verticalCenterOffset: -1
-            font.weight: Font.Bold
             color: Appearance.m3colors.m3onSurface
-            text: `${root.label} ${root.percentageValue}`
+            text: `${root.percentageValue}`
         }
 
         Item {
