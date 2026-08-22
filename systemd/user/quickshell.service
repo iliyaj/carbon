@@ -1,7 +1,6 @@
 [Unit]
 Description=Carbon Quickshell desktop shell
 Documentation=https://github.com/iliyaj/carbon
-ConditionEnvironment=WAYLAND_DISPLAY
 
 [Service]
 Type=simple

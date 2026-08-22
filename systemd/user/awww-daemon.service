@@ -1,7 +1,6 @@
 [Unit]
 Description=awww Wayland wallpaper daemon for Carbon
 Documentation=https://codeberg.org/LGFae/awww
-ConditionEnvironment=WAYLAND_DISPLAY
 
 [Service]
 Type=simple

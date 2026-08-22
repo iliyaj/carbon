@@ -48,16 +48,11 @@ hl.on("hyprland.start", function()
         hl.exec_cmd(cmd)
     end
 
-    -- Commands spawned during the start event inherit Hyprland's pre-socket
-    -- environment even if the child sleeps. Spawn this child from a timer so it
-    -- receives the live Wayland variables, and clear failures left by logout
-    -- before restarting the compositor-bound services.
-    hl.timer(function()
-        local services = table.concat(compositor_services, " ")
-        hl.exec_cmd("systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE"
-            .. " && { systemctl --user reset-failed " .. services .. " || :; }"
-            .. " && systemctl --user restart " .. services)
-    end, { timeout = 1000, type = "oneshot" })
+    -- The start event's children receive Hyprland's live socket environment.
+    local services = table.concat(compositor_services, " ")
+    hl.exec_cmd("systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE"
+        .. " && { systemctl --user reset-failed " .. services .. " || :; }"
+        .. " && systemctl --user restart " .. services)
 
     if polkit_agent then
         hl.exec_cmd(polkit_agent)
@@ -67,9 +62,7 @@ hl.on("hyprland.start", function()
 
     if geoclue_agent and lib.in_path("gammastep") then
         hl.exec_cmd(geoclue_agent)
-        hl.timer(function()
-            hl.exec_cmd("gammastep")
-        end, { timeout = 1000, type = "oneshot" })
+        hl.exec_cmd("sleep 1 && gammastep")
     end
 end)
 
