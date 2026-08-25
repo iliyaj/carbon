@@ -1,8 +1,7 @@
 pragma Singleton
 pragma ComponentBehavior: Bound
 
-import "root:/Modules/Common/Functions/string_utils.js" as StringUtils
-import "root:/Modules/Common/Functions/file_utils.js" as FileUtils
+import "root:/Modules/Common/Functions"
 import "root:/Modules/Common"
 import QtQuick
 import Quickshell

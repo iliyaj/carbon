@@ -1,7 +1,7 @@
 import "root:/Services"
 import "root:/Modules/Common"
 import "root:/Modules/Common/Widgets"
-import "root:/Modules/Common/Functions/lua_utils.js" as LuaUtils
+import "root:/Modules/Common/Functions"
 import QtQuick
 import QtQuick.Layouts
 import Quickshell

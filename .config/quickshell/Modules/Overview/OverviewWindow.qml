@@ -1,7 +1,7 @@
 import "root:/Services/"
 import "root:/Modules/Common"
 import "root:/Modules/Common/Widgets"
-import "root:/Modules/Common/Functions/color_utils.js" as ColorUtils
+import "root:/Modules/Common/Functions"
 import Qt5Compat.GraphicalEffects
 import QtQuick
 import QtQuick.Controls

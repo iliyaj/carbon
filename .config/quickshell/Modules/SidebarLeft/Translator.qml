@@ -1,7 +1,7 @@
 import "root:/Services"
 import "root:/Modules/Common"
 import "root:/Modules/Common/Widgets"
-import "root:/Modules/Common/Functions/string_utils.js" as StringUtils
+import "root:/Modules/Common/Functions"
 import "./Translator/"
 import QtQuick
 import QtQuick.Controls

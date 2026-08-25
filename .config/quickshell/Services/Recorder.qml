@@ -1,5 +1,5 @@
 import "root:/Modules/Common"
-import "root:/Modules/Common/Functions/file_utils.js" as FileUtils
+import "root:/Modules/Common/Functions"
 import QtQuick
 import Quickshell
 import Quickshell.Hyprland

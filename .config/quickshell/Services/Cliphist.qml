@@ -1,8 +1,7 @@
 pragma Singleton
 pragma ComponentBehavior: Bound
 
-import "root:/Modules/Common/Functions/fuzzysort.js" as Fuzzy
-import "root:/Modules/Common/Functions/levendist.js" as Levendist
+import "root:/Modules/Common/Functions"
 import "root:/Modules/Common"
 import QtQuick
 import Quickshell

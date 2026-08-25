@@ -1,8 +1,7 @@
 import "root:/Modules/Common"
 import "root:/Modules/Common/Widgets"
 import "root:/Services"
-import "root:/Modules/Common/Functions/string_utils.js" as StringUtils
-import "root:/Modules/Common/Functions/file_utils.js" as FileUtils
+import "root:/Modules/Common/Functions"
 import Qt5Compat.GraphicalEffects
 import Qt.labs.platform
 import QtQuick

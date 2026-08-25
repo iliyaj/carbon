@@ -1,9 +1,7 @@
 // pragma NativeMethodBehavior: AcceptThisObject
 import "root:/Modules/Common"
 import "root:/Modules/Common/Widgets"
-import "root:/Modules/Common/Functions/color_utils.js" as ColorUtils
-import "root:/Modules/Common/Functions/string_utils.js" as StringUtils
-import "root:/Modules/Common/Functions/fuzzysort.js" as Fuzzy
+import "root:/Modules/Common/Functions"
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts

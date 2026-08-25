@@ -1,6 +1,6 @@
 pragma Singleton
 
-import "root:/Modules/Common/Functions/file_utils.js" as FileUtils
+import "root:/Modules/Common/Functions"
 import "root:/Modules/Common"
 import Quickshell
 import Quickshell.Io

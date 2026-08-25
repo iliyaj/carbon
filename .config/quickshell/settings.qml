@@ -17,9 +17,7 @@ import "root:/Services/"
 import "root:/Modules/Common/"
 import "root:/Modules/Common/Widgets/"
 import "root:/Modules/Settings/"
-import "root:/Modules/Common/Functions/color_utils.js" as ColorUtils
-import "root:/Modules/Common/Functions/file_utils.js" as FileUtils
-import "root:/Modules/Common/Functions/string_utils.js" as StringUtils
+import "root:/Modules/Common/Functions"
 
 ApplicationWindow {
     id: root

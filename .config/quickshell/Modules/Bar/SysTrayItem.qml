@@ -1,5 +1,5 @@
 import "root:/Modules/Common/"
-import "root:/Modules/Common/Functions/color_utils.js" as ColorUtils
+import "root:/Modules/Common/Functions"
 import QtQuick
 import QtQuick.Layouts
 import Quickshell

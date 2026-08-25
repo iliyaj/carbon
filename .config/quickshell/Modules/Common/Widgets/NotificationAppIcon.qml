@@ -1,5 +1,5 @@
 import "root:/Modules/Common"
-import "./notification_utils.js" as NotificationUtils
+import "root:/Modules/Common/Functions"
 import Qt5Compat.GraphicalEffects
 import QtQuick
 import QtQuick.Controls
