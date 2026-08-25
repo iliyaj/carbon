@@ -1,6 +1,6 @@
 # Carbon
 
-Carbon is an opinionated Hyprland desktop shell built with Quickshell, QML, and Qt. It combines the compositor configuration and graphical shell needed for a cohesive daily desktop while keeping machine-specific values outside the public repository.
+Carbon is a stability-focused Hyprland desktop shell built with Quickshell, QML, and Qt. It provides a practical daily desktop environment with sensible defaults, reliable behavior, and an ongoing focus on bug fixes.
 
 Carbon is an independently maintained fork of [end-4/dots-hyprland](https://github.com/end-4/dots-hyprland)'s **illogical-impulse**, originally created from a source snapshot. It does not automatically merge upstream changes; local features and modifications are developed directly in Carbon.
 
