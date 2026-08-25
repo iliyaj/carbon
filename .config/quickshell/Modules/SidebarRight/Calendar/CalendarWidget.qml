@@ -1,6 +1,6 @@
 import "root:/Modules/Common"
 import "root:/Modules/Common/Widgets"
-import "./calendar_layout.js" as CalendarLayout
+import "root:/Modules/SidebarRight/Calendar"
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
