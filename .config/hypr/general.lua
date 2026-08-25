@@ -107,7 +107,8 @@ hl.config({
         swallow_regex = "(foot|kitty|allacritty|Alacritty)",
         allow_session_lock_restore = true,
         initial_workspace_tracking = false,
-        focus_on_activate = true,
+        -- Repeated activation requests from modal dialogs must not warp the pointer back to their centre.
+        focus_on_activate = false,
     },
 
     binds = {
