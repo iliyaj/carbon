@@ -12,11 +12,13 @@ import Quickshell.Services.Mpris
 Singleton {
     id: root
 
-    readonly property var players: filterPlayers(Mpris.players.values)
+    readonly property var _validPlayers: filterPlayers(Mpris.players.values)
+    readonly property var players: deduplicatePlayers(_validPlayers)
     property MprisPlayer activePlayer: null
 
     // Most-recent-first history gives paused players a stable fallback order.
     property var _activityHistory: []
+    property var _ownerPids: ({})
 
     function isPlayerctld(player: MprisPlayer): bool {
         return player.dbusName.startsWith("org.mpris.MediaPlayer2.playerctld")
@@ -33,16 +35,125 @@ Singleton {
         return player.dbusName.startsWith("org.mpris.MediaPlayer2.plasma-browser-integration")
     }
 
-    function hasMeaningfulMetadata(player: MprisPlayer): bool {
+    function hasTrackData(player: MprisPlayer): bool {
         return String(player.trackTitle ?? "").trim().length > 0
             || String(player.trackArtist ?? "").trim().length > 0
             || String(player.trackAlbum ?? "").trim().length > 0
-            || String(player.trackArtUrl ?? "").trim().length > 0
             || player.length > 0
     }
 
+    function normalizedMetadata(value): string {
+        return String(value ?? "").trim().toLowerCase().replace(/\s+/g, " ")
+    }
+
+    function titleIncludesTrackAndArtist(trackPlayer: MprisPlayer, combinedPlayer: MprisPlayer): bool {
+        const title = normalizedMetadata(trackPlayer.trackTitle)
+        const artist = normalizedMetadata(trackPlayer.trackArtist)
+        const combinedTitle = normalizedMetadata(combinedPlayer.trackTitle)
+        return title.length > 0
+            && artist.length > 0
+            && combinedTitle !== title
+            && combinedTitle.startsWith(title)
+            && combinedTitle.endsWith(artist)
+    }
+
+    function areDuplicatePlayers(first: MprisPlayer, second: MprisPlayer): bool {
+        if (!first || !second)
+            return false
+
+        const firstOwnerPid = _ownerPids[first.dbusName] ?? 0
+        const secondOwnerPid = _ownerPids[second.dbusName] ?? 0
+        // One app can expose native and Chromium services whose titles diverge while paused.
+        if (firstOwnerPid > 0 && firstOwnerPid === secondOwnerPid)
+            return true
+
+        const firstTitle = normalizedMetadata(first.trackTitle)
+        const secondTitle = normalizedMetadata(second.trackTitle)
+        if (firstTitle.length === 0 || secondTitle.length === 0)
+            return false
+
+        const firstArtist = normalizedMetadata(first.trackArtist)
+        const secondArtist = normalizedMetadata(second.trackArtist)
+        if (firstArtist.length > 0 && secondArtist.length > 0 && firstArtist !== secondArtist)
+            return false
+
+        const shorterTitle = firstTitle.length <= secondTitle.length ? firstTitle : secondTitle
+        const longerTitle = firstTitle.length > secondTitle.length ? firstTitle : secondTitle
+        const titlesMatch = firstTitle === secondTitle
+            || (shorterTitle.length >= 8 && longerTitle.includes(shorterTitle))
+            || titleIncludesTrackAndArtist(first, second)
+            || titleIncludesTrackAndArtist(second, first)
+        if (!titlesMatch)
+            return false
+
+        // The same title can identify different recordings.
+        return first.length <= 0
+            || second.length <= 0
+            || Math.abs(first.length - second.length) <= 2
+    }
+
+    function playerQuality(player: MprisPlayer): int {
+        // Native endpoints carry richer metadata than their browser mirrors.
+        return (player.isPlaying ? 16 : 0)
+            + (String(player.trackArtUrl ?? "").length > 0 ? 8 : 0)
+            + (normalizedMetadata(player.trackArtist).length > 0 ? 4 : 0)
+            + (normalizedMetadata(player.trackAlbum).length > 0 ? 2 : 0)
+            + (player.length > 0 ? 1 : 0)
+    }
+
+    function deduplicatePlayers(validPlayers): var {
+        const canonicalPlayers = []
+
+        for (const player of validPlayers) {
+            if (!player)
+                continue
+
+            const duplicateIndex = canonicalPlayers.findIndex(candidate => areDuplicatePlayers(candidate, player))
+            if (duplicateIndex === -1) {
+                canonicalPlayers.push(player)
+            } else if (playerQuality(player) > playerQuality(canonicalPlayers[duplicateIndex])) {
+                canonicalPlayers[duplicateIndex] = player
+            }
+        }
+
+        return canonicalPlayers
+    }
+
+    function rememberOwnerPid(dbusName: string, ownerPid: int): void {
+        if (ownerPid <= 0 || _ownerPids[dbusName] === ownerPid)
+            return
+
+        const updatedOwnerPids = Object.assign({}, _ownerPids)
+        updatedOwnerPids[dbusName] = ownerPid
+        _ownerPids = updatedOwnerPids
+    }
+
+    function forgetOwnerPid(dbusName: string): void {
+        if (_ownerPids[dbusName] === undefined)
+            return
+
+        const updatedOwnerPids = Object.assign({}, _ownerPids)
+        delete updatedOwnerPids[dbusName]
+        _ownerPids = updatedOwnerPids
+    }
+
+    function trackLengthFor(player: MprisPlayer): real {
+        if (!player)
+            return 0
+
+        let trackLength = player.length ?? 0
+        for (const candidate of _validPlayers) {
+            if (candidate && candidate.length > trackLength && areDuplicatePlayers(player, candidate))
+                trackLength = candidate.length
+        }
+        return trackLength
+    }
+
     function filterPlayers(discoveredPlayers): var {
-        const directPlayers = discoveredPlayers.filter(player => !isPlayerctld(player))
+        // Quickshell can briefly leave a null entry while an MPRIS service disappears.
+        const directPlayers = discoveredPlayers.filter(player => player !== null
+            && player !== undefined
+            && !isPlayerctld(player))
         const hasNativeBrowser = directPlayers.some(player => isNativeBrowser(player))
 
         // Plasma Browser Integration is valuable for browsers without native MPRIS,
@@ -51,10 +162,10 @@ Singleton {
             if (hasNativeBrowser && isPlasmaBrowserIntegration(player))
                 return false
 
-            // Some Electron apps leave behind a stopped Chromium endpoint with
-            // no track data alongside their real MPRIS player.
+            // Chromium can retain only a temporary artwork URL after media closes.
             return player.playbackState !== MprisPlaybackState.Stopped
-                || hasMeaningfulMetadata(player)
+                || player.canPlay
+                || hasTrackData(player)
         })
     }
 
@@ -133,25 +244,52 @@ Singleton {
     Instantiator {
         model: Mpris.players
 
-        delegate: Connections {
+        delegate: Scope {
             required property MprisPlayer modelData
-            target: modelData
+            property string playerDbusName: ""
 
-            function onPlaybackStateChanged(): void {
-                if (modelData.isPlaying)
-                    root.playerBecameActive(modelData)
-                else
-                    root.reconcilePlayers()
+            Connections {
+                target: modelData
+
+                function onPlaybackStateChanged(): void {
+                    if (modelData?.isPlaying)
+                        root.playerBecameActive(modelData)
+                    else
+                        root.reconcilePlayers()
+                }
+
+                function onTrackChanged(): void {
+                    // Quickshell intentionally requires consumers to request position
+                    // notifications while displaying a changing progress value.
+                    modelData?.positionChanged()
+                    root.playerChangedTrack(modelData)
+                }
             }
 
-            function onTrackChanged(): void {
-                // Quickshell intentionally requires consumers to request position
-                // notifications while displaying a changing progress value.
-                modelData.positionChanged()
-                root.playerChangedTrack(modelData)
+            Process {
+                id: ownerPidLookup
+                command: [
+                    "busctl", "--user", "call",
+                    "org.freedesktop.DBus", "/org/freedesktop/DBus",
+                    "org.freedesktop.DBus", "GetConnectionUnixProcessID",
+                    "s", playerDbusName
+                ]
+
+                stdout: StdioCollector {
+                    onStreamFinished: {
+                        const match = text.match(/^u\s+(\d+)/)
+                        if (match)
+                            root.rememberOwnerPid(playerDbusName, Number(match[1]))
+                    }
+                }
             }
 
-            Component.onCompleted: Qt.callLater(root.reconcilePlayers)
+            Component.onCompleted: {
+                playerDbusName = modelData.dbusName
+                ownerPidLookup.running = true
+                Qt.callLater(root.reconcilePlayers)
+            }
+            Component.onDestruction: root.forgetOwnerPid(playerDbusName)
         }
     }
 
@@ -169,7 +307,7 @@ Singleton {
         }
 
         function pauseAll(): void {
-            for (const player of root.players) {
+            for (const player of root._validPlayers) {
                 if (player.isPlaying && player.canPause)
                     player.pause()
             }

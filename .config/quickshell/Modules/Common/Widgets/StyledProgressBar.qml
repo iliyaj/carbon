@@ -1,12 +1,6 @@
-import "root:/Services"
 import "root:/Modules/Common"
-import "root:/Modules/Common/Widgets"
 import QtQuick
 import QtQuick.Controls
-import QtQuick.Layouts
-import Quickshell
-import Quickshell.Widgets
-import Qt5Compat.GraphicalEffects
 
 /**
  * Material 3 progress bar. See https://m3.material.io/components/progress-indicators/overview
@@ -18,13 +12,13 @@ ProgressBar {
     property real valueBarGap: 4
     property color highlightColor: Appearance?.colors.colPrimary ?? "#685496"
     property color trackColor: Appearance?.m3colors.m3secondaryContainer ?? "#F1D3F9"
-    property bool sperm: false // If true, the progress bar will have a wavy fill effect
-    property bool animateSperm: true
-    property real spermAmplitudeMultiplier: sperm ? 0.5 : 0
-    property real spermFrequency: 6
-    property real spermFps: 60
+    property bool wavy: false
+    property bool animateWave: true
+    property real waveAmplitudeMultiplier: wavy ? 0.5 : 0
+    property real waveFrequency: 6
+    property real waveFps: 60
 
-    Behavior on spermAmplitudeMultiplier {
+    Behavior on waveAmplitudeMultiplier {
         animation: Appearance?.animation.elementMoveFast.numberAnimation.createObject(this)
     }
 
@@ -53,45 +47,72 @@ ProgressBar {
                 verticalCenter: parent.verticalCenter
             }
             height: parent.height * 6
+
             onPaint: {
-                var ctx = getContext("2d");
-                ctx.clearRect(0, 0, width, height);
+                const context = getContext("2d")
+                context.clearRect(0, 0, width, height)
 
-                var progress = root.visualPosition;
-                var fillWidth = progress * width;
-                var amplitude = parent.height * root.spermAmplitudeMultiplier;
-                var frequency = root.spermFrequency;
-                var phase = Date.now() / 400.0;
-                var centerY = height / 2;
+                const fillWidth = Math.max(0, Math.min(width, root.visualPosition * width))
+                const strokeWidth = parent.height
+                const centerY = height / 2
+                if (fillWidth <= 0 || strokeWidth <= 0)
+                    return
 
-                ctx.strokeStyle = root.highlightColor;
-                ctx.lineWidth = parent.height;
-                ctx.lineCap = "round";
-                ctx.beginPath();
-                for (var x = ctx.lineWidth / 2; x <= fillWidth; x += 1) {
-                    var waveY = centerY + amplitude * Math.sin(frequency * 2 * Math.PI * x / width + phase);
-                    if (x === 0)
-                        ctx.moveTo(x, waveY);
-                    else
-                        ctx.lineTo(x, waveY);
+                context.fillStyle = root.highlightColor
+                if (fillWidth <= strokeWidth) {
+                    context.beginPath()
+                    context.arc(fillWidth / 2, centerY, fillWidth / 2, 0, Math.PI * 2)
+                    context.fill()
+                    return
                 }
-                ctx.stroke();
+
+                const amplitude = strokeWidth * root.waveAmplitudeMultiplier
+                const phase = Date.now() / 400
+                const startX = strokeWidth / 2
+                const endX = fillWidth - strokeWidth / 2
+                const waveY = x => centerY + amplitude * Math.sin(root.waveFrequency * 2 * Math.PI * x / width + phase)
+
+                context.strokeStyle = root.highlightColor
+                context.lineWidth = strokeWidth
+                context.lineCap = "round"
+                context.beginPath()
+                context.moveTo(startX, waveY(startX))
+                for (let x = startX + 1; x < endX; x += 1)
+                    context.lineTo(x, waveY(x))
+                context.lineTo(endX, waveY(endX))
+                context.stroke()
             }
+
+            onWidthChanged: requestPaint()
+            onHeightChanged: requestPaint()
+
             Connections {
                 target: root
-                function onValueChanged() { wavyFill.requestPaint(); }
-                function onHighlightColorChanged() { wavyFill.requestPaint(); }
+
+                function onValueChanged(): void {
+                    wavyFill.requestPaint()
+                }
+
+                function onHighlightColorChanged(): void {
+                    wavyFill.requestPaint()
+                }
+
+                function onWaveAmplitudeMultiplierChanged(): void {
+                    wavyFill.requestPaint()
+                }
             }
+
             Timer {
-                interval: 1000 / root.spermFps
-                running: root.animateSperm
-                repeat: root.sperm
+                interval: 1000 / root.waveFps
+                running: root.wavy && root.animateWave
+                repeat: true
                 onTriggered: wavyFill.requestPaint()
             }
         }
+
         Rectangle { // Right remaining part fill
             anchors.right: parent.right
-            width: (1 - root.visualPosition) * parent.width - valueBarGap
+            width: Math.max(0, (1 - root.visualPosition) * parent.width - valueBarGap)
             height: parent.height
             radius: Appearance?.rounding.full ?? 9999
             color: root.trackColor

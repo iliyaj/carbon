@@ -3,23 +3,24 @@ import "root:/Modules/Common/Widgets"
 import "root:/Services"
 import "root:/Modules/Common/Functions/string_utils.js" as StringUtils
 import "root:/Modules/Common/Functions/color_utils.js" as ColorUtils
-import "root:/Modules/Common/Functions/file_utils.js" as FileUtils
 import Qt5Compat.GraphicalEffects
 import QtQuick
 import QtQuick.Effects
 import QtQuick.Layouts
-import QtQuick.Controls
 import Quickshell
 import Quickshell.Io
 import Quickshell.Services.Mpris
 import Quickshell.Widgets
-import Quickshell.Wayland
-import Quickshell.Hyprland
 
 Item { // Player instance
     id: playerController
     required property MprisPlayer player
-    property string artUrl: player?.trackArtUrl ?? ""
+    property real trackLength: 0
+    property real trackPosition: 0
+    property bool playing: false
+    property string trackTitle: ""
+    property string trackArtist: ""
+    property string artUrl: ""
     property string artDownloadLocation: Directories.coverArt
     property string artFileName: Qt.md5(artUrl) + ".jpg"
     property string artFilePath: `${artDownloadLocation}/${artFileName}`
@@ -29,6 +30,39 @@ Item { // Player instance
     property list<real> visualizerPoints: []
     property real maxVisualizerValue: 1000 // Max value in the data points
     property int visualizerSmoothing: 2 // Number of points to average for smoothing
+    readonly property bool hasLiveTrack: player !== null && MprisController.hasTrackData(player)
+
+    // Ignore teardown-only browser artwork and freeze the final real track frame.
+    Binding on trackLength {
+        when: playerController.hasLiveTrack
+        value: MprisController.trackLengthFor(playerController.player)
+        restoreMode: Binding.RestoreNone
+    }
+    Binding on trackPosition {
+        when: playerController.hasLiveTrack
+        value: playerController.player?.position ?? 0
+        restoreMode: Binding.RestoreNone
+    }
+    Binding on playing {
+        when: playerController.hasLiveTrack
+        value: playerController.player?.isPlaying ?? false
+        restoreMode: Binding.RestoreNone
+    }
+    Binding on trackTitle {
+        when: playerController.hasLiveTrack
+        value: playerController.player?.trackTitle ?? ""
+        restoreMode: Binding.RestoreNone
+    }
+    Binding on trackArtist {
+        when: playerController.hasLiveTrack
+        value: playerController.player?.trackArtist ?? ""
+        restoreMode: Binding.RestoreNone
+    }
+    Binding on artUrl {
+        when: playerController.hasLiveTrack
+        value: playerController.player?.trackArtUrl ?? ""
+        restoreMode: Binding.RestoreNone
+    }
 
     implicitWidth: widgetWidth
     implicitHeight: widgetHeight
@@ -56,11 +90,11 @@ Item { // Player instance
     }
 
     Timer { // Force update for prevision
-        running: playerController.player?.playbackState == MprisPlaybackState.Playing
+        running: playerController.hasLiveTrack && playerController.playing
         interval: 1000
         repeat: true
         onTriggered: {
-            playerController.player.positionChanged()
+            playerController.player?.positionChanged()
         }
     }
 
@@ -181,7 +215,7 @@ Item { // Player instance
         WaveVisualizer {
             id: visualizerCanvas
             anchors.fill: parent
-            live: playerController.player?.isPlaying
+            live: playerController.playing
             points: playerController.visualizerPoints
             maxVisualizerValue: playerController.maxVisualizerValue
             smoothing: playerController.visualizerSmoothing
@@ -237,7 +271,7 @@ Item { // Player instance
                     font.pixelSize: Appearance.font.pixelSize.large
                     color: blendedColors.colOnLayer0
                     elide: Text.ElideRight
-                    text: StringUtils.cleanMusicTitle(playerController.player?.trackTitle) || "Untitled"
+                    text: StringUtils.cleanMusicTitle(playerController.trackTitle) || "Untitled"
                 }
                 StyledText {
                     id: trackArtist
@@ -245,7 +279,7 @@ Item { // Player instance
                     font.pixelSize: Appearance.font.pixelSize.smaller
                     color: blendedColors.colSubtext
                     elide: Text.ElideRight
-                    text: playerController.player?.trackArtist
+                    text: playerController.trackArtist
                 }
                 Item { Layout.fillHeight: true }
                 Item {
@@ -260,7 +294,7 @@ Item { // Player instance
                         font.pixelSize: Appearance.font.pixelSize.small
                         color: blendedColors.colSubtext
                         elide: Text.ElideRight
-                        text: `${StringUtils.friendlyTimeForSeconds(playerController.player?.position)} / ${StringUtils.friendlyTimeForSeconds(playerController.player?.length)}`
+                        text: `${StringUtils.friendlyTimeForSeconds(playerController.trackPosition)} / ${StringUtils.friendlyTimeForSeconds(playerController.trackLength)}`
                     }
                     RowLayout {
                         id: sliderRow
@@ -283,8 +317,10 @@ Item { // Player instance
                                 anchors.fill: parent
                                 highlightColor: blendedColors.colPrimary
                                 trackColor: blendedColors.colSecondaryContainer
-                                value: playerController.player?.position / playerController.player?.length
-                                sperm: playerController.player?.isPlaying
+                                value: playerController.trackLength > 0
+                                    ? playerController.trackPosition / playerController.trackLength
+                                    : 0
+                                wavy: playerController.playing
                             }
                         }
                         TrackChangeButton {
@@ -301,19 +337,19 @@ Item { // Player instance
                         property real size: 44
                         implicitWidth: size
                         implicitHeight: size
-                        onClicked: playerController.player.togglePlaying();
+                        onClicked: playerController.player?.togglePlaying()
 
-                        buttonRadius: playerController.player?.isPlaying ? Appearance?.rounding.normal : size / 2
-                        colBackground: playerController.player?.isPlaying ? blendedColors.colPrimary : blendedColors.colSecondaryContainer
-                        colBackgroundHover: playerController.player?.isPlaying ? blendedColors.colPrimaryHover : blendedColors.colSecondaryContainerHover
-                        colRipple: playerController.player?.isPlaying ? blendedColors.colPrimaryActive : blendedColors.colSecondaryContainerActive
+                        buttonRadius: playerController.playing ? Appearance?.rounding.normal : size / 2
+                        colBackground: playerController.playing ? blendedColors.colPrimary : blendedColors.colSecondaryContainer
+                        colBackgroundHover: playerController.playing ? blendedColors.colPrimaryHover : blendedColors.colSecondaryContainerHover
+                        colRipple: playerController.playing ? blendedColors.colPrimaryActive : blendedColors.colSecondaryContainerActive
 
                         contentItem: MaterialSymbol {
                             iconSize: Appearance.font.pixelSize.huge
                             fill: 1
                             horizontalAlignment: Text.AlignHCenter
-                            color: playerController.player?.isPlaying ? blendedColors.colOnPrimary : blendedColors.colOnSecondaryContainer
-                            text: playerController.player?.isPlaying ? "pause" : "play_arrow"
+                            color: playerController.playing ? blendedColors.colOnPrimary : blendedColors.colOnSecondaryContainer
+                            text: playerController.playing ? "pause" : "play_arrow"
 
                             Behavior on color {
                                 animation: Appearance.animation.elementMoveFast.colorAnimation.createObject(this)
