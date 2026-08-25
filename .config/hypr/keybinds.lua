@@ -61,19 +61,17 @@ hl.bind("Super_L", hl.dsp.global("quickshell:workspaceNumber"),
 hl.bind("SUPER + V", hl.dsp.global("quickshell:overviewClipboardToggle"),
     { description = "Shell: Clipboard history >> clipboard" })
 hl.bind("SUPER + Tab", hl.dsp.global("quickshell:overviewToggle"))
-hl.bind("SUPER + A", hl.dsp.global("quickshell:sidebarLeftToggle"),
-    { description = "Shell: Toggle left sidebar" })
+hl.bind("SUPER + M", hl.dsp.global("quickshell:sidebarRightToggle"),
+    { description = "Shell: Toggle right sidebar" })
 hl.bind("SUPER + ALT + A", hl.dsp.global("quickshell:sidebarLeftToggleDetach"))
 hl.bind("SUPER + B", hl.dsp.global("quickshell:sidebarLeftToggle"))
 hl.bind("SUPER + O", hl.dsp.global("quickshell:sidebarLeftToggle"))
-hl.bind("SUPER + N", hl.dsp.global("quickshell:sidebarRightToggle"),
-    { description = "Shell: Toggle right sidebar" })
+hl.bind("SUPER + N", hl.dsp.global("quickshell:sidebarLeftToggle"),
+    { description = "Shell: Toggle left sidebar" })
 hl.bind("SUPER + Slash", hl.dsp.global("quickshell:cheatsheetToggle"),
     { description = "Shell: Toggle cheatsheet" })
 hl.bind("SUPER + K", hl.dsp.global("quickshell:oskToggle"),
     { description = "Shell: Toggle on-screen keyboard" })
-hl.bind("SUPER + M", hl.dsp.global("quickshell:mediaControlsToggle"),
-    { description = "Shell: Toggle media controls" })
 hl.bind("CTRL + ALT + Delete", hl.dsp.global("quickshell:sessionToggle"),
     { description = "Shell: Toggle session menu" })
 hl.bind("CTRL + ALT + Delete", hl.dsp.exec_cmd(qs_alive .. " || pkill wlogout || wlogout -p layer-shell"))
@@ -162,8 +160,8 @@ hl.bind("SUPER + SHIFT + ALT + Q", hl.dsp.exec_cmd("hyprctl kill"),
     { description = "Window: Forcefully zap a window" })
 
 -- Split ratio
-hl.bind("SUPER + Semicolon", hl.dsp.window.resize({ x = -80, y = 0 }), { repeating = true })
-hl.bind("SUPER + Apostrophe", hl.dsp.window.resize({ x = 80, y = 0 }), { repeating = true })
+hl.bind("SUPER + Semicolon", hl.dsp.window.resize({ x = -80, y = 0, relative = true }), { repeating = true })
+hl.bind("SUPER + Apostrophe", hl.dsp.window.resize({ x = 80, y = 0, relative = true }), { repeating = true })
 
 hl.bind("SUPER + ALT + Space", lib.toggle_floating,
     { description = "Window: Float/Tile" })
