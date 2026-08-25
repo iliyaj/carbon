@@ -165,7 +165,9 @@ Scope {
         description: qsTr("Toggles overview on release")
 
         onReleased: {
-            GlobalStates.overviewOpen = !GlobalStates.overviewOpen
+            // Let the compositor finish the Super-key release before changing layer contents.
+            const nextState = !GlobalStates.overviewOpen
+            Qt.callLater(() => GlobalStates.overviewOpen = nextState)
         }
     }
     GlobalShortcut {
