@@ -12,6 +12,7 @@ local theme_tool = home .. "/.config/quickshell/Scripts/Colors/theme.py"
 local terminal = lib.first_installed({
     "kitty -1", "foot", "alacritty", "wezterm", "konsole", "kgx", "uxterm", "xterm",
 })
+local ghostty = lib.first_installed({ "ghostty" })
 local terminal_editor = terminal and lib.in_path("nvim") and terminal .. " nvim" or nil
 local file_manager = lib.first_installed({
     "dolphin", "nautilus", "nemo", "thunar", { bin = "yazi", cmd = "kitty -1 fish -c yazi" },
@@ -131,7 +132,7 @@ hl.bind("SUPER + ALT + R", hl.dsp.exec_cmd("qs ipc call recorder toggleRegion"),
     { description = "Utilities: Record region (no sound)" })
 hl.bind("CTRL + ALT + R", hl.dsp.exec_cmd("qs ipc call recorder toggleFullscreen"),
     { description = "Utilities: Record screen (no sound)" })
-hl.bind("SUPER + SHIFT + ALT + R", hl.dsp.exec_cmd("qs ipc call recorder toggleFullscreenAudio"),
+hl.bind("SUPER + F9", hl.dsp.exec_cmd("qs ipc call recorder toggleFullscreenAudio"),
     { description = "Utilities: Record screen (with sound)" })
 
 --------------------------------------------------------------------------------
@@ -293,7 +294,7 @@ hl.bind("XF86AudioPause", hl.dsp.exec_cmd("playerctl play-pause"), { locked = tr
 --------------------------------------------------------------------------------
 
 bind_app("SUPER + Return", terminal, { description = "Apps: Terminal" })
-bind_app("SUPER + T", terminal)
+bind_app("SUPER + T", ghostty, { description = "Apps: Ghostty terminal" })
 bind_app("CTRL + ALT + T", terminal)
 bind_app("SUPER + E", file_manager, { description = "Apps: File manager" })
 hl.bind("SUPER + W", hl.dsp.exec_cmd("firefox"), { description = "Apps: Browser" })
