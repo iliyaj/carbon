@@ -4,6 +4,8 @@ Documentation=https://github.com/iliyaj/carbon
 
 [Service]
 Type=simple
+# Applications launched by the shell must survive a shell restart or crash.
+KillMode=process
 ExecStart=/usr/bin/quickshell
 Restart=on-failure
 RestartSec=2

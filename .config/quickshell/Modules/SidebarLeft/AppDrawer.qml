@@ -473,8 +473,7 @@ Item {
                         onClicked: {
                             const entry = root.menuEntry
                             root.menuEntry = null
-                            if (entry.execute) entry.execute()
-                            else Quickshell.execDetached(entry.exec)
+                            AppLauncher.launchDesktopEntry(entry)
                         }
                     }
 

@@ -12,6 +12,18 @@ import Quickshell.Hyprland
 Scope {
     id: overviewScope
     property bool dontAutoCancelSearch: false
+
+    function virtualBoxWindowIsActive(): bool {
+        const active = ToplevelManager.activeToplevel
+        return /^VirtualBox/.test(active?.appId ?? "")
+    }
+
+    function toggleOverview(): void {
+        if (!GlobalStates.overviewOpen && virtualBoxWindowIsActive())
+            return
+        GlobalStates.overviewOpen = !GlobalStates.overviewOpen
+    }
+
     Variants {
         id: overviewVariants
         model: Quickshell.screens
@@ -134,13 +146,14 @@ Scope {
 		target: "overview"
 
         function toggle() {
-            GlobalStates.overviewOpen = !GlobalStates.overviewOpen
+            overviewScope.toggleOverview()
         }
         function close() {
             GlobalStates.overviewOpen = false
         }
         function open() {
-            GlobalStates.overviewOpen = true
+            if (!overviewScope.virtualBoxWindowIsActive())
+                GlobalStates.overviewOpen = true
         }
 	}
 
@@ -149,7 +162,7 @@ Scope {
         description: qsTr("Toggles overview on press")
 
         onPressed: {
-            GlobalStates.overviewOpen = !GlobalStates.overviewOpen
+            overviewScope.toggleOverview()
         }
     }
     GlobalShortcut {
@@ -167,7 +180,11 @@ Scope {
         onReleased: {
             // Let the compositor finish the Super-key release before changing layer contents.
             const nextState = !GlobalStates.overviewOpen
-            Qt.callLater(() => GlobalStates.overviewOpen = nextState)
+            Qt.callLater(() => {
+                if (nextState && overviewScope.virtualBoxWindowIsActive())
+                    return
+                GlobalStates.overviewOpen = nextState
+            })
         }
     }
     GlobalShortcut {
@@ -179,6 +196,8 @@ Scope {
                 GlobalStates.overviewOpen = false;
                 return;
             }
+            if (overviewScope.virtualBoxWindowIsActive())
+                return;
             for (let i = 0; i < overviewVariants.instances.length; i++) {
                 let panelWindow = overviewVariants.instances[i];
                 if (panelWindow.modelData.name == Hyprland.focusedMonitor.name) {

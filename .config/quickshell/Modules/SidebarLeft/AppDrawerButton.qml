@@ -18,11 +18,7 @@ Item {
     signal menuRequested(real x, real y)
 
     function launch() {
-        if (appItem.entry.execute) {
-            appItem.entry.execute()
-        } else {
-            Quickshell.execDetached(appItem.entry.exec)
-        }
+        AppLauncher.launchDesktopEntry(appItem.entry)
     }
 
     Rectangle {

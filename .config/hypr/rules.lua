@@ -5,6 +5,9 @@
 
 hl.window_rule({ match = { xwayland = true }, no_blur = true })
 
+-- Modal dialogs should stay clear of the bar and remain reachable for keyboard or mouse input.
+hl.window_rule({ match = { modal = true }, float = true, center = true })
+
 
 for _, class in ipairs({
     "^(blueberry\\.py)$",
