@@ -9,7 +9,7 @@ The upstream repository and Carbon are distributed under GPLv3. The complete lic
 ## Included third-party code
 
 - `.config/quickshell/Modules/Common/Functions/fuzzysort.js` is adapted from [farzher/fuzzysort](https://github.com/farzher/fuzzysort), Copyright (c) 2018 Stephen Kamenar, under the MIT License. Its embedded priority queue is adapted from [lemire/FastPriorityQueue.js](https://github.com/lemire/FastPriorityQueue.js) under Apache-2.0. The license texts are in [`LICENSES/MIT.txt`](LICENSES/MIT.txt) and [`LICENSES/Apache-2.0.txt`](LICENSES/Apache-2.0.txt).
-- `.config/quickshell/Modules/Common/Functions/levendist.js` identifies its source as `koeqaife/hyprland-material-you` under GPLv3.
+- `.config/quickshell/Modules/Common/Functions/Levendist.qml` is adapted from `koeqaife/hyprland-material-you` under GPLv3.
 - `.config/quickshell/Modules/Common/Widgets/CircularProgress.qml` is adapted from [rafzby/circular-progressbar](https://github.com/rafzby/circular-progressbar) under LGPL-3.0-only. The license text is in [`LICENSES/LGPL-3.0-only.txt`](LICENSES/LGPL-3.0-only.txt).
 - `.config/quickshell/Services/Brightness.qml` is adapted from [caelestia-dots/shell](https://github.com/caelestia-dots/shell) under GPLv3.
 - The `.config/hypr/*.lua` files were authored for Carbon and are distributed under GPL-3.0-or-later.
