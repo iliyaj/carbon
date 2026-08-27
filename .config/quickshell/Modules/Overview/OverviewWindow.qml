@@ -94,14 +94,14 @@ Item { // Window
                 // mipmap: true
                 Layout.alignment: Qt.AlignHCenter
                 source: root.iconPath
-                implicitWidth: iconSize
-                implicitHeight: iconSize
+                Layout.preferredWidth: iconSize
+                Layout.preferredHeight: iconSize
                 sourceSize: Qt.size(iconSize, iconSize)
 
-                Behavior on implicitWidth {
+                Behavior on Layout.preferredWidth {
                     animation: Appearance.animation.elementMoveEnter.numberAnimation.createObject(this)
                 }
-                Behavior on implicitHeight {
+                Behavior on Layout.preferredHeight {
                     animation: Appearance.animation.elementMoveEnter.numberAnimation.createObject(this)
                 }
             }
