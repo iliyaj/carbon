@@ -16,8 +16,8 @@ Singleton {
     property QtObject spacing
     property string syntaxHighlightingTheme
 
-    // Extremely conservative transparency values for consistency and readability
     property real transparency: ConfigOptions?.appearance.transparency ? (m3colors.darkmode ? 0.1 : 0.07) : 0
+    property bool themedResourceColors: ConfigOptions?.appearance.themedResourceColors ?? false
     property real contentTransparency: ConfigOptions?.appearance.transparency ? (m3colors.darkmode ? 0.55 : 0.55) : 0
 
     m3colors: QtObject {
@@ -146,14 +146,18 @@ Singleton {
         property color colScrim: ColorUtils.transparentize(m3colors.m3scrim, 0.5)
         property color colShadow: ColorUtils.transparentize(m3colors.m3shadow, 0.7)
         property color colOutlineVariant: m3colors.m3outlineVariant
-        property color colResourceNormal: "#34C759"
-        property color colOnResourceNormal: "#FFFFFF"
-        property color colResourceNeutral: "#FFFFFF"
-        property color colOnResourceNeutral: "#1B1B1B"
-        property color colResourceWarning: "#FFCC0A"
-        property color colOnResourceWarning: "#1B1B1B"
-        property color colResourceCritical: "#FF3B30"
-        property color colOnResourceCritical: "#FFFFFF"
+        property color colResourceNormalFixed: "#34C759"
+        property color colResourceNeutralFixed: "#FFFFFF"
+        property color colResourceWarningFixed: "#FFCC0A"
+        property color colResourceCriticalFixed: "#FF3B30"
+        property color colResourceNormal: root.themedResourceColors ? m3colors.m3primary : colResourceNormalFixed
+        property color colOnResourceNormal: root.themedResourceColors ? ColorUtils.contrastText(colResourceNormal, m3colors.m3surface, m3colors.m3onSurface) : "#FFFFFF"
+        property color colResourceNeutral: root.themedResourceColors ? m3colors.m3onSurface : colResourceNeutralFixed
+        property color colOnResourceNeutral: root.themedResourceColors ? m3colors.m3surface : "#1B1B1B"
+        property color colResourceWarning: root.themedResourceColors ? ColorUtils.mix(m3colors.m3error, m3colors.m3primary, 0.5) : colResourceWarningFixed
+        property color colOnResourceWarning: root.themedResourceColors ? ColorUtils.contrastText(colResourceWarning, m3colors.m3surface, m3colors.m3onSurface) : "#1B1B1B"
+        property color colResourceCritical: root.themedResourceColors ? m3colors.m3error : colResourceCriticalFixed
+        property color colOnResourceCritical: root.themedResourceColors ? ColorUtils.contrastText(colResourceCritical, m3colors.m3surface, m3colors.m3onSurface) : "#FFFFFF"
     }
 
     rounding: QtObject {

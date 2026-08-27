@@ -107,6 +107,23 @@ ContentPage {
         }
 
         ContentSubsection {
+            title: "Resource pill colors"
+
+            ConfigRow {
+                ConfigSwitch {
+                    text: "Match theme"
+                    checked: ConfigOptions.appearance.themedResourceColors
+                    onCheckedChanged: {
+                        ConfigLoader.setConfigValueAndSave("appearance.themedResourceColors", checked);
+                    }
+                    StyledToolTip {
+                        content: "Color the RAM pill from the generated palette instead of the fixed green, white, yellow and red."
+                    }
+                }
+            }
+        }
+
+        ContentSubsection {
             title: "Fake screen rounding"
 
             ButtonGroup {

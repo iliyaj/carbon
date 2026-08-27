@@ -7,6 +7,7 @@ Singleton {
     property QtObject appearance: QtObject {
         property int fakeScreenRounding: 2 // 0: None | 1: Always | 2: When not fullscreen
         property bool transparency: false
+        property bool themedResourceColors: false
         property QtObject palette: QtObject {
             property string type: "auto" // Allowed: auto, scheme-content, scheme-expressive, scheme-fidelity, scheme-fruit-salad, scheme-monochrome, scheme-neutral, scheme-rainbow, scheme-tonal-spot
         }
