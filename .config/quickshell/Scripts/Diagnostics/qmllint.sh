@@ -1,7 +1,23 @@
 #!/usr/bin/env bash
 # /usr/bin/qmllint is Qt5 and exits 255 on Qt6 pragmas without printing, so it silently
-# checks nothing. This runs Qt6's against a copy with root:/ imports and singletons resolved.
+# checks nothing. This runs Qt6 qmllint against a copy with root:/ imports and singletons resolved.
 set -uo pipefail
+
+usage() {
+    cat <<'EOF'
+Usage: qmllint.sh [QML_FILE ...]
+
+Lint the given files, or every QML file in the Carbon Quickshell tree when no files are given.
+Paths may be absolute or relative to the caller, but must be inside .config/quickshell.
+EOF
+}
+
+case "${1:-}" in
+    -h|--help)
+        usage
+        exit 0
+        ;;
+esac
 
 QMLLINT=/usr/lib/qt6/bin/qmllint
 if [ ! -x "$QMLLINT" ]; then
@@ -12,8 +28,21 @@ fi
 root=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
 targets=()
 for f in "$@"; do
-    [ -e "$f" ] || { echo "qmllint.sh: no such file: $f" >&2; exit 2; }
-    targets+=("$(realpath --relative-to="$root" "$(realpath "$f")")")
+    [ -f "$f" ] || { echo "qmllint.sh: no such file: $f" >&2; exit 2; }
+    source_path=$(realpath "$f")
+    case "$source_path" in
+        "$root"/*.qml)
+            targets+=("$(realpath --relative-to="$root" "$source_path")")
+            ;;
+        "$root"/*)
+            echo "qmllint.sh: not a QML file: $f" >&2
+            exit 2
+            ;;
+        *)
+            echo "qmllint.sh: file is outside $root: $f" >&2
+            exit 2
+            ;;
+    esac
 done
 
 work=$(mktemp -d) || exit 2
@@ -35,8 +64,15 @@ for f in dst.rglob("*.qml"):
         singletons.setdefault(f.parent, []).append(f.stem)
 for d, names in singletons.items():
     qd = d / "qmldir"
-    prev = qd.read_text().rstrip() + "\n" if qd.exists() else ""
-    qd.write_text(prev + "".join(f"singleton {n} 1.0 {n}.qml\n" for n in sorted(names)))
+    prev = qd.read_text() if qd.exists() else ""
+    missing = [n for n in sorted(names) if not re.search(
+        rf"^\s*(?:(?:internal|singleton)\s+)*{re.escape(n)}(?:\s|$)", prev, re.M
+    )]
+    if missing:
+        separator = "" if not prev or prev.endswith("\n") else "\n"
+        qd.write_text(prev + separator + "".join(
+            f"singleton {n} 1.0 {n}.qml\n" for n in missing
+        ))
 PY
 
 cd "$work/src" || exit 2
@@ -44,15 +80,24 @@ if [ ${#targets[@]} -eq 0 ]; then
     mapfile -t targets < <(find . -name '*.qml' -printf '%P\n' | sort)
 fi
 
-status=0
+finding_files=0
 for f in "${targets[@]}"; do
     out=$("$QMLLINT" "$f" 2>&1)
     rc=$?
     if [ -n "$out" ] || [ $rc -ne 0 ]; then
-        printf '### %s (rc=%s)\n%s\n' "$f" "$rc" "${out:-<no output; rc $rc means a parse error>}"
-        status=1
+        if [ $rc -eq 0 ]; then
+            printf '### %s\n%s\n' "$f" "$out"
+        else
+            printf '### %s (qmllint exit %s)\n%s\n' "$f" "$rc" "${out:-<no output; nonzero exit usually means a parse error>}"
+        fi
+        finding_files=$((finding_files + 1))
     fi
 done
 
-[ $status -eq 0 ] && echo "qmllint: clean (${#targets[@]} files)"
-exit $status
+if [ $finding_files -eq 0 ]; then
+    echo "qmllint: clean (${#targets[@]} files)"
+    exit 0
+fi
+
+echo "qmllint: findings in $finding_files of ${#targets[@]} files"
+exit 1
