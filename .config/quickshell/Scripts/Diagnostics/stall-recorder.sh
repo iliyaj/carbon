@@ -11,6 +11,7 @@ max_blocked_listed="${STALL_RECORDER_MAX_BLOCKED_LISTED:-6}"
 max_captures="${STALL_RECORDER_MAX_CAPTURES:-40}"
 auto_capture_gap="${STALL_RECORDER_AUTO_CAPTURE_GAP:-60}"
 auto_capture="${STALL_RECORDER_AUTO_CAPTURE:-1}"
+startup_grace_seconds="${STALL_RECORDER_STARTUP_GRACE_SECONDS:-15}"
 
 clock_ticks="$(getconf CLK_TCK)"
 page_kib=$(( $(getconf PAGESIZE) / 1024 ))
@@ -153,9 +154,10 @@ run_recorder() {
     local stall_started_ms=0 carbon_stall_s
     local qs_pid="" qs_state qs_wchan qs_cpu qs_rss qs_blocked
     local qs_ticks_previous=0 qs_epoch_previous=0
-    local now_ms last_capture_ms=0
+    local now_ms last_capture_ms=0 auto_capture_armed=0 recorder_started_ms
 
     mkdir -p "$state_root"
+    recorder_started_ms="$(date +%s%3N)"
     exec 9> "$state_root/recorder.lock"
     if ! flock -n 9; then
         printf 'The stall recorder is already running.\n' >&2
@@ -221,6 +223,7 @@ run_recorder() {
         read -r carbon_state carbon_ms < <(probe qs ipc call carbon ping)
 
         if [ "$carbon_state" = "ok" ] && [ "$hypr_state" = "ok" ]; then
+            auto_capture_armed=1
             stall_started_ms=0
             carbon_stall_s="0.0"
         else
@@ -235,7 +238,11 @@ run_recorder() {
             "$hypr_state" "$hypr_ms" "$carbon_state" "$carbon_ms" "$carbon_stall_s" \
             "$qs_cpu" "$qs_rss" "$qs_state" "$qs_wchan" "$qs_blocked" >> "$live_log"
 
-        if [ "$auto_capture" = "1" ] && { [ "$carbon_state" != "ok" ] || [ "$hypr_state" != "ok" ]; } &&
+        # Ignore normal initialization, but preserve evidence when startup never becomes healthy.
+        if [ "$auto_capture" = "1" ] &&
+            { [ "$carbon_state" != "ok" ] || [ "$hypr_state" != "ok" ]; } &&
+            { [ "$auto_capture_armed" = "1" ] ||
+                [ "$((now_ms - recorder_started_ms))" -ge "$((startup_grace_seconds * 1000))" ]; } &&
             [ "$((now_ms - last_capture_ms))" -ge "$((auto_capture_gap * 1000))" ]; then
             last_capture_ms="$now_ms"
             capture_state "auto: $hypr_state/$carbon_state" >/dev/null 2>&1 &
