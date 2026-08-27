@@ -171,7 +171,7 @@ Rectangle {
         StackLayout {
             id: tabStack
             Layout.fillWidth: true
-            implicitHeight: tabStack.children[0]?.tabLoader?.implicitHeight // TODO: make this less stupid
+            Layout.preferredHeight: tabStack.children[0]?.tabLoader?.implicitHeight // TODO: make this less stupid
             Layout.alignment: Qt.AlignVCenter
             property int realIndex: 0
             property int animationDuration: Appearance.animation.elementMoveFast.duration * 1.5
