@@ -87,12 +87,15 @@ Singleton {
 	FileView {
         id: stateFileView
         path: root.filePath
+        atomicWrites: true
+        // a watched self-write can otherwise reload the previous value over a fresh one
+        blockWrites: true
         watchChanges: true
-        // onFileChanged: {
-        //     console.log("[PersistentStateManager] File changed, reloading...")
-        //     this.reload()
-        //     delayedFileRead.start()
-        // }
+        // states are shared with the settings app, so pick up its writes
+        onFileChanged: {
+            this.reload()
+            delayedFileRead.start()
+        }
         onLoadedChanged: {
             const fileContent = stateFileView.text()
             root.applyStates(fileContent)

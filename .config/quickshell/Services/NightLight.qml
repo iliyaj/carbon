@@ -16,7 +16,7 @@ Singleton {
     readonly property int maxTemperature: 20000
 
     property bool available: false
-    property bool enabled: PersistentStates.nightLight.enabled
+    property bool enabled: false
     property date now: new Date()
     property int appliedTemperature: 0
     property real lastDaemonStart: 0
@@ -145,6 +145,13 @@ Singleton {
         root.apply()
     }
 
+    // assigning `enabled` would break a plain binding, so follow the shared state by hand
+    function syncEnabled(): void {
+        if (root.enabled !== PersistentStates.nightLight.enabled)
+            root.enabled = PersistentStates.nightLight.enabled
+        root.apply()
+    }
+
     function toggle(): void {
         root.setEnabled(!root.enabled)
     }
@@ -187,7 +194,15 @@ Singleton {
         root.apply()
     }
 
-    Component.onCompleted: root.refresh()
+    Component.onCompleted: {
+        root.enabled = PersistentStates.nightLight.enabled
+        root.refresh()
+    }
+
+    Connections {
+        target: PersistentStates.nightLight
+        function onEnabledChanged() { root.syncEnabled() }
+    }
 
     Process {
         id: timezoneProcess
