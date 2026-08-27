@@ -117,8 +117,8 @@ Scope {
                 }
 
                 Item {
-                    height: 1 // Prevent Wayland protocol error
-                    width: 1 // Prevent Wayland protocol error
+                    implicitWidth: 1 // Prevent a zero-sized layer surface request
+                    implicitHeight: 1
                 }
 
                 SearchWidget {

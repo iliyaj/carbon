@@ -122,7 +122,7 @@ Item { // Notification group area
 
         onDraggingChanged: () => {
             if (dragging && root.qmlParent) {
-                root.qmlParent.dragIndex = root.index ?? root.parent?.children?.indexOf(root) ?? 0;
+                root.qmlParent.dragIndex = root.index ?? root.parent?.children.indexOf(root) ?? 0;
             }
         }
 

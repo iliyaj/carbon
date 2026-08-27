@@ -19,7 +19,7 @@ import Qt.labs.platform
 Singleton {
     id: root
 
-    readonly property var renderPadding: 4 // This is to prevent cutoff in the rendered images
+    readonly property int renderPadding: 4 // Prevent rendered image edges from being clipped
 
     property list<string> processedHashes: []
     property var processedExpressions: ({})

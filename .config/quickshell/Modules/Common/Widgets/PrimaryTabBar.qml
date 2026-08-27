@@ -53,7 +53,7 @@ ColumnLayout {
     Item { // Tab indicator
         id: tabIndicator
         Layout.fillWidth: true
-        height: 3
+        implicitHeight: 3
         Connections {
             target: root
             function onExternalTrackedTabChanged() {

@@ -66,10 +66,6 @@ TabButton {
                     anchors.left: buttonContent.left
                     anchors.bottom: buttonContent.bottom
                 }
-                PropertyChanges {
-                    target: itemBackground
-                    implicitWidth: root.visualWidth
-                }
             }
             transitions: Transition {
                 AnchorAnimation {

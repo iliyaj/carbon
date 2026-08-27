@@ -43,7 +43,7 @@ Item {
                 Image {
                     property real size: slider.trackHeight * 1.3
                     Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-                    visible: source != ""
+                    visible: source.toString() !== ""
                     sourceSize.width: size
                     sourceSize.height: size
                     source: {

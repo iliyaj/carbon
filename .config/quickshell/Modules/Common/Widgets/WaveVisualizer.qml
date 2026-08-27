@@ -11,8 +11,8 @@ import Quickshell.Io
 
 Canvas { // Visualizer
     id: root
-    property list<var> points
-    property list<var> smoothPoints
+    property list<real> points
+    property list<real> smoothPoints
     property real maxVisualizerValue: 1000
     property int smoothing: 2
     property bool live: true

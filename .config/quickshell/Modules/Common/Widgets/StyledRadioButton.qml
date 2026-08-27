@@ -26,8 +26,8 @@ RadioButton {
             id: radio
             Layout.fillWidth: false
             Layout.alignment: Qt.AlignVCenter
-            width: 20
-            height: 20
+            implicitWidth: 20
+            implicitHeight: 20
             radius: Appearance?.rounding.full
             border.color: checked ? root.activeColor : root.inactiveColor
             border.width: 2

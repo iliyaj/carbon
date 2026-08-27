@@ -273,7 +273,7 @@ Item {
                                 Rectangle {
                                     Layout.fillWidth: true
                                     Layout.alignment: Qt.AlignVCenter
-                                    height: 1
+                                    implicitHeight: 1
                                     color: Appearance.colors.colOutlineVariant
                                 }
 

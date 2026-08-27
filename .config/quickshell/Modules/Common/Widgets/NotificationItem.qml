@@ -25,8 +25,9 @@ Item { // Notification item area
         "image": "",
         "summary": "",
         "time": 0,
-        "urgency": NotificationUrgency.Normal.toString(),
+        "urgency": String(NotificationUrgency.Normal),
     })
+    readonly property bool isCritical: notificationData.urgency === String(NotificationUrgency.Critical)
     property bool expanded: false
     property bool onlyNotification: false
     property real fontSize: Appearance.font.pixelSize.small
@@ -84,7 +85,7 @@ Item { // Notification item area
             "image": notification.image ?? "",
             "summary": notification.summary ?? "",
             "time": notification.time ?? 0,
-            "urgency": notification.urgency ?? NotificationUrgency.Normal.toString(),
+            "urgency": notification.urgency ?? String(NotificationUrgency.Normal),
         };
     }
 
@@ -226,7 +227,7 @@ Item { // Notification item area
         }
 
         color: (expanded && !onlyNotification) ?
-            (notificationData.urgency == NotificationUrgency.Critical) ?
+            root.isCritical ?
                 ColorUtils.mix(Appearance.colors.colSecondaryContainer, Appearance.colors.colLayer2, 0.35) :
                 (Appearance.colors.colSurfaceContainerHigh) :
             ColorUtils.transparentize(Appearance.colors.colSurfaceContainerHighest)
@@ -317,9 +318,6 @@ Item { // Notification item area
                     Behavior on opacity {
                         animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
                     }
-                    Behavior on height {
-                        animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
-                    }
                     Behavior on implicitHeight {
                         animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
                     }
@@ -343,7 +341,7 @@ Item { // Notification item area
                             contentItem: MaterialSymbol {
                                 iconSize: Appearance.font.pixelSize.large
                                 horizontalAlignment: Text.AlignHCenter
-                                color: (notificationData.urgency == NotificationUrgency.Critical) ?
+                                color: root.isCritical ?
                                     Appearance.m3colors.m3onSurfaceVariant : Appearance.m3colors.m3onSurface
                                 text: "close"
                             }
@@ -363,7 +361,7 @@ Item { // Notification item area
                             contentItem: MaterialSymbol {
                                 iconSize: Appearance.font.pixelSize.large
                                 horizontalAlignment: Text.AlignHCenter
-                                color: (notificationData.urgency == NotificationUrgency.Critical) ?
+                                color: root.isCritical ?
                                     Appearance.m3colors.m3onSurfaceVariant : Appearance.m3colors.m3onSurface
                                 text: "draw"
                             }
@@ -408,7 +406,7 @@ Item { // Notification item area
                                 id: copyIcon
                                 iconSize: Appearance.font.pixelSize.large
                                 horizontalAlignment: Text.AlignHCenter
-                                color: (notificationData.urgency == NotificationUrgency.Critical) ?
+                                color: root.isCritical ?
                                     Appearance.m3colors.m3onSurfaceVariant : Appearance.m3colors.m3onSurface
                                 text: "content_copy"
                             }

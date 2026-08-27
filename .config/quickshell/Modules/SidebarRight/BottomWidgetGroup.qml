@@ -128,7 +128,7 @@ Rectangle {
             Layout.fillWidth: false
             Layout.leftMargin: 10
             Layout.topMargin: 10
-            width: tabBar.width
+            implicitWidth: tabBar.implicitWidth
             // Navigation rail buttons
             NavigationRailTabArray {
                 id: tabBar
@@ -171,7 +171,7 @@ Rectangle {
         StackLayout {
             id: tabStack
             Layout.fillWidth: true
-            height: tabStack.children[0]?.tabLoader?.implicitHeight // TODO: make this less stupid
+            implicitHeight: tabStack.children[0]?.tabLoader?.implicitHeight // TODO: make this less stupid
             Layout.alignment: Qt.AlignVCenter
             property int realIndex: 0
             property int animationDuration: Appearance.animation.elementMoveFast.duration * 1.5

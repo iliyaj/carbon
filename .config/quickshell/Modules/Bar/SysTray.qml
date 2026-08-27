@@ -40,9 +40,7 @@ Item {
             font.pixelSize: Appearance.font.pixelSize.larger
             color: Appearance.colors.colSubtext
             text: "•"
-            visible: {
-                SystemTray.items.values.length > 0
-            }
+            visible: SystemTray.items.values.length > 0
         }
 
     }

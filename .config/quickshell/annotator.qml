@@ -225,17 +225,17 @@ ShellRoot {
                     anchors.centerIn: parent
                     spacing: 8
 
-                    ToolButton {
+                    AnnotatorToolButton {
                         icon: "north_east"
                         active: root.tool === "arrow"
                         onClicked: root.tool = "arrow"
                     }
-                    ToolButton {
+                    AnnotatorToolButton {
                         icon: "crop_square"
                         active: root.tool === "rect"
                         onClicked: root.tool = "rect"
                     }
-                    ToolButton {
+                    AnnotatorToolButton {
                         icon: "title"
                         active: root.tool === "text"
                         onClicked: root.tool = "text"
@@ -247,11 +247,11 @@ ShellRoot {
                         color: "#33ffffff"
                     }
 
-                    ToolButton {
+                    AnnotatorToolButton {
                         icon: "content_copy"
                         onClicked: win.saveAndCopy()
                     }
-                    ToolButton {
+                    AnnotatorToolButton {
                         icon: "close"
                         onClicked: Qt.quit()
                     }
@@ -303,7 +303,7 @@ ShellRoot {
         Timer { id: retryTimer; interval: 100; onTriggered: win.saveAndCopy() }
         Timer { id: quitTimer; interval: 400; onTriggered: Qt.quit() }
 
-        component ToolButton: Rectangle {
+        component AnnotatorToolButton: Rectangle {
             id: btn
             property string icon: ""
             property bool active: false

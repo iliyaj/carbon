@@ -61,7 +61,7 @@ RippleButton {
         if (!root.itemName) return [];
         // Regular expression to match URLs
         const urlRegex = /https?:\/\/[^\s<>"{}|\\^`[\]]+/gi;
-        const matches = root.itemName?.match(urlRegex)
+        const matches = root.itemName.match(urlRegex)
             ?.filter(url => !url.includes("…")) // Elided = invalid
         return matches ? matches : [];
     }
