@@ -21,8 +21,23 @@ Singleton {
     property int appliedTemperature: 0
     property real lastDaemonStart: 0
 
-    readonly property real latitude: ConfigOptions.nightLight.latitude
-    readonly property real longitude: ConfigOptions.nightLight.longitude
+    property string timezone: ""
+    property real timezoneLatitude: NaN
+    property real timezoneLongitude: NaN
+
+    readonly property bool timezoneLocated: !isNaN(root.timezoneLatitude) && !isNaN(root.timezoneLongitude)
+    readonly property bool usingSystemLocation: ConfigOptions.nightLight.systemLocation && root.timezoneLocated
+
+    readonly property real latitude: root.usingSystemLocation ? root.timezoneLatitude : ConfigOptions.nightLight.latitude
+    readonly property real longitude: root.usingSystemLocation ? root.timezoneLongitude : ConfigOptions.nightLight.longitude
+
+    readonly property string locationText: {
+        if (root.usingSystemLocation)
+            return qsTr("%1 · %2").arg(root.timezone).arg(root.coordinatesText)
+        if (ConfigOptions.nightLight.systemLocation)
+            return qsTr("No coordinates for this timezone, using the values below")
+        return qsTr("Sunset schedule computed for %1").arg(root.coordinatesText)
+    }
 
     // 1 is full daylight, 0 is full night
     readonly property real progress: {
@@ -70,6 +85,23 @@ Singleton {
         return qsTr("Warms %1–%2, clears %3–%4")
             .arg(root.clock(dusk.setting)).arg(root.clock(dawn.setting))
             .arg(root.clock(dawn.rising)).arg(root.clock(dusk.rising))
+    }
+
+    // tzdata gives each zone a representative city in ISO 6709, as +DDMM+DDDMM or +DDMMSS+DDDMMSS
+    function handleTimezone(line: string): void {
+        const parts = line.split("|")
+        root.timezone = parts[0] ?? ""
+
+        const match = (parts[1] ?? "").match(/^([+-])(\d{2})(\d{2})(\d{2})?([+-])(\d{3})(\d{2})(\d{2})?$/)
+        if (!match) {
+            root.timezoneLatitude = NaN
+            root.timezoneLongitude = NaN
+            return
+        }
+
+        const degrees = (sign, d, m, s) => (sign === "-" ? -1 : 1) * (Number(d) + Number(m) / 60 + Number(s ?? 0) / 3600)
+        root.timezoneLatitude = degrees(match[1], match[2], match[3], match[4])
+        root.timezoneLongitude = degrees(match[5], match[6], match[7], match[8])
     }
 
     function clamp(value: real, low: real, high: real): real {
@@ -136,6 +168,8 @@ Singleton {
         root.now = new Date()
         if (!probeProcess.running)
             probeProcess.running = true
+        if (!timezoneProcess.running)
+            timezoneProcess.running = true
     }
 
     function startDaemon(): void {
@@ -154,6 +188,17 @@ Singleton {
     }
 
     Component.onCompleted: root.refresh()
+
+    Process {
+        id: timezoneProcess
+        command: ["bash", "-c",
+            "tz=$(readlink -f /etc/localtime | sed 's|.*/zoneinfo/||');"
+            + " echo \"$tz|$(awk -F'\t' -v z=\"$tz\" '$0 !~ /^#/ && $3 == z {print $2; exit}'"
+            + " /usr/share/zoneinfo/zone1970.tab /usr/share/zoneinfo/zone.tab 2>/dev/null)\""]
+        stdout: SplitParser {
+            onRead: data => root.handleTimezone(data)
+        }
+    }
 
     Process {
         id: probeProcess

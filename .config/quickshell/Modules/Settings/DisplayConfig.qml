@@ -354,8 +354,14 @@ ContentPage {
             title: qsTr("Location")
             visible: !ConfigOptions.nightLight.manualSchedule
 
+            ConfigSwitch {
+                text: qsTr("Use the system timezone")
+                checked: ConfigOptions.nightLight.systemLocation
+                onCheckedChanged: ConfigLoader.setConfigValueAndSave("nightLight.systemLocation", checked)
+            }
             ConfigRow {
                 uniform: true
+                visible: !NightLight.usingSystemLocation
                 ValueField {
                     placeholderText: qsTr("Latitude")
                     configKey: "nightLight.latitude"
@@ -370,7 +376,7 @@ ContentPage {
             StyledText {
                 Layout.fillWidth: true
                 Layout.leftMargin: 8
-                text: qsTr("Sunset schedule computed for %1").arg(NightLight.coordinatesText)
+                text: NightLight.locationText
                 font.italic: true
                 color: Appearance.colors.colOnLayer1Inactive
                 wrapMode: Text.Wrap

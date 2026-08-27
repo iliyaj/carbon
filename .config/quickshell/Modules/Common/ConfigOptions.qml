@@ -111,8 +111,9 @@ Singleton {
         property string sunriseTime: "06:30" // start of the morning fade
         property string sunsetTime: "20:00" // start of the evening fade
         property int transitionMinutes: 60
-        property real latitude: -34.90
-        property real longitude: 138.60
+        property bool systemLocation: true // take coordinates from the system timezone
+        property real latitude: -37.82
+        property real longitude: 144.97
     }
 
     property QtObject notifications: QtObject {
