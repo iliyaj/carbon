@@ -107,8 +107,8 @@ hl.config({
         swallow_regex = "(foot|kitty|allacritty|Alacritty)",
         allow_session_lock_restore = true,
         initial_workspace_tracking = false,
-        -- Repeated activation requests from modal dialogs must not warp the pointer back to their centre.
         focus_on_activate = false,
+        enable_anr_dialog = false, -- suppress false warnings for apps like retroarch
     },
 
     binds = {
