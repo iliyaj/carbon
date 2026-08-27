@@ -305,6 +305,10 @@ ContentPage {
 
             ConfigSpinBox {
                 text: qsTr("Daytime (K)")
+                opacity: (!NightLight.enabled || NightLight.progress > 0) ? 1 : 0.4
+                Behavior on opacity {
+                    animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
+                }
                 value: ConfigOptions.nightLight.dayTemperature
                 from: 2000
                 to: 6500
@@ -313,6 +317,10 @@ ContentPage {
             }
             ConfigSpinBox {
                 text: qsTr("Night (K)")
+                opacity: (!NightLight.enabled || NightLight.progress < 1) ? 1 : 0.4
+                Behavior on opacity {
+                    animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
+                }
                 value: ConfigOptions.nightLight.nightTemperature
                 from: 2000
                 to: 6500
