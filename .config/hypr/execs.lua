@@ -11,11 +11,6 @@ local polkit_agent = lib.first_existing({
     "/usr/libexec/polkit-gnome-authentication-agent-1",
 })
 
-local geoclue_agent = lib.first_existing({
-    "/usr/lib/geoclue-2.0/demos/agent",
-    "/usr/libexec/geoclue-2.0/demos/agent",
-})
-
 local compositor_services = {
     "awww-daemon.service",
     "quickshell.service",
@@ -41,6 +36,8 @@ local autostart = {
     "hyprctl setcursor Bibata-Modern-Classic 24",
 
     "logid",
+
+    "hyprsunset", -- carbon drives its temperature over hyprctl
 }
 
 hl.on("hyprland.start", function()
@@ -58,11 +55,6 @@ hl.on("hyprland.start", function()
         hl.exec_cmd(polkit_agent)
     else
         hl.notification.create({ text = "No polkit authentication agent found", duration = 8000 })
-    end
-
-    if geoclue_agent and lib.in_path("gammastep") then
-        hl.exec_cmd(geoclue_agent)
-        hl.exec_cmd("sleep 1 && gammastep")
     end
 end)
 

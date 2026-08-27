@@ -164,7 +164,7 @@ Scope {
 
                             NetworkToggle {}
                             BluetoothToggle {}
-                            NightLight {}
+                            NightLightToggle {}
                             GameMode {}
                             IdleInhibitor {}
                             WindowControls {}

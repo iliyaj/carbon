@@ -104,6 +104,17 @@ Singleton {
         property string userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
     }
 
+    property QtObject nightLight: QtObject {
+        property bool manualSchedule: false // fixed clock times instead of solar elevation
+        property int dayTemperature: 6500
+        property int nightTemperature: 3800
+        property string sunriseTime: "06:30" // start of the morning fade
+        property string sunsetTime: "20:00" // start of the evening fade
+        property int transitionMinutes: 60
+        property real latitude: -34.90
+        property real longitude: 138.60
+    }
+
     property QtObject notifications: QtObject {
         property int maxRetained: 200
         property int persistDebounce: 500

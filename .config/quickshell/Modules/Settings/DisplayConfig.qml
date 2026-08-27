@@ -37,6 +37,21 @@ ContentPage {
         function onOutputsChanged() { root.resetSelections() }
     }
 
+    component ValueField: MaterialTextField {
+        property string configKey: ""
+        property string configValue: ""
+        Layout.fillWidth: true
+        text: configValue
+        onConfigValueChanged: {
+            if (!activeFocus)
+                text = configValue
+        }
+        onActiveFocusChanged: {
+            if (!activeFocus && text !== configValue)
+                ConfigLoader.setConfigValueAndSave(configKey, text)
+        }
+    }
+
     forceWidth: true
 
     ContentSection {
@@ -237,6 +252,128 @@ ContentPage {
                 })
                 if (output)
                     NagameDisplay.preview(output.connector, root.selectedModes[output.connector])
+            }
+        }
+    }
+
+    ContentSection {
+        title: qsTr("Night light")
+
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: Appearance.spacing.md
+
+            MaterialSymbol {
+                text: "nightlight"
+                iconSize: 28
+                color: NightLight.enabled ? Appearance.m3colors.m3primary : Appearance.m3colors.m3outline
+            }
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: 2
+                StyledText {
+                    Layout.fillWidth: true
+                    text: NightLight.statusText
+                    font.pixelSize: Appearance.font.pixelSize.larger
+                    font.weight: Font.Medium
+                }
+                StyledText {
+                    Layout.fillWidth: true
+                    text: NightLight.scheduleText
+                    font.italic: true
+                    color: Appearance.m3colors.m3outline
+                    wrapMode: Text.Wrap
+                }
+            }
+
+            RippleButtonWithIcon {
+                materialIcon: NightLight.enabled ? "bedtime_off" : "nightlight"
+                mainText: NightLight.enabled ? qsTr("Turn off") : qsTr("Turn on")
+                enabled: NightLight.available
+                onClicked: NightLight.toggle()
+            }
+        }
+
+        ContentSubsection {
+            title: qsTr("Temperature")
+
+            ConfigSpinBox {
+                text: qsTr("Daytime (K)")
+                value: ConfigOptions.nightLight.dayTemperature
+                from: 2000
+                to: 6500
+                stepSize: 100
+                onValueChanged: ConfigLoader.setConfigValueAndSave("nightLight.dayTemperature", value)
+            }
+            ConfigSpinBox {
+                text: qsTr("Night (K)")
+                value: ConfigOptions.nightLight.nightTemperature
+                from: 2000
+                to: 6500
+                stepSize: 100
+                onValueChanged: ConfigLoader.setConfigValueAndSave("nightLight.nightTemperature", value)
+            }
+        }
+
+        ContentSubsection {
+            title: qsTr("Schedule")
+            tooltip: qsTr("Without custom times, night light follows the sun's elevation at your location.")
+
+            ConfigSwitch {
+                text: qsTr("Use custom times")
+                checked: ConfigOptions.nightLight.manualSchedule
+                onCheckedChanged: ConfigLoader.setConfigValueAndSave("nightLight.manualSchedule", checked)
+            }
+            ConfigRow {
+                uniform: true
+                visible: ConfigOptions.nightLight.manualSchedule
+                ValueField {
+                    placeholderText: qsTr("Sunrise (HH:MM)")
+                    configKey: "nightLight.sunriseTime"
+                    configValue: ConfigOptions.nightLight.sunriseTime
+                }
+                ValueField {
+                    placeholderText: qsTr("Sunset (HH:MM)")
+                    configKey: "nightLight.sunsetTime"
+                    configValue: ConfigOptions.nightLight.sunsetTime
+                }
+            }
+            ConfigSpinBox {
+                visible: ConfigOptions.nightLight.manualSchedule
+                text: qsTr("Fade duration (minutes)")
+                value: ConfigOptions.nightLight.transitionMinutes
+                from: 1
+                to: 240
+                stepSize: 5
+                onValueChanged: ConfigLoader.setConfigValueAndSave("nightLight.transitionMinutes", value)
+            }
+        }
+
+        ContentSubsection {
+            title: qsTr("Location")
+            visible: !ConfigOptions.nightLight.manualSchedule
+
+            ConfigRow {
+                uniform: true
+                ValueField {
+                    placeholderText: qsTr("Latitude")
+                    configKey: "nightLight.latitude"
+                    configValue: String(ConfigOptions.nightLight.latitude)
+                }
+                ValueField {
+                    placeholderText: qsTr("Longitude")
+                    configKey: "nightLight.longitude"
+                    configValue: String(ConfigOptions.nightLight.longitude)
+                }
+            }
+            StyledText {
+                Layout.fillWidth: true
+                Layout.leftMargin: 8
+                text: qsTr("Sunset schedule computed for %1").arg(NightLight.coordinatesText)
+                font.italic: true
+                color: Appearance.colors.colOnLayer1Inactive
+                wrapMode: Text.Wrap
             }
         }
     }

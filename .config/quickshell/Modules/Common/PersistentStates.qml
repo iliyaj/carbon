@@ -10,6 +10,10 @@ Singleton {
         }
     }
 
+    property QtObject nightLight: QtObject {
+        property bool enabled: true
+    }
+
     property QtObject idle: QtObject {
         property bool inhibit: false
     }
