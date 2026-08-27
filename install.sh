@@ -175,6 +175,7 @@ link_config "$REPO_DIR/.config/kitty/kitty.conf" "$CONFIG_HOME/kitty/kitty.conf"
 # not also erase Carbon's unit definitions.
 install_config_file "$REPO_DIR/systemd/user/quickshell.service" "$CONFIG_HOME/systemd/user/quickshell.service"
 install_config_file "$REPO_DIR/systemd/user/awww-daemon.service" "$CONFIG_HOME/systemd/user/awww-daemon.service"
+install_config_file "$REPO_DIR/systemd/user/carbon-stall-recorder.service" "$CONFIG_HOME/systemd/user/carbon-stall-recorder.service"
 
 if [[ ! -e "$REPO_DIR/.config/hypr/user.env" ]]; then
     install -m 600 "$REPO_DIR/.config/hypr/user.env.example" "$REPO_DIR/.config/hypr/user.env"
@@ -205,3 +206,4 @@ fi
 
 printf '\nUse Super+Return to open Kitty. Use Super+/ to view all keybinds.\n'
 printf 'Nagame is installed but disabled; set it up graphically from Carbon Settings → Display.\n'
+printf 'The desktop stall recorder is installed but disabled; start it only while diagnosing a problem.\n'

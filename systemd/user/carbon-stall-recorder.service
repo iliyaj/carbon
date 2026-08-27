@@ -1,0 +1,18 @@
+[Unit]
+Description=Carbon desktop stall flight recorder
+PartOf=graphical-session.target
+After=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=%h/.config/quickshell/Scripts/Diagnostics/stall-recorder.sh run
+Restart=on-failure
+RestartSec=5
+Nice=10
+IOSchedulingClass=idle
+CPUWeight=10
+IOWeight=10
+NoNewPrivileges=true
+
+[Install]
+WantedBy=graphical-session.target

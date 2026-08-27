@@ -47,7 +47,7 @@ The cheatsheet reads Hyprland's live bind inventory and is the authoritative lis
 - `.config/quickshell/` - shell, settings app, QML modules, services, scripts, and bundled default wallpaper
 - `.config/matugen/` - templates used by Carbon's Material color pipeline
 - `.config/fuzzel/` and `.config/kitty/` - application configs that load generated colors
-- `systemd/user/` - portable Quickshell and wallpaper-daemon user units
+- `systemd/user/` - portable shell, wallpaper-daemon, and opt-in diagnostic user units
 - `requirements.txt` and `packages.arch` - pinned Python and Arch package inputs
 
 ## Release and security
@@ -55,6 +55,24 @@ The cheatsheet reads Hyprland's live bind inventory and is the authoritative lis
 The public repository starts with a fresh Git history so discarded private development history cannot be published accidentally. Machine facts belong in ignored `user.env`; runtime and generated state belong outside the checkout.
 
 See [ATTRIBUTION.md](ATTRIBUTION.md) for upstream and third-party provenance. Publishing or pushing is never part of the automated checks in `scripts/check-release.sh`.
+
+## Optional stall diagnostics
+
+The desktop stall recorder is installed in a disabled state and never starts automatically. Start it temporarily when investigating an intermittent desktop problem:
+
+```bash
+systemctl --user start carbon-stall-recorder.service
+```
+
+It keeps a rolling 15-minute window of samples and writes a capture on its own whenever a probe fails, so a stall is preserved even if nobody is at the keyboard. `Super + \` forces a capture for problems that never trip a probe.
+
+```bash
+~/.config/quickshell/Scripts/Diagnostics/stall-recorder.sh capture
+~/.config/quickshell/Scripts/Diagnostics/stall-recorder.sh status
+systemctl --user stop carbon-stall-recorder.service
+```
+
+Samples and captures live in `$XDG_STATE_HOME/carbon/stall-recorder/`. Each capture holds the sample window, a system summary, per-thread state for the shell, and recent journals.
 
 ## License
 
