@@ -75,8 +75,40 @@ Singleton {
         NotifTimer {}
     }
 
+    property int maxRetained: ConfigOptions?.notifications?.maxRetained ?? 200
+    property int persistDebounce: ConfigOptions?.notifications?.persistDebounce ?? 500
+
     function stringifyList(list) {
-        return JSON.stringify(list.map((notif) => notifToJSON(notif)), null, 2);
+        return JSON.stringify(list.map((notif) => notifToJSON(notif)));
+    }
+
+    Timer {
+        id: persistTimer
+        interval: root.persistDebounce
+        repeat: false
+        onTriggered: notifFileView.setText(root.stringifyList(root.list))
+    }
+
+    function schedulePersist() {
+        persistTimer.restart();
+    }
+
+    function trimList() {
+        if (root.maxRetained <= 0)
+            return;
+
+        const current = [...root.list];
+        const overflow = current.length - root.maxRetained;
+        if (overflow <= 0)
+            return;
+
+        const evicted = current.slice(0, overflow);
+        root.list = current.slice(overflow);
+        evicted.forEach(notif => {
+            if (notif.timer)
+                notif.timer.destroy();
+            Qt.callLater(() => notif.destroy());
+        });
     }
 
     onListChanged: {
@@ -165,7 +197,8 @@ Singleton {
 
             root.notify(newNotifObject);
             // console.log(notifToString(newNotifObject));
-            notifFileView.setText(stringifyList(root.list));
+            root.trimList();
+            root.schedulePersist();
         }
     }
 
@@ -177,7 +210,7 @@ Singleton {
 
         // One assignment prevents groups from rendering every intermediate count.
         root.list = root.list.filter(notif => !idSet.has(notif.id));
-        notifFileView.setText(stringifyList(root.list));
+        root.schedulePersist();
 
         notifServer.trackedNotifications.values
             .filter(notif => idSet.has(notif.id + root.idOffset))
@@ -262,6 +295,10 @@ Singleton {
 
             console.log("[Notifications] File loaded")
             root.idOffset = maxId
+            if (root.list.length > root.maxRetained) {
+                root.trimList();
+                root.schedulePersist();
+            }
             root.initDone()
         }
         onLoadFailed: (error) => {
