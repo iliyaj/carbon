@@ -297,6 +297,11 @@ ContentPage {
 
         ContentSubsection {
             title: qsTr("Temperature")
+            enabled: NightLight.enabled
+            opacity: NightLight.enabled ? 1 : 0.4
+            Behavior on opacity {
+                animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
+            }
 
             ConfigSpinBox {
                 text: qsTr("Daytime (K)")
@@ -318,6 +323,11 @@ ContentPage {
 
         ContentSubsection {
             title: qsTr("Schedule")
+            enabled: NightLight.enabled
+            opacity: NightLight.enabled ? 1 : 0.4
+            Behavior on opacity {
+                animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
+            }
             tooltip: qsTr("Without custom times, night light follows the sun's elevation at your location.")
 
             ConfigSwitch {
@@ -352,6 +362,11 @@ ContentPage {
 
         ContentSubsection {
             title: qsTr("Location")
+            enabled: NightLight.enabled
+            opacity: NightLight.enabled ? 1 : 0.4
+            Behavior on opacity {
+                animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
+            }
             visible: !ConfigOptions.nightLight.manualSchedule
 
             ConfigSwitch {
