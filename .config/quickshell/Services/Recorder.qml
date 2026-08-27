@@ -102,7 +102,8 @@ Scope {
 
     Process {
         id: regionProcess
-        command: ["slurp"]
+        // Keep slurp's stdin closed.
+        command: ["sh", "-c", "exec slurp </dev/null"]
         stdout: StdioCollector {}
         onExited: (exitCode, exitStatus) => {
             const geometry = stdout.text.trim()
