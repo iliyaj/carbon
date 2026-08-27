@@ -44,15 +44,9 @@ if [ ${#targets[@]} -eq 0 ]; then
     mapfile -t targets < <(find . -name '*.qml' -printf '%P\n' | sort)
 fi
 
-# Quickshell's own types and nested QtObject properties do not resolve standalone; these
-# categories are noise here, everything else reports.
-MUTED=(--missing-property disable --unqualified disable --unresolved-type disable
-       --signal-handler-parameters disable --unused-imports disable --property-override disable
-       --import disable --uncreatable-type disable --missing-type disable)
-
 status=0
 for f in "${targets[@]}"; do
-    out=$("$QMLLINT" "${MUTED[@]}" "$f" 2>&1)
+    out=$("$QMLLINT" "$f" 2>&1)
     rc=$?
     if [ -n "$out" ] || [ $rc -ne 0 ]; then
         printf '### %s (rc=%s)\n%s\n' "$f" "$rc" "${out:-<no output; rc $rc means a parse error>}"
