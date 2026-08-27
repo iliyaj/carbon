@@ -55,7 +55,10 @@ ApplicationWindow {
     property int currentPage: 0
 
     visible: true
-    onClosing: Qt.quit()
+    onClosing: {
+        ConfigLoader.flushConfig()
+        Qt.quit()
+    }
     title: "Carbon Settings"
 
     Component.onCompleted: {

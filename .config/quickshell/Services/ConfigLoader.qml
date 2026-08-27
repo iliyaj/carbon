@@ -19,6 +19,7 @@ Singleton {
     property bool firstLoad: true
     property bool migrationRequested: false
     property var preventNextNotification: false
+    property bool savePending: false
 
     function loadConfig() {
         // FileView.preload already starts the initial asynchronous read. Calling
@@ -104,8 +105,26 @@ Singleton {
             return
         setLiveConfigValue(nestedKey, value);
         root.preventNextNotification = preventNextNotification;
+        root.savePending = true;
+        saveDebounce.restart();
+    }
+
+    // a whole-config write costs both processes real work, so coalesce bursts of edits
+    function flushConfig() {
+        if (!root.savePending)
+            return
+        saveDebounce.stop();
+        root.savePending = false;
         saveConfig();
     }
+
+    Timer {
+        id: saveDebounce
+        interval: 400
+        onTriggered: root.flushConfig()
+    }
+
+    Component.onDestruction: root.flushConfig()
 
     Timer {
         id: delayedFileRead
