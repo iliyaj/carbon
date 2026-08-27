@@ -8,6 +8,7 @@ local home = lib.home
 
 local qs_alive = "qs ipc call carbon ping"
 local theme_tool = home .. "/.config/quickshell/Scripts/Colors/theme.py"
+local stall_recorder = home .. "/.config/quickshell/Scripts/Diagnostics/stall-recorder.sh"
 
 local terminal = lib.first_installed({
     "kitty -1", "foot", "alacritty", "wezterm", "konsole", "kgx", "uxterm", "xterm",
@@ -132,6 +133,9 @@ hl.bind("CTRL + ALT + R", hl.dsp.exec_cmd("qs ipc call recorder toggleFullscreen
     { description = "Utilities: Record screen (no sound)" })
 hl.bind("SUPER + F9", hl.dsp.exec_cmd("qs ipc call recorder toggleFullscreenAudio"),
     { description = "Utilities: Record screen (with sound)" })
+
+hl.bind("SUPER + Backslash", hl.dsp.exec_cmd(stall_recorder .. " capture"),
+    { locked = true, description = "Utilities: Capture desktop stall" })
 
 --------------------------------------------------------------------------------
 -- Window
