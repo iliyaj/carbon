@@ -16,10 +16,23 @@ Singleton {
     property var addresses: []
     property var windowByAddress: ({})
     property var monitors: []
+    readonly property var legacyEvents: [
+        "activewindow", "focusedmon", "monitoradded",
+        "createworkspace", "destroyworkspace", "moveworkspace",
+        "activespecial", "movewindow", "windowtitle"
+    ]
+
+    function updateClients() {
+        getClients.running = true
+    }
+
+    function updateMonitors() {
+        getMonitors.running = true
+    }
 
     function updateWindowList() {
-        getClients.running = true
-        getMonitors.running = true
+        updateClients()
+        updateMonitors()
     }
 
     Component.onCompleted: {
@@ -30,12 +43,11 @@ Singleton {
         target: Hyprland
 
         function onRawEvent(event) {
-            // Filter out redundant old v1 events for the same thing
-            if(event.name in [
-                "activewindow", "focusedmon", "monitoradded",
-                "createworkspace", "destroyworkspace", "moveworkspace",
-                "activespecial", "movewindow", "windowtitle"
-            ]) return ;
+            // Active-window events repeat with animated titles; neither changes cached layout data.
+            if (root.legacyEvents.includes(event.name)
+                    || event.name === "activewindowv2"
+                    || event.name === "windowtitlev2")
+                return
             updateWindowList()
         }
     }

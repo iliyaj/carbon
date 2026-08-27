@@ -13,6 +13,15 @@ Scope {
     id: overviewScope
     property bool dontAutoCancelSearch: false
 
+    Connections {
+        target: GlobalStates
+
+        function onOverviewOpenChanged(): void {
+            if (GlobalStates.overviewOpen)
+                HyprlandData.updateClients()
+        }
+    }
+
     function virtualBoxWindowIsActive(): bool {
         const active = ToplevelManager.activeToplevel
         return /^VirtualBox/.test(active?.appId ?? "")
