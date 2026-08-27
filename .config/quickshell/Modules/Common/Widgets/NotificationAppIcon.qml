@@ -28,6 +28,13 @@ Rectangle { // App icon
     radius: Appearance.rounding.full
     color: Appearance.colors.colSecondaryContainer
 
+    function resolvedAppIcon(icon) {
+        // Screenshot tools commonly put an absolute image path in app_icon.
+        if (icon.startsWith("/") || icon.startsWith("file://"))
+            return Qt.resolvedUrl(icon)
+        return Quickshell.iconPath(icon, "image-missing")
+    }
+
     // Keep every icon layer instantiated so source changes cannot rebuild the card in stages.
     MaterialSymbol {
         visible: root.image == "" && root.appIcon == ""
@@ -51,7 +58,7 @@ Rectangle { // App icon
         anchors.centerIn: parent
         implicitSize: root.appIconSize
         asynchronous: false
-        source: visible ? Quickshell.iconPath(root.appIcon, "image-missing") : ""
+        source: visible ? root.resolvedAppIcon(root.appIcon) : ""
     }
 
     Item {
@@ -88,7 +95,7 @@ Rectangle { // App icon
             anchors.right: parent.right
             implicitSize: root.smallAppIconSize
             asynchronous: false
-            source: visible ? Quickshell.iconPath(root.appIcon, "image-missing") : ""
+            source: visible ? root.resolvedAppIcon(root.appIcon) : ""
         }
     }
 }
