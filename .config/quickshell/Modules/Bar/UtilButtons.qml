@@ -96,6 +96,22 @@ Item {
         }
 
         Loader {
+            active: ConfigOptions.bar.utilButtons.showClipboard
+            visible: ConfigOptions.bar.utilButtons.showClipboard
+            sourceComponent: CircleUtilButton {
+                Layout.alignment: Qt.AlignVCenter
+                onClicked: Hyprland.dispatch("hl.dsp.global([[quickshell:overviewClipboardToggle]])")
+                MaterialSymbol {
+                    horizontalAlignment: Qt.AlignHCenter
+                    fill: 0
+                    text: "content_paste_search"
+                    iconSize: Appearance.font.pixelSize.large
+                    color: Appearance.colors.colOnLayer2
+                }
+            }
+        }
+
+        Loader {
             active: ConfigOptions.bar.utilButtons.showColorPicker
             visible: ConfigOptions.bar.utilButtons.showColorPicker
             sourceComponent: CircleUtilButton {

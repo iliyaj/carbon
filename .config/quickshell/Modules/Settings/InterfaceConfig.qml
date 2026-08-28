@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import Quickshell
 import "root:/Services/"
 import "root:/Modules/Common/"
 import "root:/Modules/Common/Widgets/"
@@ -65,6 +66,16 @@ ContentPage {
                     checked: ConfigOptions.bar.utilButtons.showColorPicker
                     onCheckedChanged: {
                         ConfigLoader.setConfigValueAndSave("bar.utilButtons.showColorPicker", checked);
+                    }
+                }
+            }
+            ConfigRow {
+                uniform: true
+                ConfigSwitch {
+                    text: "Clipboard"
+                    checked: ConfigOptions.bar.utilButtons.showClipboard
+                    onCheckedChanged: {
+                        ConfigLoader.setConfigValueAndSave("bar.utilButtons.showClipboard", checked);
                     }
                 }
             }
@@ -147,6 +158,23 @@ ContentPage {
                 onValueChanged: {
                     ConfigLoader.setConfigValueAndSave("bar.workspaces.showNumberDelay", value);
                 }
+            }
+        }
+    }
+
+    ContentSection {
+        title: "Clipboard"
+
+        RippleButtonWithIcon {
+            materialIcon: "delete_sweep"
+            mainText: "Clear clipboard history"
+            onClicked: Quickshell.execDetached([
+                "bash",
+                "-c",
+                "cliphist wipe && wl-copy --clear && notify-send -a Carbon 'Clipboard cleared' 'Clipboard contents and history were removed'"
+            ])
+            StyledToolTip {
+                content: "Permanently removes the current clipboard contents and all saved entries"
             }
         }
     }
