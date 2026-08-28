@@ -2,12 +2,30 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell
+import Quickshell.Hyprland
 import "root:/Services/"
 import "root:/Modules/Common/"
+import "root:/Modules/Common/Functions/"
 import "root:/Modules/Common/Widgets/"
 
 ContentPage {
+    id: root
+
     forceWidth: true
+
+    function openMXMouse(): void {
+        const window = HyprlandData.windowList.find(client =>
+            client.class === "org.quickshell" && client.title === "MX Master 3")
+        if (window?.address) {
+            Hyprland.dispatch(`hl.dsp.focus({ window = ${LuaUtils.stringLiteral(`address:${window.address}`)} })`)
+            return
+        }
+
+        Quickshell.execDetached([
+            "/usr/bin/quickshell", "--no-duplicate", "--path",
+            FileUtils.trimFileProtocol(`${Directories.config}/quickshell/mx-mouse.qml`)
+        ])
+    }
 
     ContentSection {
         title: "Audio"
@@ -146,6 +164,19 @@ ContentPage {
                 StyledToolTip {
                     content: "Edit mimeapps.list, the XDG default application associations"
                 }
+            }
+        }
+    }
+
+    ContentSection {
+        title: "Devices"
+
+        RippleButtonWithIcon {
+            materialIcon: "mouse"
+            mainText: qsTr("Open MX Master 3 controls")
+            onClicked: root.openMXMouse()
+            StyledToolTip {
+                content: qsTr("View the active MX Master 3 button configuration")
             }
         }
     }
