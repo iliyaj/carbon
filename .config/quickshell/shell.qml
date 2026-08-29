@@ -29,9 +29,8 @@ import Quickshell
 import Quickshell.Io
 import "./Services/"
 
+// Enable or disable modules here. 
 ShellRoot {
-    // Enable/disable modules here. False = not loaded at all, so rest assured
-    // no unnecessary stuff will take up memory if you decide to only use, say, the overview.
     property bool enableBar: true
     property bool enableBackgroundWidgets: true
     property bool enableCheatsheet: true
@@ -54,15 +53,25 @@ ShellRoot {
         function ping(): void {}
     }
 
+    function initializeNightLight(): void {
+        if (PersistentStateManager.allowWriteback)
+            NightLight.enabled
+    }
+
     // Force initialization of some singletons
     Component.onCompleted: {
         MaterialThemeLoader.reapplyTheme()
         ConfigLoader.loadConfig()
         PersistentStateManager.loadStates()
-        // Touch Idle so a persisted inhibit re-engages without waiting for the sidebar
+        initializeNightLight()
         Idle.inhibit
         Cliphist.refresh()
         FirstRunExperience.load()
+    }
+
+    Connections {
+        target: PersistentStateManager
+        function onAllowWritebackChanged(): void { initializeNightLight() }
     }
 
     Autolock {
