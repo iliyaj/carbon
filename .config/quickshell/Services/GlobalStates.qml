@@ -14,13 +14,26 @@ Singleton {
     property bool workspaceShowNumbers: false
     property bool gameMode: false
 
+    function applyGameMode(): void {
+        Hyprland.dispatch("function() hl.config({ animations = { enabled = false }, decoration = { shadow = { enabled = false }, blur = { enabled = false }, rounding = 0 }, general = { gaps_in = 0, gaps_out = 0, border_size = 1, allow_tearing = true } }) end");
+    }
+
     // Strips the compositor's eye candy; shell surfaces watch gameMode to drop their own rounding
     function setGameMode(enabled: bool): void {
         root.gameMode = enabled;
         if (enabled)
-            Hyprland.dispatch("function() hl.config({ animations = { enabled = false }, decoration = { shadow = { enabled = false }, blur = { enabled = false }, rounding = 0 }, general = { gaps_in = 0, gaps_out = 0, border_size = 1, allow_tearing = true } }) end");
+            root.applyGameMode();
         else
             Quickshell.execDetached(["hyprctl", "reload"]);
+    }
+
+    Connections {
+        target: Hyprland
+
+        function onRawEvent(event) {
+            if (event.name === "configreloaded" && root.gameMode)
+                root.applyGameMode();
+        }
     }
 
     // Game mode outlives the shell, so recover it from the compositor instead of assuming it is off
