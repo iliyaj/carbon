@@ -111,20 +111,26 @@ Singleton {
         setLiveConfigValue(nestedKey, value);
         root.preventNextNotification = preventNextNotification;
         root.savePending = true;
-        saveDebounce.restart();
+        // A single edit writes at once so the other process reacts immediately; a burst behind it still coalesces
+        if (saveCooldown.running) {
+            saveCooldown.restart();
+            return;
+        }
+        root.flushConfig();
+        saveCooldown.restart();
     }
 
     // a whole-config write costs both processes real work, so coalesce bursts of edits
     function flushConfig() {
         if (!root.savePending)
             return
-        saveDebounce.stop();
+        saveCooldown.stop();
         root.savePending = false;
         saveConfig();
     }
 
     Timer {
-        id: saveDebounce
+        id: saveCooldown
         interval: 400
         onTriggered: root.flushConfig()
     }

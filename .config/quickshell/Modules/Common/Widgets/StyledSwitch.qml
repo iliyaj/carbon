@@ -45,13 +45,13 @@ Switch {
         anchors.leftMargin: root.checked ? ((root.pressed || root.down) ? (22 * root.scale) : 24 * root.scale) : ((root.pressed || root.down) ? (2 * root.scale) : 8 * root.scale)
 
         Behavior on anchors.leftMargin {
-            animation: Appearance.animation.elementMove.numberAnimation.createObject(this)
+            animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
         }
         Behavior on width {
-            animation: Appearance.animation.elementMove.numberAnimation.createObject(this)
+            animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
         }
         Behavior on height {
-            animation: Appearance.animation.elementMove.numberAnimation.createObject(this)
+            animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
         }
         Behavior on color {
             animation: Appearance.animation.elementMoveFast.colorAnimation.createObject(this)
