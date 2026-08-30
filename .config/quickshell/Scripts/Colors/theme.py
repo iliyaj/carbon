@@ -173,7 +173,11 @@ def palette_thumbnail(image: Path) -> Path:
 def detect_scheme(image: Path) -> str:
     result = run([virtualenv_python(), SCRIPT_DIR / "scheme_for_image.py", image], check=False, capture=True)
     detected = result.stdout.strip()
-    return detected if detected in SCHEMES else "scheme-tonal-spot"
+    if result.returncode != 0 or detected not in SCHEMES:
+        message = result.stderr.strip() or f"unexpected output '{detected}'"
+        print(f"theme.py: automatic scheme detection failed, using scheme-tonal-spot: {message}", file=sys.stderr)
+        return "scheme-tonal-spot"
+    return detected
 
 
 def choose_wallpaper() -> str:
