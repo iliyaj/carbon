@@ -76,8 +76,18 @@ Singleton {
                 Object.keys(obj).every(key => !isNaN(key) || key === "length");
         };
 
+        // Rebuilding a list notifies once per element, so an unchanged list must be left alone
+        const sameList = (list, jsonList) => {
+            if (list.length !== jsonList.length) return false;
+            for (let i = 0; i < jsonList.length; i++) {
+                if (list[i] !== jsonList[i]) return false;
+            }
+            return true;
+        };
+
         // If both are arrays or array-like, update in place or replace
         if ((Array.isArray(qtObj) || isQtArrayLike(qtObj)) && Array.isArray(jsonObj)) {
+            if (sameList(qtObj, jsonObj)) return;
             qtObj.length = 0;
             for (let i = 0; i < jsonObj.length; i++) {
                 qtObj.push(jsonObj[i]);
@@ -108,13 +118,14 @@ Singleton {
             const value = qtObj[key];
             const jsonValue = jsonObj[key];
             if ((Array.isArray(value) || isQtArrayLike(value)) && Array.isArray(jsonValue)) {
+                if (sameList(value, jsonValue)) continue;
                 value.length = 0;
                 for (let i = 0; i < jsonValue.length; i++) {
                     value.push(jsonValue[i]);
                 }
             } else if (isQtObject(value)) {
                 root.applyToQtObject(value, jsonValue);
-            } else {
+            } else if (value !== jsonValue) {
                 qtObj[key] = jsonValue;
             }
         }
