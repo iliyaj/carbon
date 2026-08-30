@@ -64,6 +64,7 @@ ApplicationWindow {
     Component.onCompleted: {
         MaterialThemeLoader.reapplyTheme()
         ConfigLoader.loadConfig()
+        PersistentStateManager.loadStates()
     }
 
     // Wide enough for the five tabs at their 160px minimum, since content only needs 606
