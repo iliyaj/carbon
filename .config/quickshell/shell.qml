@@ -10,6 +10,7 @@ import "./Modules/AppImageInstaller/"
 import "./Modules/BackgroundWidgets/"
 import "./Modules/Bar/"
 import "./Modules/Cheatsheet/"
+import "./Modules/ClickVisualizer/"
 import "./Modules/Dock/"
 import "./Modules/MediaControls/"
 import "./Modules/NotificationPopup/"
@@ -34,6 +35,7 @@ ShellRoot {
     property bool enableBar: true
     property bool enableBackgroundWidgets: true
     property bool enableCheatsheet: true
+    property bool enableClickVisualizer: true
     property bool enableDock: false
     property bool enableMediaControls: true
     property bool enableNotificationPopup: true
@@ -83,6 +85,7 @@ ShellRoot {
     LazyLoader { active: enableBar; component: Bar {} }
     LazyLoader { active: enableBackgroundWidgets && ConfigOptions.background.showClock; component: BackgroundWidgets {} }
     LazyLoader { active: enableCheatsheet; component: Cheatsheet {} }
+    LazyLoader { active: enableClickVisualizer && ConfigOptions.accessibility.showMouseClicks; component: ClickVisualizer {} }
     LazyLoader { active: enableDock; component: Dock {} }
     LazyLoader { active: enableMediaControls; component: MediaControls {} }
     LazyLoader { active: enableNotificationPopup; component: NotificationPopup {} }

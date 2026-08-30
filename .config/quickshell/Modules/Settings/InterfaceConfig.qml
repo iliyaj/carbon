@@ -314,4 +314,21 @@ ContentPage {
         }
 
     }
+
+    ContentSection {
+        title: "Accessibility"
+
+        ConfigRow {
+            ConfigSwitch {
+                text: "Show mouse clicks"
+                checked: ConfigOptions.accessibility.showMouseClicks
+                onCheckedChanged: {
+                    ConfigLoader.setConfigValueAndSave("accessibility.showMouseClicks", checked);
+                }
+                StyledToolTip {
+                    content: "Shows a brief pointer ripple for demonstrations and recordings"
+                }
+            }
+        }
+    }
 }

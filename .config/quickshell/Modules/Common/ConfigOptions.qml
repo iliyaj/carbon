@@ -4,6 +4,10 @@ import QtQuick
 import Quickshell
 
 Singleton {
+    property QtObject accessibility: QtObject {
+        property bool showMouseClicks: false
+    }
+
     property QtObject appearance: QtObject {
         property int fakeScreenRounding: 2 // 0: None | 1: Always | 2: When not fullscreen
         property bool transparency: false
