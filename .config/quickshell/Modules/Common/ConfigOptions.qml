@@ -33,6 +33,7 @@ Singleton {
 
     property QtObject background: QtObject {
         property bool showClock: true
+        property bool hideWhenFullscreen: true
         property bool fixedClockPosition: false
         property real clockX: -500
         property real clockY: -500

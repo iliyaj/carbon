@@ -59,77 +59,79 @@ Scope {
     Variants { // For each monitor
         model: Quickshell.screens
 
-        LazyLoader {
+        PanelWindow { // Window
+            id: windowRoot
             required property var modelData
             readonly property HyprlandMonitor monitor: Hyprland.monitorFor(modelData)
-            activeAsync: !ToplevelManager.activeToplevel?.activated
-            component: PanelWindow { // Window
-                id: windowRoot
-                screen: modelData
-                property var textHorizontalAlignment: root.effectiveCenterX / monitor.scale < windowRoot.width / 3 ? Text.AlignLeft :
-                    (root.effectiveCenterX / monitor.scale > windowRoot.width * 2 / 3 ? Text.AlignRight : Text.AlignHCenter)
+            // Windows already cover the bottom layer, so only a fullscreen client on this screen needs hiding
+            readonly property bool coveredByFullscreen: HyprlandData.windowList.some(window =>
+                window.fullscreen > 0
+                && window.monitor === windowRoot.monitor?.id
+                && window.workspace?.id === windowRoot.monitor?.activeWorkspace?.id)
+            screen: modelData
+            visible: !(windowRoot.coveredByFullscreen && ConfigOptions.background.hideWhenFullscreen)
+            property var textHorizontalAlignment: root.effectiveCenterX / monitor.scale < windowRoot.width / 3 ? Text.AlignLeft :
+                (root.effectiveCenterX / monitor.scale > windowRoot.width * 2 / 3 ? Text.AlignRight : Text.AlignHCenter)
 
-                WlrLayershell.layer: WlrLayer.Bottom
-                WlrLayershell.namespace: "quickshell:backgroundWidgets"
+            WlrLayershell.layer: WlrLayer.Bottom
+            WlrLayershell.namespace: "quickshell:backgroundWidgets"
 
+            anchors {
+                top: true
+                bottom:true
+                left: true
+                right: true
+            }
+            color: "transparent"
+            HyprlandWindow.visibleMask: Region {
+                item: widgetBackground
+            }
+
+            Rectangle {
+                id: widgetBackground
+                property real verticalPadding: 20
+                property real horizontalPadding: 30
+                radius: 40
+                color: root.colBackground
+                implicitHeight: columnLayout.implicitHeight + verticalPadding * 2
+                implicitWidth: columnLayout.implicitWidth + horizontalPadding * 2
                 anchors {
-                    top: true
-                    bottom:true
-                    left: true
-                    right: true
-                }
-                color: "transparent"
-                HyprlandWindow.visibleMask: Region {
-                    item: widgetBackground
-                }
-
-                Rectangle {
-                    id: widgetBackground
-                    property real verticalPadding: 20
-                    property real horizontalPadding: 30
-                    radius: 40
-                    color: root.colBackground
-                    implicitHeight: columnLayout.implicitHeight + verticalPadding * 2
-                    implicitWidth: columnLayout.implicitWidth + horizontalPadding * 2
-                    anchors {
-                        left: parent.left
-                        top: parent.top
-                        leftMargin: (root.effectiveCenterX / monitor.scale - implicitWidth / 2)
-                        topMargin: (root.effectiveCenterY / monitor.scale - implicitHeight / 2)
-                        Behavior on leftMargin {
-                            animation: Appearance.animation.elementMove.numberAnimation.createObject(this)
-                        }
-                        Behavior on topMargin {
-                            animation: Appearance.animation.elementMove.numberAnimation.createObject(this)
-                        }
+                    left: parent.left
+                    top: parent.top
+                    leftMargin: (root.effectiveCenterX / monitor.scale - implicitWidth / 2)
+                    topMargin: (root.effectiveCenterY / monitor.scale - implicitHeight / 2)
+                    Behavior on leftMargin {
+                        animation: Appearance.animation.elementMove.numberAnimation.createObject(this)
                     }
-
-                    ColumnLayout {
-                        id: columnLayout
-                        anchors.centerIn: parent
-                        spacing: -5
-
-                        StyledText {
-                            Layout.fillWidth: true
-                            horizontalAlignment: windowRoot.textHorizontalAlignment
-                            font.pixelSize: 95
-                            color: root.colText
-                            style: Text.Raised
-                            styleColor: Appearance.colors.colShadow
-                            text: DateTime.time
-                        }
-                        StyledText {
-                            Layout.fillWidth: true
-                            horizontalAlignment: windowRoot.textHorizontalAlignment
-                            font.pixelSize: 25
-                            color: root.colText
-                            style: Text.Raised
-                            styleColor: Appearance.colors.colShadow
-                            text: DateTime.date
-                        }
+                    Behavior on topMargin {
+                        animation: Appearance.animation.elementMove.numberAnimation.createObject(this)
                     }
                 }
 
+                ColumnLayout {
+                    id: columnLayout
+                    anchors.centerIn: parent
+                    spacing: -5
+
+                    StyledText {
+                        Layout.fillWidth: true
+                        horizontalAlignment: windowRoot.textHorizontalAlignment
+                        font.pixelSize: 95
+                        color: root.colText
+                        style: Text.Raised
+                        styleColor: Appearance.colors.colShadow
+                        text: DateTime.time
+                    }
+                    StyledText {
+                        Layout.fillWidth: true
+                        horizontalAlignment: windowRoot.textHorizontalAlignment
+                        font.pixelSize: 25
+                        color: root.colText
+                        style: Text.Raised
+                        styleColor: Appearance.colors.colShadow
+                        text: DateTime.date
+                    }
+                }
             }
         }
 

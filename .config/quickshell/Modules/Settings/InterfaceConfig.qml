@@ -20,6 +20,16 @@ ContentPage {
                     ConfigLoader.setConfigValueAndSave("background.showClock", checked);
                 }
             }
+            ConfigSwitch {
+                text: "Hide for fullscreen windows"
+                checked: ConfigOptions.background.hideWhenFullscreen
+                onCheckedChanged: {
+                    ConfigLoader.setConfigValueAndSave("background.hideWhenFullscreen", checked);
+                }
+                StyledToolTip {
+                    content: "Ordinary windows already cover the clock; this also hides it behind a fullscreen window."
+                }
+            }
         }
     }
 
