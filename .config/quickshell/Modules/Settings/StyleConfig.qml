@@ -45,8 +45,7 @@ ContentPage {
                 configOptionName: "appearance.palette.type"
                 onSelected: (newValue) => {
                     ConfigLoader.setConfigValueAndSave("appearance.palette.type", newValue);
-                    // Trigger color regeneration when palette changes
-                    Quickshell.execDetached([Directories.wallpaperToolPath, "--noswitch"]);
+                    Quickshell.execDetached([Directories.wallpaperToolPath, "--noswitch", "--type", newValue]);
                 }
                 options: [
                     {"value": "auto", "displayName": "Auto"},
