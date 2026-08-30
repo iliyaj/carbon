@@ -7,7 +7,6 @@ import QtQuick
 import QtQuick.Effects
 import QtQuick.Layouts
 import Quickshell
-import Quickshell.Io
 import Quickshell.Services.Mpris
 import Quickshell.Widgets
 
@@ -20,12 +19,9 @@ Item { // Player instance
     property string trackTitle: ""
     property string trackArtist: ""
     property string artUrl: ""
-    property string artDownloadLocation: Directories.coverArt
-    property string artFileName: Qt.md5(artUrl) + ".jpg"
-    property string artFilePath: `${artDownloadLocation}/${artFileName}`
-    property string displayedArtFilePath: downloaded ? Qt.resolvedUrl(artFilePath) : ""
+    property string artFilePath: MprisController.coverArtFilePath(artUrl)
+    property string displayedArtFilePath: ""
     property color artDominantColor: colorQuantizer?.colors[0] || Appearance.m3colors.m3secondaryContainer
-    property bool downloaded: false
     property list<real> visualizerPoints: []
     property real maxVisualizerValue: 1000 // Max value in the data points
     property int visualizerSmoothing: 2 // Number of points to average for smoothing
@@ -97,48 +93,29 @@ Item { // Player instance
         }
     }
 
-    function downloadCurrentArt(): void {
-        downloaded = false
-
+    function refreshDisplayedArt(): void {
         if (artUrl.length === 0) {
+            displayedArtFilePath = ""
             playerController.artDominantColor = Appearance.m3colors.m3secondaryContainer
             return
         }
 
-        if (coverArtDownloader.running) return
-
-        // Snapshot both bindings together so a metadata change cannot pair a new
-        // URL with the previous track's derived cache filename.
-        coverArtDownloader.targetFile = artUrl
-        coverArtDownloader.outputFile = artFilePath
-        coverArtDownloader.running = true
+        // Retain the previous cover until the newest remote image is complete.
+        if (MprisController.isCoverArtReady(artUrl))
+            displayedArtFilePath = Qt.resolvedUrl(artFilePath)
     }
 
-    onArtFilePathChanged: downloadCurrentArt()
+    onArtFilePathChanged: refreshDisplayedArt()
 
-    Process { // Cover art downloader
-        id: coverArtDownloader
-        property string targetFile: ""
-        property string outputFile: ""
-        command: [
-            "bash", "-c",
-            `[ -f "$1" ] || curl -4 --fail --silent --show-error --location "$2" --output "$1"`,
-            "cover-art", outputFile, targetFile
-        ]
-        onExited: (exitCode, exitStatus) => {
-            if (exitCode === 0 && outputFile === playerController.artFilePath) {
-                playerController.downloaded = true
-            } else if (exitCode !== 0 && outputFile === playerController.artFilePath) {
-                console.warn(`[MediaControls] Failed to download cover art: ${targetFile}`)
-            }
-
-            // If the track changed while curl was running, fetch only the newest
-            // pending artwork after this Process has fully returned to idle.
-            if (outputFile !== playerController.artFilePath && playerController.artUrl.length > 0) {
-                Qt.callLater(playerController.downloadCurrentArt)
-            }
+    Connections {
+        target: MprisController
+        function onCoverArtReady(readyArtUrl: string): void {
+            if (readyArtUrl === playerController.artUrl)
+                playerController.refreshDisplayedArt()
         }
     }
+
+    Component.onCompleted: refreshDisplayedArt()
 
     ColorQuantizer {
         id: colorQuantizer

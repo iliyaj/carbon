@@ -4,6 +4,7 @@
 pragma Singleton
 pragma ComponentBehavior: Bound
 
+import "root:/Modules/Common"
 import QtQuick
 import Quickshell
 import Quickshell.Io
@@ -19,6 +20,27 @@ Singleton {
     // Most-recent-first history gives paused players a stable fallback order.
     property var _activityHistory: []
     property var _ownerPids: ({})
+    property var _cachedArtUrls: ({})
+
+    signal coverArtReady(artUrl: string)
+
+    function coverArtFilePath(artUrl: string): string {
+        return `${Directories.coverArt}/${Qt.md5(artUrl)}.jpg`
+    }
+
+    function isCoverArtReady(artUrl: string): bool {
+        return artUrl.length > 0 && _cachedArtUrls[artUrl] === true
+    }
+
+    function rememberCoverArt(artUrl: string): void {
+        if (artUrl.length === 0 || isCoverArtReady(artUrl))
+            return
+
+        const updatedCachedArtUrls = Object.assign({}, _cachedArtUrls)
+        updatedCachedArtUrls[artUrl] = true
+        _cachedArtUrls = updatedCachedArtUrls
+        coverArtReady(artUrl)
+    }
 
     function isPlayerctld(player: MprisPlayer): bool {
         return player.dbusName.startsWith("org.mpris.MediaPlayer2.playerctld")
@@ -247,6 +269,27 @@ Singleton {
         delegate: Scope {
             required property MprisPlayer modelData
             property string playerDbusName: ""
+            property string playerArtUrl: root.hasTrackData(modelData)
+                ? String(modelData.trackArtUrl ?? "")
+                : ""
+
+            function downloadCurrentArt(): void {
+                if (coverArtDownloader.running) {
+                    // Skipped tracks must not hold up the current cover.
+                    if (coverArtDownloader.targetFile !== playerArtUrl)
+                        coverArtDownloader.running = false
+                    return
+                }
+
+                if (playerArtUrl.length === 0 || root.isCoverArtReady(playerArtUrl))
+                    return
+
+                coverArtDownloader.targetFile = playerArtUrl
+                coverArtDownloader.outputFile = root.coverArtFilePath(playerArtUrl)
+                coverArtDownloader.running = true
+            }
+
+            onPlayerArtUrlChanged: downloadCurrentArt()
 
             Connections {
                 target: modelData
@@ -284,9 +327,32 @@ Singleton {
                 }
             }
 
+            Process {
+                id: coverArtDownloader
+                property string targetFile: ""
+                property string outputFile: ""
+                command: [
+                    "bash", "-c",
+                    `[ -s "$1" ] || exec curl -4 --fail --silent --show-error --location --remove-on-error "$2" --output "$1"`,
+                    "cover-art", outputFile, targetFile
+                ]
+                onExited: exitCode => {
+                    const completedArtUrl = targetFile
+                    if (exitCode === 0) {
+                        root.rememberCoverArt(completedArtUrl)
+                    } else if (completedArtUrl === playerArtUrl) {
+                        console.warn(`[MprisController] Failed to download cover art: ${completedArtUrl}`)
+                    }
+
+                    if (completedArtUrl !== playerArtUrl && playerArtUrl.length > 0)
+                        Qt.callLater(downloadCurrentArt)
+                }
+            }
+
             Component.onCompleted: {
                 playerDbusName = modelData.dbusName
                 ownerPidLookup.running = true
+                downloadCurrentArt()
                 Qt.callLater(root.reconcilePlayers)
             }
             Component.onDestruction: root.forgetOwnerPid(playerDbusName)
