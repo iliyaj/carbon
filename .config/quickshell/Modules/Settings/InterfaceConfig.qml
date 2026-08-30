@@ -72,10 +72,13 @@ ContentPage {
                     }
                 }
                 ConfigSwitch {
-                    text: "Color picker"
-                    checked: ConfigOptions.bar.utilButtons.showColorPicker
+                    text: "Screen snip (delayed)"
+                    checked: ConfigOptions.bar.utilButtons.showScreenSnipDelayed
                     onCheckedChanged: {
-                        ConfigLoader.setConfigValueAndSave("bar.utilButtons.showColorPicker", checked);
+                        ConfigLoader.setConfigValueAndSave("bar.utilButtons.showScreenSnipDelayed", checked);
+                    }
+                    StyledToolTip {
+                        content: "Adds a button that waits 3 seconds before opening the region picker"
                     }
                 }
             }
@@ -86,6 +89,13 @@ ContentPage {
                     checked: ConfigOptions.bar.utilButtons.showClipboard
                     onCheckedChanged: {
                         ConfigLoader.setConfigValueAndSave("bar.utilButtons.showClipboard", checked);
+                    }
+                }
+                ConfigSwitch {
+                    text: "Clock and date"
+                    checked: ConfigOptions.bar.showClock
+                    onCheckedChanged: {
+                        ConfigLoader.setConfigValueAndSave("bar.showClock", checked);
                     }
                 }
             }
@@ -116,13 +126,10 @@ ContentPage {
                     }
                 }
                 ConfigSwitch {
-                    text: "Screen snip (delayed)"
-                    checked: ConfigOptions.bar.utilButtons.showScreenSnipDelayed
+                    text: "Color picker"
+                    checked: ConfigOptions.bar.utilButtons.showColorPicker
                     onCheckedChanged: {
-                        ConfigLoader.setConfigValueAndSave("bar.utilButtons.showScreenSnipDelayed", checked);
-                    }
-                    StyledToolTip {
-                        content: "Adds a button that waits 3 seconds before opening the region picker"
+                        ConfigLoader.setConfigValueAndSave("bar.utilButtons.showColorPicker", checked);
                     }
                 }
             }

@@ -44,10 +44,13 @@ Scope {
             property ShellScreen modelData
             property real useShortenedForm: (Appearance.sizes.barHellaShortenScreenWidthThreshold >= screen.width) ? 2 :
                 (Appearance.sizes.barShortenScreenWidthThreshold >= screen.width) ? 1 : 0
-            readonly property int centerSideModuleWidth:
+            readonly property int configuredCenterSideModuleWidth:
                 (useShortenedForm == 2) ? Appearance.sizes.barCenterSideModuleWidthHellaShortened :
                 (useShortenedForm == 1) ? Appearance.sizes.barCenterSideModuleWidthShortened :
                     Appearance.sizes.barCenterSideModuleWidth
+            // Keep both sides equal while allowing enabled utilities to reserve their natural width
+            readonly property int centerSideModuleWidth: Math.max(configuredCenterSideModuleWidth,
+                Math.ceil(rightCenterGroupContent.implicitWidth))
 
             WlrLayershell.namespace: "quickshell:bar"
             implicitHeight: barHeight + (GlobalStates.gameMode ? 0 : Appearance.rounding.screenRounding)
@@ -208,6 +211,7 @@ Scope {
                             anchors.fill: parent
 
                             ClockWidget {
+                                visible: ConfigOptions.bar.showClock
                                 showDate: (ConfigOptions.bar.verbose && barRoot.useShortenedForm < 2)
                                 Layout.alignment: Qt.AlignVCenter
                                 Layout.fillWidth: true
