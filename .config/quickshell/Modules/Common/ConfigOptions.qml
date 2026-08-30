@@ -55,6 +55,7 @@ Singleton {
             property bool showScreenSnipDelayed: true
             property bool showColorPicker: false
             property bool showClipboard: true
+            property bool showFileManager: true
             property bool showMicToggle: false
             property bool showKeyboardToggle: true
             property bool showDarkModeToggle: true

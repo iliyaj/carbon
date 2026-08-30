@@ -48,9 +48,19 @@ Scope {
                 (useShortenedForm == 2) ? Appearance.sizes.barCenterSideModuleWidthHellaShortened :
                 (useShortenedForm == 1) ? Appearance.sizes.barCenterSideModuleWidthShortened :
                     Appearance.sizes.barCenterSideModuleWidth
-            // Keep both sides equal while allowing enabled utilities to reserve their natural width
-            readonly property int centerSideModuleWidth: Math.max(configuredCenterSideModuleWidth,
+            readonly property int requiredCenterSideModuleWidth: Math.max(configuredCenterSideModuleWidth,
                 Math.ceil(rightCenterGroupContent.implicitWidth))
+            property int centerSideModuleWidth: configuredCenterSideModuleWidth
+
+            // A button may expand the paired modules, but hiding one must not resize the media title
+            onRequiredCenterSideModuleWidthChanged: centerSideModuleWidth = Math.max(centerSideModuleWidth,
+                requiredCenterSideModuleWidth)
+            onConfiguredCenterSideModuleWidthChanged: Qt.callLater(resetCenterSideModuleWidth)
+            Component.onCompleted: resetCenterSideModuleWidth()
+
+            function resetCenterSideModuleWidth() {
+                centerSideModuleWidth = requiredCenterSideModuleWidth
+            }
 
             WlrLayershell.namespace: "quickshell:bar"
             implicitHeight: barHeight + (GlobalStates.gameMode ? 0 : Appearance.rounding.screenRounding)

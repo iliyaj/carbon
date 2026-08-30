@@ -62,8 +62,12 @@ ContentPage {
 
         ContentSubsection {
             title: "Buttons"
-            ConfigRow {
-                uniform: true
+            GridLayout {
+                columns: 2
+                columnSpacing: Appearance.spacing.md
+                rowSpacing: 0
+                uniformCellWidths: true
+
                 ConfigSwitch {
                     text: "Screen snip"
                     checked: ConfigOptions.bar.utilButtons.showScreenSnip
@@ -81,9 +85,6 @@ ContentPage {
                         content: "Adds a button that waits 3 seconds before opening the region picker"
                     }
                 }
-            }
-            ConfigRow {
-                uniform: true
                 ConfigSwitch {
                     text: "Clipboard"
                     checked: ConfigOptions.bar.utilButtons.showClipboard
@@ -98,9 +99,6 @@ ContentPage {
                         ConfigLoader.setConfigValueAndSave("bar.showClock", checked);
                     }
                 }
-            }
-            ConfigRow {
-                uniform: true
                 ConfigSwitch {
                     text: "Mic toggle"
                     checked: ConfigOptions.bar.utilButtons.showMicToggle
@@ -115,9 +113,6 @@ ContentPage {
                         ConfigLoader.setConfigValueAndSave("bar.utilButtons.showKeyboardToggle", checked);
                     }
                 }
-            }
-            ConfigRow {
-                uniform: true
                 ConfigSwitch {
                     text: "Dark/Light toggle"
                     checked: ConfigOptions.bar.utilButtons.showDarkModeToggle
@@ -130,6 +125,13 @@ ContentPage {
                     checked: ConfigOptions.bar.utilButtons.showColorPicker
                     onCheckedChanged: {
                         ConfigLoader.setConfigValueAndSave("bar.utilButtons.showColorPicker", checked);
+                    }
+                }
+                ConfigSwitch {
+                    text: "File manager"
+                    checked: ConfigOptions.bar.utilButtons.showFileManager
+                    onCheckedChanged: {
+                        ConfigLoader.setConfigValueAndSave("bar.utilButtons.showFileManager", checked);
                     }
                 }
             }

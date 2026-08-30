@@ -83,15 +83,19 @@ Item {
             }
         }
 
-        CircleUtilButton {
-            Layout.alignment: Qt.AlignVCenter
-            onClicked: Hyprland.dispatch("hl.dsp.exec_cmd([[dolphin]])")
-            MaterialSymbol {
-                horizontalAlignment: Qt.AlignHCenter
-                fill: 0
-                text: "folder_open"
-                iconSize: Appearance.font.pixelSize.large
-                color: Appearance.colors.colOnLayer2
+        Loader {
+            active: ConfigOptions.bar.utilButtons.showFileManager
+            visible: ConfigOptions.bar.utilButtons.showFileManager
+            sourceComponent: CircleUtilButton {
+                Layout.alignment: Qt.AlignVCenter
+                onClicked: Hyprland.dispatch("hl.dsp.exec_cmd([[dolphin]])")
+                MaterialSymbol {
+                    horizontalAlignment: Qt.AlignHCenter
+                    fill: 0
+                    text: "folder_open"
+                    iconSize: Appearance.font.pixelSize.large
+                    color: Appearance.colors.colOnLayer2
+                }
             }
         }
 
