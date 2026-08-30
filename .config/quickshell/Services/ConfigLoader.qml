@@ -20,6 +20,7 @@ Singleton {
     property bool migrationRequested: false
     property var preventNextNotification: false
     property bool savePending: false
+    property string lastSavedContent: ""
 
     function loadConfig() {
         // FileView.preload already starts the initial asynchronous read. Calling
@@ -30,6 +31,9 @@ Singleton {
     }
 
     function applyConfig(fileContent) {
+        // our own write, in-memory state already matches
+        if (!root.firstLoad && fileContent === root.lastSavedContent)
+            return
         try {
             if (fileContent.trim() === "")
                 throw new Error("Config file is empty")
@@ -80,6 +84,7 @@ Singleton {
     function saveConfig() {
         const plainConfig = ObjectUtils.toPlainObject(ConfigOptions)
         const jsonContent = JSON.stringify(plainConfig, null, 2)
+        root.lastSavedContent = jsonContent
         configFileView.setText(jsonContent)
     }
 
