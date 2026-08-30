@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import configparser
+import hashlib
 import io
 import json
 import os
@@ -44,6 +45,9 @@ WALLPAPER_GENERATED_DIR = GENERATED_DIR / "wallpaper"
 CURRENT_WALLPAPER = STATE_DIR / "user/current-wallpaper"
 MATERIAL_SCSS = GENERATED_DIR / "material_colors.scss"
 COLORS_JSON = GENERATED_DIR / "colors.json"
+PALETTE_CACHE_DIR = GENERATED_DIR / "palette-source"
+PALETTE_MAX_EDGE = 512
+PALETTE_CACHE_KEEP = 10
 TERMINAL_DIR = GENERATED_DIR / "terminal"
 TERM_SCHEME = QUICKSHELL_DIR / "Scripts/Terminal/scheme-base.toml"
 MATUGEN_CONFIG = SCRIPT_DIR / "matugen.toml"
@@ -137,6 +141,33 @@ def configured_scheme() -> str:
         return json.loads(config_path.read_text()).get("appearance", {}).get("palette", {}).get("type", "auto")
     except (OSError, json.JSONDecodeError):
         return "auto"
+
+
+def prune_palette_cache() -> None:
+    cached = sorted(PALETTE_CACHE_DIR.glob("*.png"), key=lambda entry: entry.stat().st_mtime, reverse=True)
+    for stale in cached[PALETTE_CACHE_KEEP:]:
+        stale.unlink(missing_ok=True)
+
+
+# Quantizing a full-resolution wallpaper costs seconds and yields the same palette as a thumbnail
+def palette_thumbnail(image: Path) -> Path:
+    try:
+        stat = image.stat()
+    except OSError:
+        return image
+    key = f"{image}:{stat.st_mtime_ns}:{stat.st_size}:{PALETTE_MAX_EDGE}"
+    cached = PALETTE_CACHE_DIR / f"{hashlib.sha256(key.encode()).hexdigest()[:32]}.png"
+    if cached.is_file():
+        return cached
+    result = run([
+        virtualenv_python(), SCRIPT_DIR / "palette_source.py",
+        "--max-edge", str(PALETTE_MAX_EDGE), "--output", cached, image,
+    ], check=False, capture=True)
+    if result.returncode != 0 or not cached.is_file():
+        print(f"theme.py: could not downscale {image}, using it directly", file=sys.stderr)
+        return image
+    prune_palette_cache()
+    return cached
 
 
 def detect_scheme(image: Path) -> str:
@@ -383,7 +414,7 @@ def main() -> int:
         return 0
 
     if scheme == "auto":
-        scheme = detect_scheme(Path(image_text)) if image_text and Path(image_text).is_file() else "scheme-tonal-spot"
+        scheme = detect_scheme(palette_thumbnail(Path(image_text))) if image_text and Path(image_text).is_file() else "scheme-tonal-spot"
     if scheme not in SCHEMES:
         print(f"Invalid scheme '{scheme}', using scheme-tonal-spot", file=sys.stderr)
         scheme = "scheme-tonal-spot"
@@ -403,7 +434,7 @@ def main() -> int:
             palette_source = str(set_wallpaper(image, monitors))
         else:
             palette_source = str(image)
-        source_kind, source = "image", palette_source
+        source_kind, source = "image", str(palette_thumbnail(Path(palette_source)))
 
     set_mode(mode)
     GENERATED_DIR.mkdir(parents=True, exist_ok=True)
