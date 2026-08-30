@@ -75,6 +75,8 @@ Scope {
 
             WlrLayershell.layer: WlrLayer.Bottom
             WlrLayershell.namespace: "quickshell:backgroundWidgets"
+            // The widget position is measured in full screen coordinates, so the bar must not shift the surface
+            exclusionMode: ExclusionMode.Ignore
 
             anchors {
                 top: true
