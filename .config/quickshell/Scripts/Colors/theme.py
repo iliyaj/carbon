@@ -48,6 +48,8 @@ COLORS_JSON = GENERATED_DIR / "colors.json"
 PALETTE_CACHE_DIR = GENERATED_DIR / "palette-source"
 PALETTE_MAX_EDGE = 512
 PALETTE_CACHE_KEEP = 10
+REGION_JSON = WALLPAPER_GENERATED_DIR / "least_busy_region.json"
+REGION_KEY = WALLPAPER_GENERATED_DIR / "least_busy_region.key"
 TERMINAL_DIR = GENERATED_DIR / "terminal"
 TERM_SCHEME = QUICKSHELL_DIR / "Scripts/Terminal/scheme-base.toml"
 MATUGEN_CONFIG = SCRIPT_DIR / "matugen.toml"
@@ -374,22 +376,30 @@ def update_hyprlock(palette_source: str) -> None:
     atomic_write(HYPRLOCK_CONFIG, content)
 
 
+# The quiet region depends only on the wallpaper and the screens, so a palette change cannot move it
 def generate_least_busy_region(source: str, monitors: list[dict]) -> None:
-    script = CONFIG_HOME / "matugen/scripts/least_busy_region.py"
     source_path = Path(source)
-    if not script.is_file() or not source_path.is_file():
+    if not source_path.is_file():
         return
     width = min(int(monitor["width"]) for monitor in monitors)
     height = min(int(monitor["height"]) for monitor in monitors)
+    stat = source_path.stat()
+    key = f"{source_path}:{stat.st_mtime_ns}:{stat.st_size}:{width}x{height}\n"
+    if REGION_JSON.is_file() and REGION_KEY.is_file() and REGION_KEY.read_text() == key:
+        return
     result = run([
-        virtualenv_python(), script,
+        virtualenv_python(), SCRIPT_DIR / "least_busy_region.py",
         "--screen-width", str(width),
         "--screen-height", str(height),
         "--width", "300", "--height", "200",
         source_path,
     ], check=False, capture=True)
-    if result.returncode == 0:
-        atomic_write(WALLPAPER_GENERATED_DIR / "least_busy_region.json", result.stdout)
+    if result.returncode != 0:
+        message = result.stderr.strip() or f"exit status {result.returncode}"
+        print(f"theme.py: could not place the desktop widgets, keeping the previous region: {message}", file=sys.stderr)
+        return
+    atomic_write(REGION_JSON, result.stdout)
+    atomic_write(REGION_KEY, key)
 
 
 def parse_args() -> argparse.Namespace:
