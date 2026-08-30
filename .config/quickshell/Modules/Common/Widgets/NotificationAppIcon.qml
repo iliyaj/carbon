@@ -30,9 +30,23 @@ Rectangle { // App icon
 
     function resolvedAppIcon(icon) {
         // Screenshot tools commonly put an absolute image path in app_icon.
-        if (icon.startsWith("/") || icon.startsWith("file://"))
-            return Qt.resolvedUrl(icon)
-        return Quickshell.iconPath(icon, "image-missing")
+        const value = String(icon ?? "")
+        if (value.startsWith("/") || value.startsWith("file://"))
+            return Qt.resolvedUrl(value)
+        return Quickshell.iconPath(value, "image-missing")
+    }
+
+    function resolvedNotificationImage(image) {
+        const value = String(image ?? "")
+        const iconProviderPrefix = "image://icon/"
+        if (value.startsWith(iconProviderPrefix)) {
+            const iconPayload = value.slice(iconProviderPrefix.length)
+            if (iconPayload.startsWith("/") || iconPayload.startsWith("file://"))
+                return Qt.resolvedUrl(iconPayload)
+        }
+        if (value.startsWith("/") || value.startsWith("file://"))
+            return Qt.resolvedUrl(value)
+        return value
     }
 
     // Keep every icon layer instantiated so source changes cannot rebuild the card in stages.
@@ -69,7 +83,7 @@ Rectangle { // App icon
             anchors.fill: parent
             readonly property int size: parent.width
 
-            source: root.image
+            source: visible ? root.resolvedNotificationImage(root.image) : ""
             fillMode: Image.PreserveAspectCrop
             cache: false
             antialiasing: true

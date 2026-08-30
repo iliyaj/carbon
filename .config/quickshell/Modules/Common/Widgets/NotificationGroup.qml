@@ -106,6 +106,39 @@ Item { // Notification group area
         root.expanded = !root.expanded;
     }
 
+    function applyPopupHover() {
+        root.notifications.forEach(notif => {
+            if (popupHoverHandler.hovered)
+                Notifications.pausePopupTimeout(notif.id);
+            else
+                Notifications.resumePopupTimeout(notif.id);
+        });
+    }
+
+    function invokeOnlyNotificationDefaultAction() {
+        if (root.notificationCount !== 1)
+            return;
+
+        const notification = root.notifications[0];
+        const action = notification.actions.find(candidate => candidate.identifier === "default") ?? null;
+        if (!action)
+            return;
+
+        Notifications.attemptInvokeAction(notification.id, action.identifier);
+    }
+
+    // A passive handler stays hovered while action buttons take the pointer, unlike MouseArea.containsMouse.
+    HoverHandler {
+        id: popupHoverHandler
+        enabled: root.popup
+        onHoveredChanged: root.applyPopupHover()
+    }
+
+    onNotificationsChanged: {
+        if (popupHoverHandler.hovered)
+            root.applyPopupHover();
+    }
+
     DragManager { // Drag manager
         id: dragManager
         anchors.fill: parent
@@ -118,6 +151,8 @@ Item { // Notification group area
                 root.toggleExpanded();
             else if (mouse.button === Qt.MiddleButton)
                 root.destroyWithAnimation();
+            else if (mouse.button === Qt.LeftButton && !dragManager.movedBeyondClickThreshold)
+                root.invokeOnlyNotificationDefaultAction();
         }
 
         onDraggingChanged: () => {

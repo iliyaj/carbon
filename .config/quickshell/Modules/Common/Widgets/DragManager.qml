@@ -16,6 +16,7 @@ MouseArea {
     property bool automaticallyReset: true
     readonly property real dragDiffX: _dragDiffX
     readonly property real dragDiffY: _dragDiffY
+    readonly property bool movedBeyondClickThreshold: _movedBeyondClickThreshold
 
     signal dragPressed(diffX: real, diffY: real)
     signal dragReleased(diffX: real, diffY: real)
@@ -25,6 +26,7 @@ MouseArea {
     property bool dragging: false
     property real _dragDiffX: 0
     property real _dragDiffY: 0
+    property bool _movedBeyondClickThreshold: false
 
     function resetDrag() {
         _dragDiffX = 0
@@ -39,6 +41,7 @@ MouseArea {
             return;
         }
         if (mouse.button === Qt.LeftButton) {
+            _movedBeyondClickThreshold = false
             startX = mouse.x
             startY = mouse.y
         }
@@ -61,6 +64,8 @@ MouseArea {
             root._dragDiffX = mouse.x - startX
             root._dragDiffY = mouse.y - startY
             const dist = Math.sqrt(root._dragDiffX * root._dragDiffX + root._dragDiffY * root._dragDiffY);
+            if (dist >= Qt.styleHints.startDragDistance)
+                root._movedBeyondClickThreshold = true;
             root.dragPressed(_dragDiffX, _dragDiffY);
             root.dragging = true;
         }

@@ -120,6 +120,7 @@ Singleton {
     property QtObject notifications: QtObject {
         property int maxRetained: 200
         property int persistDebounce: 500
+        property int timeout: 5000
     }
 
     property QtObject osd: QtObject {

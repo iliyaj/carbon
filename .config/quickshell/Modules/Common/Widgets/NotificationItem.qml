@@ -28,6 +28,10 @@ Item { // Notification item area
         "urgency": String(NotificationUrgency.Normal),
     })
     readonly property bool isCritical: notificationData.urgency === String(NotificationUrgency.Critical)
+    // The default action belongs to the notification card, not the visible button row.
+    readonly property var defaultAction: notificationData.actions.find(action => action.identifier === "default") ?? null
+    readonly property var visibleActions: notificationData.actions.filter(action =>
+        action.identifier !== "default" && String(action.text ?? "").trim().length > 0)
     property bool expanded: false
     property bool onlyNotification: false
     property real fontSize: Appearance.font.pixelSize.small
@@ -70,7 +74,7 @@ Item { // Notification item area
     implicitHeight: background.implicitHeight
 
     function captureNotification(notification) {
-        if (!notification)
+        if (!notification || notification.closing)
             return;
 
         root.notificationData = {
@@ -146,6 +150,13 @@ Item { // Notification item area
         destroyAnimation.running = true;
     }
 
+    function invokeDefaultAction() {
+        if (!root.defaultAction)
+            return;
+
+        Notifications.attemptInvokeAction(notificationData.id, root.defaultAction.identifier);
+    }
+
     SequentialAnimation { // Drag finish animation
         id: destroyAnimation
         running: false
@@ -174,6 +185,8 @@ Item { // Notification item area
         onClicked: (mouse) => {
             if (mouse.button === Qt.MiddleButton) {
                 root.destroyWithAnimation();
+            } else if (mouse.button === Qt.LeftButton && !dragManager.movedBeyondClickThreshold) {
+                root.invokeDefaultAction();
             }
         }
 
@@ -330,7 +343,7 @@ Item { // Notification item area
                             Layout.fillWidth: true
                             buttonText: qsTr("Close")
                             urgency: notificationData.urgency
-                            implicitWidth: (notificationData.actions.length == 0) ?
+                            implicitWidth: (root.visibleActions.length == 0) ?
                                 ((actionsFlickable.width - actionRowLayout.spacing * (root.fillerButtonCount - 1)) / root.fillerButtonCount) :
                                 (contentItem.implicitWidth + leftPadding + rightPadding)
 
@@ -351,7 +364,7 @@ Item { // Notification item area
                             visible: root.isScreenshot
                             Layout.fillWidth: true
                             urgency: notificationData.urgency
-                            implicitWidth: (notificationData.actions.length == 0) ?
+                            implicitWidth: (root.visibleActions.length == 0) ?
                                 ((actionsFlickable.width - actionRowLayout.spacing * (root.fillerButtonCount - 1)) / root.fillerButtonCount) :
                                 (contentItem.implicitWidth + leftPadding + rightPadding)
                             onClicked: {
@@ -369,7 +382,7 @@ Item { // Notification item area
 
                         Repeater {
                             id: actionRepeater
-                            model: notificationData.actions
+                            model: root.visibleActions
                             NotificationActionButton {
                                 Layout.fillWidth: true
                                 buttonText: modelData.text
@@ -383,7 +396,7 @@ Item { // Notification item area
                         NotificationActionButton {
                             Layout.fillWidth: true
                             urgency: notificationData.urgency
-                            implicitWidth: (notificationData.actions.length == 0) ?
+                            implicitWidth: (root.visibleActions.length == 0) ?
                                 ((actionsFlickable.width - actionRowLayout.spacing * (root.fillerButtonCount - 1)) / root.fillerButtonCount) :
                                 (contentItem.implicitWidth + leftPadding + rightPadding)
 
