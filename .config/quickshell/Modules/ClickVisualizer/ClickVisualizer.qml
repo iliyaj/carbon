@@ -104,24 +104,16 @@ Scope {
                         : button === "middle"
                             ? Appearance.colors.colSecondary
                             : Appearance.colors.colPrimary
+                    readonly property color innerColor: button === "right"
+                        ? Appearance.colors.colPrimary
+                        : button === "middle"
+                            ? Appearance.m3colors.m3tertiary
+                            : Appearance.colors.colSecondary
 
                     x: clickX - width / 2
                     y: clickY - height / 2
                     width: 48
                     height: 48
-
-                    Rectangle {
-                        id: contrastRing
-                        anchors.centerIn: parent
-                        width: 36
-                        height: width
-                        radius: width / 2
-                        color: "transparent"
-                        border.width: 7
-                        border.color: Appearance.m3colors.darkmode ? "#B3000000" : "#99FFFFFF"
-                        scale: colourRing.scale
-                        opacity: colourRing.opacity
-                    }
 
                     Rectangle {
                         id: colourRing
@@ -140,7 +132,7 @@ Scope {
                         width: 12
                         height: width
                         radius: width / 2
-                        color: ripple.rippleColor
+                        color: ripple.innerColor
                     }
 
                     ParallelAnimation {
@@ -151,15 +143,15 @@ Scope {
                             property: "scale"
                             from: 0.65
                             to: 1.9
-                            duration: 400
+                            duration: 220
                             easing.type: Easing.OutCubic
                         }
                         NumberAnimation {
                             target: colourRing
                             property: "opacity"
-                            from: 1
+                            from: 0.75
                             to: 0
-                            duration: 400
+                            duration: 220
                             easing.type: Easing.InCubic
                         }
                         NumberAnimation {
@@ -167,15 +159,15 @@ Scope {
                             property: "scale"
                             from: 1
                             to: 0.45
-                            duration: 180
+                            duration: 120
                             easing.type: Easing.OutCubic
                         }
                         NumberAnimation {
                             target: centreFlash
                             property: "opacity"
-                            from: 0.9
+                            from: 0.65
                             to: 0
-                            duration: 220
+                            duration: 150
                             easing.type: Easing.OutCubic
                         }
 
