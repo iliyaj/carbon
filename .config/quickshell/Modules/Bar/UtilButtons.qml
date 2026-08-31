@@ -1,5 +1,6 @@
 import "root:/Modules/Common"
 import "root:/Modules/Common/Widgets"
+import "root:/Services"
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
@@ -148,17 +149,38 @@ Item {
         }
 
         Loader {
+            id: micToggleLoader
             active: ConfigOptions.bar.utilButtons.showMicToggle
             visible: ConfigOptions.bar.utilButtons.showMicToggle
+            Component.onCompleted: if (active) MicLevel.subscribe()
+            Component.onDestruction: if (active) MicLevel.unsubscribe()
+            onActiveChanged: active ? MicLevel.subscribe() : MicLevel.unsubscribe()
             sourceComponent: CircleUtilButton {
                 Layout.alignment: Qt.AlignVCenter
                 onClicked: Hyprland.dispatch("hl.dsp.exec_cmd([[wpctl set-mute @DEFAULT_SOURCE@ toggle]])")
-                MaterialSymbol {
-                    horizontalAlignment: Qt.AlignHCenter
-                    fill: 0
-                    text: Pipewire.defaultAudioSource?.audio?.muted ? "mic_off" : "mic"
-                    iconSize: Appearance.font.pixelSize.large
-                    color: Appearance.colors.colOnLayer2
+                Item {
+                    property real ringGap: 12 // breathing room between icon and ring
+
+                    implicitWidth: micSymbol.implicitWidth + ringGap
+                    implicitHeight: micSymbol.implicitHeight + ringGap
+
+                    MicLevelRing {
+                        anchors.centerIn: parent
+                        width: Math.max(parent.width, parent.height)
+                        height: width
+                        level: MicLevel.level
+                        active: !(Pipewire.defaultAudioSource?.audio?.muted ?? true)
+                    }
+
+                    MaterialSymbol {
+                        id: micSymbol
+                        anchors.centerIn: parent
+                        horizontalAlignment: Qt.AlignHCenter
+                        fill: 0
+                        text: Pipewire.defaultAudioSource?.audio?.muted ? "mic_off" : "mic"
+                        iconSize: Appearance.font.pixelSize.large
+                        color: Appearance.colors.colOnLayer2
+                    }
                 }
             }
         }
