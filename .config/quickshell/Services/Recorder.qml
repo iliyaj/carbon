@@ -65,19 +65,32 @@ Scope {
         return false
     }
 
+    function microphoneName(): string {
+        const configured = ConfigOptions.recorder.microphone
+        return configured.length > 0 ? configured : (Audio.source?.name ?? "")
+    }
+
     function prepareRecording(captureArguments: var, withAudio: bool): void {
         const videosDirectory = FileUtils.trimFileProtocol(Directories.videos)
         outputPath = `${videosDirectory}/recording_${timestamp()}.mp4`
-        pendingCommand = ["wf-recorder", "--pixel-format", "yuv420p", "-f", outputPath].concat(captureArguments)
+        const recorderArguments = ["--pixel-format", "yuv420p", "-f", outputPath].concat(captureArguments)
 
-        if (withAudio) {
+        if (!withAudio) {
+            pendingCommand = ["wf-recorder"].concat(recorderArguments)
+        } else {
             const sinkName = Audio.sink?.name ?? ""
             if (!Audio.sink?.ready || sinkName.length === 0) {
                 notify("Recording cancelled", "The default audio output is not ready")
                 pendingCommand = []
                 return
             }
-            pendingCommand.push(`--audio=${sinkName}.monitor`)
+            const microphone = microphoneName()
+            if (microphone.length === 0) {
+                notify("Recording cancelled", "No microphone source is available")
+                pendingCommand = []
+                return
+            }
+            pendingCommand = [`${Directories.scriptPath}/Audio/record-mix.sh`, microphone, `${sinkName}.monitor`].concat(recorderArguments)
         }
 
         createDirectoryProcess.command = ["mkdir", "-p", videosDirectory]
@@ -127,7 +140,7 @@ Scope {
             if (root.stopRequested || exitCode === 0)
                 root.notify("Recording stopped", "The recording was saved")
             else
-                root.notify("Recording failed", `wf-recorder exited with code ${exitCode}`)
+                root.notify("Recording failed", `The recorder exited with code ${exitCode}`)
             root.stopRequested = false
         }
     }

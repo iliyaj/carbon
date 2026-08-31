@@ -145,6 +145,10 @@ Singleton {
         property real columns: 5
     }
 
+    property QtObject recorder: QtObject {
+        property string microphone: "" // pipewire source name, empty follows the default source
+    }
+
     property QtObject resources: QtObject {
         property int updateInterval: 3000
     }
