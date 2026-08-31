@@ -19,6 +19,7 @@ Item {
 
     function launch() {
         AppLauncher.launchDesktopEntry(appItem.entry)
+        GlobalStates.sidebarLeftOpen = false
     }
 
     Rectangle {

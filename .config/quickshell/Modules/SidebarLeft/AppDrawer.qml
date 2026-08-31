@@ -474,6 +474,7 @@ Item {
                             const entry = root.menuEntry
                             root.menuEntry = null
                             AppLauncher.launchDesktopEntry(entry)
+                            GlobalStates.sidebarLeftOpen = false
                         }
                     }
 
