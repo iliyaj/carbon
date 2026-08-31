@@ -35,8 +35,6 @@ local autostart = {
 
     "hyprctl setcursor Bibata-Modern-Classic 24",
 
-    "logid",
-
     "hyprsunset", -- carbon drives its temperature over hyprctl
 }
 
