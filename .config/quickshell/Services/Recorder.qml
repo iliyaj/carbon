@@ -10,9 +10,18 @@ Scope {
 
     readonly property bool recording: recorderProcess.running
     readonly property bool selectingRegion: regionProcess.running
+    readonly property string recorderUnit: "carbon-screen-recorder.service"
     property bool stopRequested: false
     property var pendingCommand: []
     property string outputPath: ""
+
+    Connections {
+        target: Quickshell
+
+        function onReloadCompleted(): void {
+            root.stopRecording()
+        }
+    }
 
     function notify(title: string, body: string): void {
         Quickshell.execDetached(["notify-send", "-a", "Recorder", title, body])
@@ -54,8 +63,7 @@ Scope {
 
     function stopOrCancel(): bool {
         if (recorderProcess.running) {
-            stopRequested = true
-            recorderProcess.signal(2)
+            stopRecording()
             return true
         }
         if (regionProcess.running) {
@@ -63,6 +71,25 @@ Scope {
             return true
         }
         return false
+    }
+
+    function stopRecording(): void {
+        stopRequested = true
+        // The transient service outlives this QML generation long enough to finalise the file.
+        Quickshell.execDetached(["systemctl", "--user", "kill", "--kill-who=main", "--signal=SIGINT", recorderUnit])
+    }
+
+    function supervisedCommand(command: var): var {
+        return [
+            "systemd-run",
+            "--user",
+            `--unit=${recorderUnit}`,
+            "--collect",
+            "--quiet",
+            "--wait",
+            "--service-type=exec",
+            "--"
+        ].concat(command)
     }
 
     function microphoneName(): string {
@@ -106,7 +133,7 @@ Scope {
                 return
             }
 
-            recorderProcess.command = root.pendingCommand
+            recorderProcess.command = root.supervisedCommand(root.pendingCommand)
             root.pendingCommand = []
             root.stopRequested = false
             recorderProcess.running = true
