@@ -2,7 +2,7 @@
 
 Carbon is a stability-focused Hyprland desktop shell built with Quickshell, QML, and Qt. It provides a practical daily desktop environment with sensible defaults, reliable behavior, and an ongoing focus on bug fixes.
 
-Carbon is an independently maintained fork of [end-4/dots-hyprland](https://github.com/end-4/dots-hyprland)'s **illogical-impulse**, originally created from a source snapshot. It does not automatically merge upstream changes; local features and modifications are developed directly in Carbon.
+Carbon started as a fork of [end-4/dots-hyprland](https://github.com/end-4/dots-hyprland)'s **illogical-impulse**, created from a source snapshot, and is now maintained independently. It does not automatically merge upstream changes; local features and modifications are developed directly in Carbon.
 
 ## What it includes
 
@@ -18,9 +18,26 @@ The shell is modular: `shell.qml` loads major surfaces through `LazyLoader`, whi
 
 ## Supported system
 
-Carbon currently supports **Arch Linux only** and is tested on a Wayland desktop with Hyprland 0.56's Lua configuration API and Arch's stable Quickshell package. Other distributions, compositors, Hyprland's retired hyprlang configuration format, and X11 are unsupported.
+Carbon currently supports **Arch Linux only** (by the way...) and is tested on a Wayland desktop with Hyprland 0.56's Lua configuration API and Arch's stable Quickshell package. Other distributions, compositors, Hyprland's retired hyprlang configuration format, and X11 are unsupported.
 
-This repository configures the desktop session, not the base system. Once Git is installed, setup is:
+I develop and daily-drive Carbon on one machine: an x86 Intel Raptor Lake CPU with an integrated GPU and a beefy amount of RAM. It runs buttery smooth on my machine, but that might just mean that I tuned it to this hardware and my display. You could hit bugs I never see. I plan to test on AMD and Nvidia graphics and in a VM, but I haven't yet.
+
+If you find it too buggy, I suggest using a more stable distro for daily driving. Ubuntu is great, but if you have a potato, MX Linux (xfce) is awesome for older hardware.
+
+This project is very much experimental. I was thinking of calling it xCarbon but it might be copyrighted.
+
+> [!WARNING]
+> If you do like running experimental software then follow the steps below:
+
+Install arch, then log in at the console. A minimal install is fine - Carbon installs hyprland, quickshell, kitty and the rest for you. You need a working network connection, since the installer pulls packages the whole way through. Run it as your normal user, not root.
+
+Git is the only thing you need first:
+
+```bash
+sudo pacman -Syu --needed git
+```
+
+Then the setup is:
 
 ```bash
 git clone https://github.com/iliyaj/carbon.git ~/carbon
@@ -28,7 +45,11 @@ cd ~/carbon
 ./install.sh
 ```
 
-Hyprland does not include a terminal. If necessary, press `Ctrl+Alt+F2`, log in at the text console, and run those commands there. See the [installation guide](INSTALL.md) for the Git bootstrap and troubleshooting.
+When it finishes, run `start-hyprland`. `Super+Return` opens a terminal, `Super+/` shows the keybinds.
+
+If you're already in Hyprland with no terminal, press `Ctrl+Alt+F2` and log in there. Hyprland does not include a terminal.
+
+See the [installation guide](INSTALL.md) for the Git bootstrap and troubleshooting.
 
 ## Useful keys
 
@@ -50,11 +71,21 @@ The cheatsheet reads Hyprland's live bind inventory and is the authoritative lis
 - `systemd/user/` - portable shell, wallpaper-daemon, and opt-in diagnostic user units
 - `requirements.txt` and `packages.arch` - pinned Python and Arch package inputs
 
-## Release and security
+## Releases
 
-The public repository starts with a fresh Git history so discarded private development history cannot be published accidentally. Machine facts belong in ignored `user.env`; runtime and generated state belong outside the checkout.
+No releases yet. `main` is the project. If people show up wanting something stable to track, I'll start tagging.
 
-See [ATTRIBUTION.md](ATTRIBUTION.md) for upstream and third-party provenance. Publishing or pushing is never part of the automated checks in `scripts/check-release.sh`.
+`scripts/check-release.sh` only checks the repo. It never publishes or pushes anything.
+
+## Security
+
+Found a security issue? Tell me privately first, through [GitHub's private vulnerability reporting](https://github.com/iliyaj/carbon/security/advisories/new), not a public issue. Give me a chance to patch it before it's out there.
+
+Anything specific to your machine goes in `user.env`, which is gitignored. Runtime and generated state stays out of the checkout.
+
+## Attribution
+
+Carbon is a fork, and it bundles other people's code. [ATTRIBUTION.md](ATTRIBUTION.md) says what came from where, and `LICENSES/` has the license texts.
 
 ## Optional stall diagnostics
 
