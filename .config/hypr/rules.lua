@@ -20,7 +20,7 @@ for _, class in ipairs({
     hl.window_rule({ match = { class = class }, float = true })
 end
 
-for _, title in ipairs({ ".*Welcome", "^(Carbon Settings)$" }) do
+for _, title in ipairs({ ".*Welcome", "^(Carbon Settings)$", "^(MX Master 3)$" }) do
     hl.window_rule({ match = { title = title }, float = true })
 end
 
