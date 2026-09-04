@@ -244,11 +244,8 @@ Item { // Notification item area
                 (Appearance.colors.colSurfaceContainerHigh) :
             ColorUtils.transparentize(Appearance.colors.colSurfaceContainerHighest)
 
-        implicitHeight: expanded ? (contentColumn.implicitHeight + padding * 2) : summaryRow.implicitHeight
-        // elementMove overshoots; match the group height and the margins instead
-        Behavior on implicitHeight {
-            animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
-        }
+        implicitHeight: expanded ? (contentColumn.implicitHeight + padding * 2) :
+            (onlyNotification ? notificationBodyText.implicitHeight : summaryRow.implicitHeight)
 
         ColumnLayout { // Content column
             id: contentColumn
@@ -262,7 +259,9 @@ Item { // Notification item area
 
             RowLayout { // Summary row
                 id: summaryRow
-                visible: !root.onlyNotification || !root.expanded
+                visible: !root.onlyNotification
+                Layout.fillHeight: false
+                Layout.alignment: Qt.AlignTop
                 Layout.fillWidth: true
                 implicitHeight: summaryText.implicitHeight
                 // Layout.fillWidth: true
@@ -290,15 +289,14 @@ Item { // Notification item area
             }
 
             ColumnLayout { // Expanded content
+                Layout.fillHeight: false
+                Layout.alignment: Qt.AlignTop
                 Layout.fillWidth: true
-                opacity: root.expanded ? 1 : 0
+                opacity: (root.expanded || root.onlyNotification) ? 1 : 0
                 visible: opacity > 0
 
-                StyledText { // Notification body (expanded)
+                StyledText { // Notification body
                     id: notificationBodyText
-                    Behavior on opacity {
-                        animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
-                    }
                     Layout.fillWidth: true
                     font.pixelSize: root.fontSize
                     color: Appearance.colors.colSubtext
@@ -320,17 +318,11 @@ Item { // Notification item area
 
                 Flickable { // Notification actions
                     id: actionsFlickable
+                    visible: root.expanded
                     Layout.fillWidth: true
                     implicitHeight: actionRowLayout.implicitHeight
                     contentWidth: actionRowLayout.implicitWidth
                     clip: !onlyNotification
-
-                    Behavior on opacity {
-                        animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
-                    }
-                    Behavior on implicitHeight {
-                        animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
-                    }
 
                     RowLayout {
                         id: actionRowLayout

@@ -41,6 +41,9 @@ Scope {
             anchors.topMargin: 5
             implicitWidth: parent.width - Appearance.sizes.elevationMargin * 2
             popup: true
+            popin: false
+            add: Transition {}
+            addDisplaced: Transition {}
         }
     }
 }

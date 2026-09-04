@@ -212,10 +212,11 @@ Singleton {
         });
     }
 
-    function groupsForList(list) {
+    function groupsForList(list, individualNotifications = false) {
         const groups = Object.create(null);
         list.forEach((notif) => {
-            const groupKey = root.groupKeyForNotification(notif);
+            const groupKey = individualNotifications ?
+                `notification:${notif.id}` : root.groupKeyForNotification(notif);
             if (!Object.prototype.hasOwnProperty.call(groups, groupKey)) {
                 groups[groupKey] = {
                     appName: root.displayNameForNotification(notif),
@@ -237,9 +238,9 @@ Singleton {
     }
 
     property var groupsByAppName: groupsForList(root.list)
-    property var popupGroupsByAppName: groupsForList(root.popupList)
+    property var popupGroups: groupsForList(root.popupList, true)
     property var appNameList: appNameListForGroups(root.groupsByAppName)
-    property var popupAppNameList: appNameListForGroups(root.popupGroupsByAppName)
+    property var popupGroupKeys: appNameListForGroups(root.popupGroups)
 
     // Quickshell's notification IDs starts at 1 on each run, while saved notifications
     // can already contain higher IDs. This is for avoiding id collisions

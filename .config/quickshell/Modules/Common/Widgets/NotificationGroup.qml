@@ -36,6 +36,7 @@ Item { // Notification group area
     property bool expanded: false
     property bool popup: false
     property real padding: 10
+    property real popupEnterOffset: popup ? Appearance.sizes.notificationPopupWidth + dismissOvershoot : 0
     implicitHeight: background.implicitHeight
 
     property real dragConfirmThreshold: 70 // Drag further to discard notification
@@ -98,6 +99,23 @@ Item { // Notification group area
         onFinished: () => {
             Notifications.discardNotifications(root.dismissIds);
         }
+    }
+
+    NumberAnimation {
+        id: popupEnterAnimation
+        target: root
+        property: "popupEnterOffset"
+        from: Appearance.sizes.notificationPopupWidth + root.dismissOvershoot
+        to: 0
+        duration: Appearance.animation.elementMoveFast.duration
+        easing.type: Appearance.animation.elementMoveFast.type
+        easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
+    }
+
+    Timer {
+        interval: 0
+        running: root.popup
+        onTriggered: popupEnterAnimation.start()
     }
 
     function toggleExpanded() {
@@ -183,10 +201,10 @@ Item { // Notification group area
         width: parent.width
         color: Appearance.colors.colSurfaceContainer
         radius: Appearance.rounding.normal
-        anchors.leftMargin: root.xOffset
+        anchors.leftMargin: root.xOffset + root.popupEnterOffset
 
         Behavior on anchors.leftMargin {
-            enabled: !dragManager.dragging
+            enabled: !dragManager.dragging && !popupEnterAnimation.running
             NumberAnimation {
                 duration: Appearance.animation.elementMove.duration
                 easing.type: Appearance.animation.elementMove.type
@@ -197,10 +215,13 @@ Item { // Notification group area
         clip: true
         implicitHeight: expanded ?
             row.implicitHeight + padding * 2 :
-            Math.min(80, row.implicitHeight + padding * 2)
+            (root.multipleNotifications ?
+                Math.min(80, row.implicitHeight + padding * 2) :
+                row.implicitHeight + padding * 2)
 
         Behavior on implicitHeight {
             id: implicitHeightAnim
+            enabled: false
             animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
         }
 
@@ -215,13 +236,17 @@ Item { // Notification group area
             NotificationAppIcon { // Icons
                 Layout.alignment: Qt.AlignTop
                 Layout.fillWidth: false
+                Layout.fillHeight: false
                 image: root.displayGroup.mainImage
                 appIcon: root.displayGroup.appIcon
                 summary: root.displayGroup.iconSummary
             }
 
             ColumnLayout { // Content
+                id: contentColumn
                 Layout.fillWidth: true
+                Layout.fillHeight: false
+                Layout.alignment: Qt.AlignTop
                 spacing: expanded ? (root.multipleNotifications ?
                     (root.displayGroup.latestImage != "") ? 35 :
                     5 : 0) : 0
@@ -234,6 +259,7 @@ Item { // Notification group area
                     id: topRow
                     // spacing: 0
                     Layout.fillWidth: true
+                    Layout.fillHeight: false
                     property real fontSize: Appearance.font.pixelSize.smaller
                     property bool showAppName: root.multipleNotifications
                     implicitHeight: Math.max(topTextRow.implicitHeight, expandButton.implicitHeight)
@@ -281,6 +307,8 @@ Item { // Notification group area
                     id: notificationsColumn
                     implicitHeight: contentHeight
                     Layout.fillWidth: true
+                    Layout.fillHeight: false
+                    Layout.alignment: Qt.AlignTop
                     spacing: expanded ? 5 : 3
                     // clip: true
                     interactive: false
@@ -301,6 +329,7 @@ Item { // Notification group area
                         opacity: (!root.expanded && index == 1 && root.notificationCount > 2) ? 0.5 : 1
                         visible: root.expanded || (index < 2)
                         width: ListView.view.width
+                        height: implicitHeight
                         onDismissGroupRequested: root.destroyWithAnimation()
                     }
                 }
