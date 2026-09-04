@@ -400,7 +400,8 @@ Item { // Notification item area
                                 (contentItem.implicitWidth + leftPadding + rightPadding)
 
                             onClicked: {
-                                Quickshell.clipboardText = notificationData.body
+                                Quickshell.clipboardText = root.isScreenshot ? root.screenshotPath
+                                    : StringUtils.stripHtml(notificationData.body)
                                 copyIcon.text = "inventory"
                                 copyIconTimer.restart()
                             }

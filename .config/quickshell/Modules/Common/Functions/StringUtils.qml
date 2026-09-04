@@ -209,4 +209,17 @@ Singleton {
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#39;');
     }
+
+    // freedesktop notification bodies carry a small markup subset
+    function stripHtml(str) {
+        if (typeof str !== 'string') return str;
+        return str
+            .replace(/<br\s*\/?>/gi, '\n')
+            .replace(/<[^>]*>/g, '')
+            .replace(/&lt;/g, '<')
+            .replace(/&gt;/g, '>')
+            .replace(/&quot;/g, '"')
+            .replace(/&#39;/g, "'")
+            .replace(/&amp;/g, '&');
+    }
 }
