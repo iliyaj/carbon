@@ -38,13 +38,12 @@ Item { // Notification item area
     property real padding: onlyNotification ? 0 : 8
     signal dismissGroupRequested
 
-    // Resolve the saved screenshot path for Hyprshot notifications so we can offer
-    // an "Annotate" action that opens the annotator on that capture.
+    // capture path behind the Annotate action
     function screenshotPathFor(n) {
-        const candidates = [n.image, n.appIcon];
-        for (const c of candidates) {
-            if (c && (c.startsWith("/") || c.startsWith("file://")) && /\.(png|jpe?g)$/i.test(c))
-                return c.replace(/^file:\/\//, "");
+        for (const candidate of [n.image, n.appIcon]) {
+            const localPath = NotificationUtils.localImagePath(candidate);
+            if (/\.(png|jpe?g)$/i.test(localPath))
+                return localPath;
         }
         const m = /Image saved in\s*<i>(.*?)<\/i>/.exec(n.body ?? "");
         if (m) return m[1];

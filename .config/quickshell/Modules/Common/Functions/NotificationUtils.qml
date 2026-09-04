@@ -82,4 +82,15 @@ Singleton {
         // Older dates
         return Qt.formatDateTime(messageTime, "MMMM dd");
     }
+
+    // quickshell hands absolute paths back as image://icon//abs/path
+    function localImagePath(value) {
+        let payload = String(value ?? "");
+        const iconProviderPrefix = "image://icon/";
+        if (payload.startsWith(iconProviderPrefix))
+            payload = payload.slice(iconProviderPrefix.length);
+        if (payload.startsWith("file://"))
+            return payload.slice("file://".length);
+        return payload.startsWith("/") ? payload : "";
+    }
 }

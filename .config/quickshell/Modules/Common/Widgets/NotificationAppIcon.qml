@@ -29,24 +29,16 @@ Rectangle { // App icon
     color: Appearance.colors.colSecondaryContainer
 
     function resolvedAppIcon(icon) {
-        // Screenshot tools commonly put an absolute image path in app_icon.
-        const value = String(icon ?? "")
-        if (value.startsWith("/") || value.startsWith("file://"))
-            return Qt.resolvedUrl(value)
-        return Quickshell.iconPath(value, "image-missing")
+        const localPath = NotificationUtils.localImagePath(icon)
+        if (localPath.length > 0)
+            return Qt.resolvedUrl(localPath)
+        return Quickshell.iconPath(String(icon ?? ""), "image-missing")
     }
 
+    // non-local payloads stay untouched for real image providers
     function resolvedNotificationImage(image) {
-        const value = String(image ?? "")
-        const iconProviderPrefix = "image://icon/"
-        if (value.startsWith(iconProviderPrefix)) {
-            const iconPayload = value.slice(iconProviderPrefix.length)
-            if (iconPayload.startsWith("/") || iconPayload.startsWith("file://"))
-                return Qt.resolvedUrl(iconPayload)
-        }
-        if (value.startsWith("/") || value.startsWith("file://"))
-            return Qt.resolvedUrl(value)
-        return value
+        const localPath = NotificationUtils.localImagePath(image)
+        return localPath.length > 0 ? Qt.resolvedUrl(localPath) : String(image ?? "")
     }
 
     // Keep every icon layer instantiated so source changes cannot rebuild the card in stages.

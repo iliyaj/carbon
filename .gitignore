@@ -11,6 +11,7 @@ AGENTS.md
 !.env.example
 /.config/hypr/user.env
 /.config/quickshell/Scripts/Diagnostics/suspend-probe.sh
+/.config/quickshell/Scripts/Diagnostics/notification-probe.sh
 
 # Python/editor/runtime output
 __pycache__/
