@@ -130,6 +130,7 @@ Singleton {
     property bool silent: false
     property var filePath: Directories.notificationsPath
     property list<Notif> list: []
+    property var groupOrderTimes: Object.create(null)
     property var popupList: list.filter((notif) => notif.popup);
     property bool popupInhibited: (GlobalStates?.sidebarRightOpen ?? false) || silent
     property var pausedPopupIds: new Set()
@@ -171,7 +172,7 @@ Singleton {
             return;
 
         const evicted = current.slice(0, overflow);
-        root.list = current.slice(overflow);
+        root.setList(current.slice(overflow));
         evicted.forEach(notif => {
             if (notif.timer)
                 notif.timer.destroy();
@@ -207,9 +208,28 @@ Singleton {
 
     function appNameListForGroups(groups) {
         return Object.keys(groups).sort((a, b) => {
-            // Sort by time, descending
-            return groups[b].time - groups[a].time;
+            return groups[b].orderTime - groups[a].orderTime;
         });
+    }
+
+    function orderTimesForList(notifications) {
+        const orderTimes = Object.assign(Object.create(null), root.groupOrderTimes);
+        const activeKeys = new Set();
+        notifications.forEach((notif) => {
+            const groupKey = root.groupKeyForNotification(notif);
+            activeKeys.add(groupKey);
+            orderTimes[groupKey] = Math.max(orderTimes[groupKey] ?? 0, notif.time);
+        });
+        Object.keys(orderTimes).forEach((groupKey) => {
+            if (!activeKeys.has(groupKey))
+                delete orderTimes[groupKey];
+        });
+        return orderTimes;
+    }
+
+    function setList(notifications) {
+        root.groupOrderTimes = root.orderTimesForList(notifications);
+        root.list = notifications;
     }
 
     function groupsForList(list, individualNotifications = false) {
@@ -222,6 +242,8 @@ Singleton {
                     appName: root.displayNameForNotification(notif),
                     appIcon: notif.appIcon,
                     notifications: [],
+                    orderTime: individualNotifications ? notif.time :
+                        (root.groupOrderTimes[groupKey] ?? notif.time),
                     time: 0
                 };
             }
@@ -270,7 +292,7 @@ Singleton {
                 "notification": notification,
                 "time": Date.now(),
             });
-			root.list = [...root.list, newNotifObject];
+			root.setList([...root.list, newNotifObject]);
 
             // Popup
             if (!root.popupInhibited)
@@ -291,7 +313,7 @@ Singleton {
             return;
 
         // One assignment prevents groups from rendering every intermediate count.
-        root.list = root.list.filter(notif => !idSet.has(notif.id));
+        root.setList(root.list.filter(notif => !idSet.has(notif.id)));
         root.schedulePersist();
 
         if (dismissTracked) {
@@ -430,7 +452,7 @@ Singleton {
         path: Qt.resolvedUrl(filePath)
         onLoaded: {
             const fileContents = notifFileView.text()
-            root.list = JSON.parse(fileContents).map((notif) => {
+            root.setList(JSON.parse(fileContents).map((notif) => {
                 return notifComponent.createObject(root, {
                     "id": notif.id,
                     "actions": [], // Notification actions are meaningless if they're not tracked by the server or the sender is dead
@@ -443,7 +465,7 @@ Singleton {
                     "time": notif.time,
                     "urgency": notif.urgency,
                 });
-            });
+            }));
             // Find largest id
             let maxId = 0
             root.list.forEach((notif) => {
@@ -461,7 +483,7 @@ Singleton {
         onLoadFailed: (error) => {
             if(error == FileViewError.FileNotFound) {
                 console.log("[Notifications] File not found, creating new file.")
-                root.list = []
+                root.setList([])
                 notifFileView.setText(stringifyList(root.list));
             } else {
                 console.log("[Notifications] Error loading file: " + error)
