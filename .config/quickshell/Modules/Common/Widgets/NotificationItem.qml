@@ -245,8 +245,9 @@ Item { // Notification item area
             ColorUtils.transparentize(Appearance.colors.colSurfaceContainerHighest)
 
         implicitHeight: expanded ? (contentColumn.implicitHeight + padding * 2) : summaryRow.implicitHeight
+        // elementMove overshoots; match the group height and the margins instead
         Behavior on implicitHeight {
-            animation: Appearance.animation.elementMove.numberAnimation.createObject(this)
+            animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
         }
 
         ColumnLayout { // Content column
@@ -274,11 +275,8 @@ Item { // Notification item area
                     text: root.notificationData.summary
                 }
                 StyledText {
-                    opacity: !root.expanded ? 1 : 0
-                    visible: opacity > 0
-                    Behavior on opacity {
-                        animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
-                    }
+                    // no fade-in; the expanded body leaves instantly and a gap reads as a blink
+                    visible: !root.expanded
                     Layout.fillWidth: true
                     font.pixelSize: root.fontSize
                     color: Appearance.colors.colSubtext
