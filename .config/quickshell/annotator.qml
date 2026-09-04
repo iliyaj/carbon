@@ -291,7 +291,11 @@ ShellRoot {
                 win.grabRetries = 0;
                 const out = root.outputPath();
                 result.saveToFile(out);
+                // agents paste into a terminal, where a path beats image bytes
                 Quickshell.execDetached(["wl-copy", "--type", "text/plain", out]);
+                Quickshell.execDetached(["notify-send", "Screenshot saved",
+                    `Image saved in <i>${out}</i> and copied to the clipboard.`,
+                    "-t", "5000", "-i", out, "-a", "Hyprshot"]);
                 quitTimer.start();
             });
             if (!grab) {
