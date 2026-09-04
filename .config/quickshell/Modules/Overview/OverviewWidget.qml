@@ -165,7 +165,7 @@ Item {
                     availableWorkspaceHeight: root.workspaceImplicitHeight
 
                     property int monitorId: windowData?.monitor
-                    property var monitor: HyprlandData.monitors[monitorId]
+                    property var monitor: HyprlandData.monitors.find(m => m.id === monitorId)
 
                     property bool atInitPosition: (initX == x && initY == y)
                     restrictToWorkspace: Drag.active || atInitPosition
