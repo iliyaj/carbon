@@ -99,7 +99,7 @@ Item {
 
         // Gating only on hover + a non-empty toplevel list; the readiness loop walked the wrong children and the un-guarded mapFromItem binding threw on every re-evaluation.
         property bool shouldShow: (popupMouseArea.containsMouse || root.buttonHovered)
-            && appTopLevel && appTopLevel.toplevels && appTopLevel.toplevels.length > 0
+            && (appTopLevel?.toplevels?.length ?? 0) > 0
 
         property bool show: false
         // Cached so the popup's position is computed only when the hovered button changes, not on every transient re-evaluation of the popup's inner bindings.
