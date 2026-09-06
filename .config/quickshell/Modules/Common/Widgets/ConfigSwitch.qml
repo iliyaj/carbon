@@ -12,6 +12,12 @@ RippleButton {
 
     contentItem: RowLayout {
         spacing: 10
+        opacity: root.enabled ? 1 : 0.4 // Without this a disabled switch looks live but ignores clicks
+
+        Behavior on opacity {
+            NumberAnimation { duration: 150 }
+        }
+
         StyledText {
             id: labelWidget
             Layout.fillWidth: true

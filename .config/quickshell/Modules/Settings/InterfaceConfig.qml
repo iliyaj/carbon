@@ -198,6 +198,7 @@ ContentPage {
             }
             ConfigSwitch {
                 text: "Automatically hide"
+                enabled: ConfigOptions.dock.enable
                 checked: !ConfigOptions.dock.pinnedOnStartup
                 onCheckedChanged: {
                     ConfigLoader.setConfigValueAndSave("dock.pinnedOnStartup", !checked);
