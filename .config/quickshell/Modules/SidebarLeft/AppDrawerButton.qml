@@ -18,7 +18,7 @@ Item {
     signal menuRequested(real x, real y)
 
     function launch() {
-        AppLauncher.launchDesktopEntry(appItem.entry)
+        AppLauncher.activateOrLaunch(appItem.entry)
         GlobalStates.sidebarLeftOpen = false
     }
 
