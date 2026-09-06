@@ -1,3 +1,5 @@
+pragma ComponentBehavior: Bound
+
 import "root:/Services"
 import "root:/Modules/Common"
 import "root:/Modules/Common/Widgets"
@@ -106,12 +108,12 @@ Item {
         Connections {
             target: root
             function onLastHoveredButtonChanged() {
-                previewPopup.cachedCenterX = popupCenterXForButton(root.lastHoveredButton);
+                previewPopup.cachedCenterX = root.popupCenterXForButton(root.lastHoveredButton);
                 updateTimer.restart();
             }
             function onButtonHoveredChanged() {
                 if (root.buttonHovered)
-                    previewPopup.cachedCenterX = popupCenterXForButton(root.lastHoveredButton);
+                    previewPopup.cachedCenterX = root.popupCenterXForButton(root.lastHoveredButton);
                 updateTimer.restart();
             }
         }
@@ -188,6 +190,7 @@ Item {
                         RippleButton {
                             id: windowButton
                             required property var modelData
+                            Layout.alignment: Qt.AlignTop
                             padding: 0
                             middleClickAction: () => {
                                 windowButton.modelData?.close();
@@ -217,8 +220,8 @@ Item {
                                     GroupButton {
                                         id: closeButton
                                         colBackground: ColorUtils.transparentize(Appearance.colors.colSurfaceContainer)
-                                        baseWidth: windowControlsHeight
-                                        baseHeight: windowControlsHeight
+                                        baseWidth: root.windowControlsHeight
+                                        baseHeight: root.windowControlsHeight
                                         buttonRadius: Appearance.rounding.full
                                         contentItem: MaterialSymbol {
                                             anchors.centerIn: parent
@@ -234,7 +237,7 @@ Item {
                                 }
                                 ScreencopyView {
                                     id: screencopyView
-                                    captureSource: previewPopup ? windowButton.modelData : null
+                                    captureSource: windowButton.modelData
                                     live: true
                                     paintCursor: true
                                     constraintSize: Qt.size(root.maxWindowPreviewWidth, root.maxWindowPreviewHeight)
