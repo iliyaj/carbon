@@ -1,6 +1,6 @@
-import "root:/Modules/Common"
-import "root:/Modules/Common/Widgets"
-import "root:/Services"
+import qs.Modules.Common
+import qs.Modules.Common.Widgets
+import qs.Services
 import "./Calendar"
 import "./Notifications"
 import "./Todo"

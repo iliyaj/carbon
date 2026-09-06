@@ -1,5 +1,5 @@
-import "root:/Modules/Common"
-import "root:/Services"
+import qs.Modules.Common
+import qs.Services
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts

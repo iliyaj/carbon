@@ -1,5 +1,5 @@
-import "root:/Services/"
-import "root:/Modules/Common/Widgets"
+import qs.Services
+import qs.Modules.Common.Widgets
 
 QuickToggleButton {
     buttonIcon: "gamepad"

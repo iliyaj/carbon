@@ -1,5 +1,5 @@
-import "root:/Modules/Common/Widgets/"
-import "root:/Modules/Common/"
+import qs.Modules.Common.Widgets
+import qs.Modules.Common
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls

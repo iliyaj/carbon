@@ -1,23 +1,40 @@
 #!/usr/bin/env bash
 # /usr/bin/qmllint is Qt5 and exits 255 on Qt6 pragmas without printing, so it silently
-# checks nothing. This runs Qt6 qmllint against a copy with root:/ imports and singletons resolved.
+# checks nothing. This runs Qt6 qmllint with Carbon's `qs.*` module import path.
+#
+# The tree is linted in place, so this sees exactly what qmlls reports in an editor. Keeping
+# the two in agreement is the point: `qs.*` imports and the checked-in qmldir files exist so
+# that both resolve Carbon's own types.
 set -uo pipefail
 
 usage() {
     cat <<'EOF'
-Usage: qmllint.sh [QML_FILE ...]
+Usage: qmllint.sh [--sync-qmldir] [QML_FILE ...]
 
 Lint the given files, or every QML file in the Carbon Quickshell tree when no files are given.
 Paths may be absolute or relative to the caller, but must be inside .config/quickshell.
+
+  --sync-qmldir   Regenerate the qmldir files instead of linting. Run this after adding,
+                  removing or renaming a QML type in a directory imported as a qs.* module.
 EOF
 }
 
-case "${1:-}" in
-    -h|--help)
-        usage
-        exit 0
-        ;;
-esac
+sync_qmldir=0
+files=()
+for arg in "$@"; do
+    case "$arg" in
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        --sync-qmldir)
+            sync_qmldir=1
+            ;;
+        *)
+            files+=("$arg")
+            ;;
+    esac
+done
 
 QMLLINT=/usr/lib/qt6/bin/qmllint
 if [ ! -x "$QMLLINT" ]; then
@@ -26,8 +43,25 @@ if [ ! -x "$QMLLINT" ]; then
 fi
 
 root=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
+sync_script="$root/Scripts/Diagnostics/qmldir-sync.py"
+import_path=$(cd "$root/../../.qmlmodules" 2>/dev/null && pwd)
+if [ -z "$import_path" ]; then
+    echo "qmllint.sh: missing .qmlmodules/qs symlink at the repo root" >&2
+    exit 2
+fi
+
+if [ $sync_qmldir -eq 1 ]; then
+    python3 "$sync_script" "$root"
+    exit $?
+fi
+
+# A stale qmldir makes every type in that module unresolvable, which buries real findings.
+if ! python3 "$sync_script" "$root" --check; then
+    exit 2
+fi
+
 targets=()
-for f in "$@"; do
+for f in "${files[@]}"; do
     [ -f "$f" ] || { echo "qmllint.sh: no such file: $f" >&2; exit 2; }
     source_path=$(realpath "$f")
     case "$source_path" in
@@ -45,44 +79,14 @@ for f in "$@"; do
     esac
 done
 
-work=$(mktemp -d) || exit 2
-trap 'rm -rf "$work"' EXIT
-
-python3 - "$root" "$work" <<'PY' || exit 2
-import os, pathlib, re, shutil, sys
-src, dst = pathlib.Path(sys.argv[1]), pathlib.Path(sys.argv[2]) / "src"
-shutil.copytree(src, dst, ignore=shutil.ignore_patterns(".git"))
-pat = re.compile(r'import\s+"root:/([^"]*)"')
-for f in dst.rglob("*.qml"):
-    text = f.read_text()
-    new = pat.sub(lambda m: 'import "%s"' % os.path.relpath((dst / m.group(1)).resolve(), f.parent), text)
-    if new != text:
-        f.write_text(new)
-singletons = {}
-for f in dst.rglob("*.qml"):
-    if re.search(r'^\s*pragma\s+Singleton', f.read_text()[:400], re.M):
-        singletons.setdefault(f.parent, []).append(f.stem)
-for d, names in singletons.items():
-    qd = d / "qmldir"
-    prev = qd.read_text() if qd.exists() else ""
-    missing = [n for n in sorted(names) if not re.search(
-        rf"^\s*(?:(?:internal|singleton)\s+)*{re.escape(n)}(?:\s|$)", prev, re.M
-    )]
-    if missing:
-        separator = "" if not prev or prev.endswith("\n") else "\n"
-        qd.write_text(prev + separator + "".join(
-            f"singleton {n} 1.0 {n}.qml\n" for n in missing
-        ))
-PY
-
-cd "$work/src" || exit 2
+cd "$root" || exit 2
 if [ ${#targets[@]} -eq 0 ]; then
     mapfile -t targets < <(find . -name '*.qml' -printf '%P\n' | sort)
 fi
 
 finding_files=0
 for f in "${targets[@]}"; do
-    out=$("$QMLLINT" "$f" 2>&1)
+    out=$("$QMLLINT" -I "$import_path" "$f" 2>&1)
     rc=$?
     if [ -n "$out" ] || [ $rc -ne 0 ]; then
         if [ $rc -eq 0 ]; then

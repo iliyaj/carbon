@@ -1,6 +1,6 @@
 pragma Singleton
 
-import "root:/Modules/Common/Functions"
+import qs.Modules.Common.Functions
 import QtQuick
 import Quickshell
 import Quickshell.Wayland

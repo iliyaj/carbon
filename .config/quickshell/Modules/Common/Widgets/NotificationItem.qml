@@ -1,6 +1,6 @@
-import "root:/Modules/Common"
-import "root:/Services"
-import "root:/Modules/Common/Functions"
+import qs.Modules.Common
+import qs.Services
+import qs.Modules.Common.Functions
 import Qt5Compat.GraphicalEffects
 import QtQuick
 import QtQuick.Controls

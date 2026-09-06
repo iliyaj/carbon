@@ -4,7 +4,7 @@
 pragma Singleton
 pragma ComponentBehavior: Bound
 
-import "root:/Modules/Common"
+import qs.Modules.Common
 import QtQuick
 import Quickshell
 import Quickshell.Io

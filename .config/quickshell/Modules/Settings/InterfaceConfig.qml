@@ -2,9 +2,9 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell
-import "root:/Services/"
-import "root:/Modules/Common/"
-import "root:/Modules/Common/Widgets/"
+import qs.Services
+import qs.Modules.Common
+import qs.Modules.Common.Widgets
 
 ContentPage {
     forceWidth: true

@@ -1,6 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
-import "root:/Modules/Common/"
+import qs.Modules.Common
 
 RowLayout {
     property bool uniform: false

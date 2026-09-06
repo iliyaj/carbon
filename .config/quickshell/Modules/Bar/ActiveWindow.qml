@@ -1,5 +1,5 @@
-import "root:/Modules/Common"
-import "root:/Modules/Common/Widgets"
+import qs.Modules.Common
+import qs.Modules.Common.Widgets
 import QtQuick
 import QtQuick.Layouts
 import Quickshell.Wayland

@@ -1,7 +1,7 @@
-import "root:/Modules/Common"
-import "root:/Modules/Common/Widgets"
-import "root:/Services"
-import "root:/Modules/Common/Functions"
+import qs.Modules.Common
+import qs.Modules.Common.Widgets
+import qs.Services
+import qs.Modules.Common.Functions
 import QtQuick
 import QtQuick.Layouts
 import Quickshell

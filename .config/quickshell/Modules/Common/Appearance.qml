@@ -1,6 +1,6 @@
 import QtQuick
 import Quickshell
-import "root:/Modules/Common/Functions"
+import qs.Modules.Common.Functions
 pragma Singleton
 pragma ComponentBehavior: Bound
 

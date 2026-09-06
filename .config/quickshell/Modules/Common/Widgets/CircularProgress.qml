@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 import QtQuick
-import "root:/Modules/Common"
+import qs.Modules.Common
 
 /**
  * Material 3 circular progress. See https://m3.material.io/components/progress-indicators/specs

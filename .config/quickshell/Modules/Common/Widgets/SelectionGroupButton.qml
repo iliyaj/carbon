@@ -3,9 +3,9 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
 import Quickshell.Hyprland
-import "root:/Services/"
-import "root:/Modules/Common/"
-import "root:/Modules/Common/Widgets/"
+import qs.Services
+import qs.Modules.Common
+import qs.Modules.Common.Widgets
 
 GroupButton {
     id: root

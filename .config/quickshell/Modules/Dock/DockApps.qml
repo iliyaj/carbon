@@ -1,9 +1,9 @@
 pragma ComponentBehavior: Bound
 
-import "root:/Services"
-import "root:/Modules/Common"
-import "root:/Modules/Common/Widgets"
-import "root:/Modules/Common/Functions"
+import qs.Services
+import qs.Modules.Common
+import qs.Modules.Common.Widgets
+import qs.Modules.Common.Functions
 import Qt5Compat.GraphicalEffects
 import QtQuick
 import QtQuick.Controls

@@ -1,6 +1,6 @@
-import "root:/Modules/Common"
-import "root:/Modules/Common/Widgets"
-import "root:/Modules/SidebarRight/Calendar"
+import qs.Modules.Common
+import qs.Modules.Common.Widgets
+import qs.Modules.SidebarRight.Calendar
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
