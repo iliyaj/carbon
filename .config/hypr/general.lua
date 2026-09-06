@@ -80,7 +80,8 @@ hl.config({
         repeat_delay = 250,
         repeat_rate = 35,
 
-        follow_mouse = 1,
+        -- Pointer focus is detached from keyboard focus so activating a window never warps the cursor
+        follow_mouse = 2,
 
         touchpad = {
             natural_scroll = true,
@@ -119,6 +120,7 @@ hl.config({
     cursor = {
         zoom_factor = 1,
         zoom_rigid = false,
+        no_warps = true,
     },
 
     xwayland = {
