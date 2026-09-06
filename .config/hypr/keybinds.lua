@@ -66,6 +66,8 @@ hl.bind("SUPER + M", hl.dsp.global("quickshell:sidebarRightToggle"),
     { description = "Shell: Toggle right sidebar" })
 hl.bind("SUPER + ALT + A", hl.dsp.global("quickshell:sidebarLeftToggleDetach"))
 hl.bind("SUPER + B", hl.dsp.global("quickshell:sidebarLeftToggle"))
+hl.bind("SUPER + ALT + D", hl.dsp.global("quickshell:dockToggle"),
+    { description = "Shell: Toggle dock" })
 hl.bind("SUPER + O", hl.dsp.global("quickshell:sidebarLeftToggle"))
 hl.bind("SUPER + N", hl.dsp.global("quickshell:sidebarLeftToggle"),
     { description = "Shell: Toggle left sidebar" })

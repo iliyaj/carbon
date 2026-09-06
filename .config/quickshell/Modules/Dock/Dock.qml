@@ -15,6 +15,15 @@ Scope { // Scope
     id: root
     property bool pinned: ConfigOptions?.dock.pinnedOnStartup ?? false
 
+    GlobalShortcut {
+        name: "dockToggle"
+        description: qsTr("Toggles dock pinning on press")
+
+        onPressed: {
+            root.pinned = !root.pinned;
+        }
+    }
+
     Variants { // For each monitor
         model: Quickshell.screens
 
