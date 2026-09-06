@@ -16,8 +16,6 @@ Singleton {
     property var substitutions: ({
         "gnome-tweaks": "org.gnome.tweaks",
         "pavucontrol-qt": "pavucontrol",
-        "wps": "wps-office2019-kprometheus",
-        "wpsoffice": "wps-office2019-kprometheus",
         "footclient": "foot",
         "zen": "zen-browser",
         "brave-browser": "brave-desktop",
@@ -26,7 +24,8 @@ Singleton {
         "code": "visual-studio-code",
         "Spotify": "spotify",
         "Logseq": "logseq",
-        "btop": "btop"
+        "btop": "btop",
+        "pcsx2-qt": "pcsx2"
     })
     property var regexSubstitutions: [
         {
