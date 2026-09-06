@@ -85,55 +85,57 @@ Item {
         }
     }
 
+    function popupCenterXForButton(button) {
+        if (!button || !root.QsWindow?.window)
+            return 0;
+        return root.QsWindow.mapFromItem(button, button.width / 2, 0).x;
+    }
+
     PopupWindow {
         id: previewPopup
         property var appTopLevel: root.lastHoveredButton?.appToplevel
-        property bool allPreviewsReady: false
+
+        // Gating only on hover + a non-empty toplevel list; the readiness loop walked the wrong children and the un-guarded mapFromItem binding threw on every re-evaluation.
+        property bool shouldShow: (popupMouseArea.containsMouse || root.buttonHovered)
+            && appTopLevel && appTopLevel.toplevels && appTopLevel.toplevels.length > 0
+
+        property bool show: false
+        // Cached so the popup's position is computed only when the hovered button changes, not on every transient re-evaluation of the popup's inner bindings.
+        property real cachedCenterX: 0
+
         Connections {
             target: root
             function onLastHoveredButtonChanged() {
-                previewPopup.allPreviewsReady = false; // Reset readiness when the hovered button changes
+                previewPopup.cachedCenterX = popupCenterXForButton(root.lastHoveredButton);
+                updateTimer.restart();
+            }
+            function onButtonHoveredChanged() {
+                if (root.buttonHovered)
+                    previewPopup.cachedCenterX = popupCenterXForButton(root.lastHoveredButton);
+                updateTimer.restart();
             }
         }
-        function updatePreviewReadiness() {
-            for(var i = 0; i < previewRowLayout.children.length; i++) {
-                const view = previewRowLayout.children[i];
-                if (view.hasContent === false) {
-                    allPreviewsReady = false;
-                    return;
-                }
-            }
-            allPreviewsReady = true;
-        }
-        property bool shouldShow: {
-            const hoverConditions = (popupMouseArea.containsMouse || root.buttonHovered)
-            return hoverConditions && allPreviewsReady;
-        }
-        property bool show: false
 
         onShouldShowChanged: {
-            if (shouldShow) {
-                // show = true;
-                updateTimer.restart();
-            } else {
-                updateTimer.restart();
-            }
+            updateTimer.restart();
         }
+
         Timer {
             id: updateTimer
             interval: 100
             onTriggered: {
-                previewPopup.show = previewPopup.shouldShow
+                previewPopup.show = previewPopup.shouldShow;
             }
         }
+
         anchor {
             window: root.QsWindow.window
             adjustment: PopupAdjustment.None
             gravity: Edges.Top | Edges.Right
             edges: Edges.Top | Edges.Left
-
         }
-        visible: popupBackground.visible
+
+        visible: popupBackground.opacity > 0
         color: "transparent"
         implicitWidth: root.QsWindow.window?.width ?? 1
         implicitHeight: popupMouseArea.implicitHeight + root.windowControlsHeight + Appearance.sizes.elevationMargin * 2
@@ -144,10 +146,7 @@ Item {
             implicitWidth: popupBackground.implicitWidth + Appearance.sizes.elevationMargin * 2
             implicitHeight: root.maxWindowPreviewHeight + root.windowControlsHeight + Appearance.sizes.elevationMargin * 2
             hoverEnabled: true
-            x: {
-                const itemCenter = root.QsWindow?.mapFromItem(root.lastHoveredButton, root.lastHoveredButton?.width / 2, 0);
-                return itemCenter.x - width / 2
-            }
+            x: previewPopup.cachedCenterX - width / 2
             StyledRectangularShadow {
                 target: popupBackground
                 opacity: previewPopup.show ? 1 : 0
@@ -239,9 +238,6 @@ Item {
                                     live: true
                                     paintCursor: true
                                     constraintSize: Qt.size(root.maxWindowPreviewWidth, root.maxWindowPreviewHeight)
-                                    onHasContentChanged: {
-                                        previewPopup.updatePreviewReadiness();
-                                    }
                                     layer.enabled: true
                                     layer.effect: OpacityMask {
                                         maskSource: Rectangle {
