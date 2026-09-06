@@ -15,12 +15,17 @@ Scope { // Scope
     id: root
     property bool pinned: ConfigOptions?.dock.pinnedOnStartup ?? false
 
+    function setPinned(value): void {
+        ConfigLoader.setConfigValueAndSave("dock.pinnedOnStartup", value); // Persisted so the dock, the shortcut and settings cannot disagree
+        ConfigLoader.setConfigValueAndSave("dock.hoverToReveal", !value);
+    }
+
     GlobalShortcut {
         name: "dockToggle"
         description: qsTr("Toggles dock pinning on press")
 
         onPressed: {
-            root.pinned = !root.pinned;
+            root.setPinned(!root.pinned);
         }
     }
 
@@ -118,7 +123,7 @@ Scope { // Scope
                                     clickedHeight: baseHeight + 20
                                     buttonRadius: Appearance.rounding.normal
                                     toggled: root.pinned
-                                    onClicked: root.pinned = !root.pinned
+                                    onClicked: root.setPinned(!root.pinned)
                                     contentItem: MaterialSymbol {
                                         text: "keep"
                                         horizontalAlignment: Text.AlignHCenter
