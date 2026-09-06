@@ -36,7 +36,7 @@ ShellRoot {
     property bool enableBackgroundWidgets: true
     property bool enableCheatsheet: true
     property bool enableClickVisualizer: true
-    property bool enableDock: false
+    property bool enableDock: ConfigOptions.dock.enable
     property bool enableMediaControls: true
     property bool enableNotificationPopup: true
     property bool enableOnScreenDisplayBrightness: true

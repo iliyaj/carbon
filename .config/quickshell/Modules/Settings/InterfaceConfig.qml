@@ -182,6 +182,35 @@ ContentPage {
     }
 
     ContentSection {
+        title: "Dock"
+
+        ConfigRow {
+            uniform: true
+            ConfigSwitch {
+                text: "Dock"
+                checked: ConfigOptions.dock.enable
+                onCheckedChanged: {
+                    ConfigLoader.setConfigValueAndSave("dock.enable", checked);
+                }
+                StyledToolTip {
+                    content: "Shows a dock along the bottom edge with pinned and running applications."
+                }
+            }
+            ConfigSwitch {
+                text: "Automatically hide"
+                checked: !ConfigOptions.dock.pinnedOnStartup
+                onCheckedChanged: {
+                    ConfigLoader.setConfigValueAndSave("dock.pinnedOnStartup", !checked);
+                    ConfigLoader.setConfigValueAndSave("dock.hoverToReveal", checked);
+                }
+                StyledToolTip {
+                    content: "Keeps the dock off screen until the pointer reaches the bottom edge, instead of always showing it."
+                }
+            }
+        }
+    }
+
+    ContentSection {
         title: "Clipboard"
 
         RippleButtonWithIcon {
