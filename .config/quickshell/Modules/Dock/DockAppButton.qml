@@ -21,6 +21,10 @@ DockButton {
     property real countDotWidth: 10
     property real countDotHeight: 4
     property bool appIsActive: appToplevel.toplevels.find(t => (t.activated == true)) !== undefined
+    readonly property int activeToplevelIndex: {
+        const index = appToplevel.toplevels.findIndex(t => t.activated)
+        return index < 0 ? -1 : Math.min(index, 2) // Clamp to the last visible dot
+    }
 
     property bool isSeparator: appToplevel.appId === "SEPARATOR"
     property var desktopEntry: DesktopEntries.byId(appToplevel.appId)
@@ -105,7 +109,7 @@ DockButton {
                         implicitWidth: (appToplevel.toplevels.length <= 3) ?
                             root.countDotWidth : root.countDotHeight // Circles when too many
                         implicitHeight: root.countDotHeight
-                        color: appIsActive ? Appearance.colors.colPrimary : ColorUtils.transparentize(Appearance.colors.colOnLayer0, 0.4)
+                        color: index === root.activeToplevelIndex ? Appearance.colors.colPrimary : ColorUtils.transparentize(Appearance.colors.colOnLayer0, 0.7)
                     }
                 }
             }
