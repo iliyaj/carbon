@@ -99,15 +99,21 @@ Singleton {
         return matches.sort((a, b) => (root.isMinimized(a) - root.isMinimized(b)) || (root.focusRank(a) - root.focusRank(b)));
     }
 
+    // Focuses a window, restoring it first when Carbon has it minimized.
+    function activateToplevel(toplevel): void {
+        if (!toplevel)
+            return;
+        if (root.isMinimized(toplevel))
+            root.restoreToplevel(toplevel);
+        else
+            toplevel.activate();
+    }
+
     // Single-instance apps exit silently when launched twice, so focus a live window first.
     function activateOrLaunch(entry): void {
         const matches = root.matchingToplevels(entry);
         if (matches.length > 0) {
-            const toplevel = matches[0];
-            if (root.isMinimized(toplevel))
-                root.restoreToplevel(toplevel);
-            else
-                toplevel.activate();
+            root.activateToplevel(matches[0]);
             return;
         }
         root.launchDesktopEntry(entry);

@@ -1,4 +1,5 @@
 // pragma NativeMethodBehavior: AcceptThisObject
+import "root:/Services"
 import "root:/Modules/Common"
 import "root:/Modules/Common/Widgets"
 import "root:/Modules/Common/Functions"
@@ -89,7 +90,10 @@ RippleButton {
 
     PointingHandInteraction {}
     onClicked: {
-        root.itemExecute()
+        if (root.entry?.isDesktopEntry)
+            AppLauncher.activateOrLaunch(root.entry)
+        else
+            root.itemExecute()
         Hyprland.dispatch("hl.dsp.global([[quickshell:overviewClose]])")
     }
     Keys.onPressed: (event) => {

@@ -362,6 +362,7 @@ Item { // Wrapper
                                 .map((entry) => {
                                     entry.clickActionName = qsTr("Launch");
                                     entry.type = qsTr("App");
+                                    entry.isDesktopEntry = true;
                                     return entry;
                                 })
                         );
