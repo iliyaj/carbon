@@ -1,5 +1,6 @@
 pragma Singleton
 
+import "root:/Modules/Common/Functions"
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
@@ -40,8 +41,33 @@ Singleton {
         }
     }
 
+    // HyprlandToplevel reports a bare address while hyprctl and the dispatchers use the 0x form.
     function toplevelAddress(toplevel): string {
-        return String(toplevel?.HyprlandToplevel?.address ?? "");
+        const address = String(toplevel?.HyprlandToplevel?.address ?? "").replace(/^0x/, "");
+        return address === "" ? "" : `0x${address}`;
+    }
+
+    // Carbon minimizes by parking a window on the special workspace.
+    function isMinimized(toplevel): bool {
+        const address = root.toplevelAddress(toplevel);
+        if (address === "")
+            return false;
+        const windowData = HyprlandData.windowList.find(window => String(window.address ?? "") === address);
+        return windowData?.workspace?.name === "special:special";
+    }
+
+    // Moves a minimized window back to the focused monitor before giving it focus.
+    function restoreToplevel(toplevel): void {
+        const address = root.toplevelAddress(toplevel);
+        const workspaceId = HyprlandData.monitors.find(monitor => monitor.focused)?.activeWorkspace?.id;
+        if (address === "" || workspaceId === undefined) {
+            toplevel.activate();
+            return;
+        }
+
+        const window = LuaUtils.stringLiteral(`address:${address}`);
+        Hyprland.dispatch(`hl.dsp.window.move({ workspace = ${workspaceId}, follow = false, window = ${window} })`);
+        Hyprland.dispatch(`hl.dsp.focus({ window = ${window} })`);
     }
 
     // Sorts behind every window the compositor still remembers being focused.
@@ -69,14 +95,19 @@ Singleton {
             if (keys.includes(appId) || keys.includes(appId.split(".").pop()))
                 matches.push(toplevel);
         }
-        return matches.sort((a, b) => root.focusRank(a) - root.focusRank(b));
+        // A minimized window is a last resort, matching how the macOS dock prefers a visible one.
+        return matches.sort((a, b) => (root.isMinimized(a) - root.isMinimized(b)) || (root.focusRank(a) - root.focusRank(b)));
     }
 
     // Single-instance apps exit silently when launched twice, so focus a live window first.
     function activateOrLaunch(entry): void {
         const matches = root.matchingToplevels(entry);
         if (matches.length > 0) {
-            matches[0].activate();
+            const toplevel = matches[0];
+            if (root.isMinimized(toplevel))
+                root.restoreToplevel(toplevel);
+            else
+                toplevel.activate();
             return;
         }
         root.launchDesktopEntry(entry);
