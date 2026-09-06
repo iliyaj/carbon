@@ -63,7 +63,8 @@ Scope {
             }
 
             WlrLayershell.namespace: "quickshell:bar"
-            implicitHeight: barHeight + (GlobalStates.gameMode ? 0 : Appearance.rounding.screenRounding)
+            // Constant across game mode; resizing the layer makes Hyprland replay the bar's slide
+            implicitHeight: barHeight + Appearance.rounding.screenRounding
             exclusiveZone: showBarBackground ? barHeight : (barHeight - 4)
             mask: Region {
                 item: barContent
