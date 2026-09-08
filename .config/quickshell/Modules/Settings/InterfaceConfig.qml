@@ -13,21 +13,26 @@ ContentPage {
         title: "Desktop"
 
         ConfigRow {
+            uniform: true
             ConfigSwitch {
                 text: "Clock and date"
                 checked: ConfigOptions.background.showClock
                 onCheckedChanged: {
                     ConfigLoader.setConfigValueAndSave("background.showClock", checked);
                 }
+                StyledToolTip {
+                    content: "Shows the clock and date on the wallpaper."
+                }
             }
             ConfigSwitch {
-                text: "Hide for fullscreen windows"
+                text: "Hide clock in fullscreen"
+                enabled: ConfigOptions.background.showClock
                 checked: ConfigOptions.background.hideWhenFullscreen
                 onCheckedChanged: {
                     ConfigLoader.setConfigValueAndSave("background.hideWhenFullscreen", checked);
                 }
                 StyledToolTip {
-                    content: "Ordinary windows already cover the clock; this also hides it behind a fullscreen window."
+                    content: "Hides the wallpaper clock when an app is fullscreen."
                 }
             }
         }
