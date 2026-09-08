@@ -25,11 +25,17 @@ Singleton {
     signal coverArtReady(artUrl: string)
 
     function coverArtFilePath(artUrl: string): string {
+        if (isDirectCoverArt(artUrl)) // no download needed
+            return artUrl
         return `${Directories.coverArt}/${Qt.md5(artUrl)}.jpg`
     }
 
+    function isDirectCoverArt(artUrl: string): bool {
+        return artUrl.startsWith("file:") || artUrl.startsWith("data:image/")
+    }
+
     function isCoverArtReady(artUrl: string): bool {
-        return artUrl.length > 0 && _cachedArtUrls[artUrl] === true
+        return artUrl.length > 0 && (isDirectCoverArt(artUrl) || _cachedArtUrls[artUrl] === true)
     }
 
     function rememberCoverArt(artUrl: string): void {

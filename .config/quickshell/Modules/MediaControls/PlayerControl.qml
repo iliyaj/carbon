@@ -21,7 +21,9 @@ Item { // Player instance
     property string artUrl: ""
     property string artFilePath: MprisController.coverArtFilePath(artUrl)
     property string displayedArtFilePath: ""
-    property color artDominantColor: colorQuantizer?.colors[0] || Appearance.m3colors.m3secondaryContainer
+    property color artDominantColor: displayedArtFilePath.length > 0
+        ? (colorQuantizer?.colors[0] || Appearance.m3colors.m3secondaryContainer)
+        : Appearance.m3colors.m3secondaryContainer
     property list<real> visualizerPoints: []
     property real maxVisualizerValue: 1000 // Max value in the data points
     property int visualizerSmoothing: 2 // Number of points to average for smoothing
@@ -94,15 +96,10 @@ Item { // Player instance
     }
 
     function refreshDisplayedArt(): void {
-        if (artUrl.length === 0) {
-            displayedArtFilePath = ""
-            playerController.artDominantColor = Appearance.m3colors.m3secondaryContainer
-            return
-        }
-
-        // Retain the previous cover until the newest remote image is complete.
-        if (MprisController.isCoverArtReady(artUrl))
-            displayedArtFilePath = Qt.resolvedUrl(artFilePath)
+        // clear stale art until the new cover is ready
+        displayedArtFilePath = MprisController.isCoverArtReady(artUrl)
+            ? Qt.resolvedUrl(artFilePath)
+            : ""
     }
 
     onArtFilePathChanged: refreshDisplayedArt()
@@ -229,6 +226,11 @@ Item { // Player instance
                     cache: false
                     antialiasing: true
                     asynchronous: true
+
+                    onStatusChanged: {
+                        if (status === Image.Error)
+                            playerController.displayedArtFilePath = "" // drop unreadable cover
+                    }
 
                     width: size
                     height: size
