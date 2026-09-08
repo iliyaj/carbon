@@ -13,14 +13,16 @@ import Quickshell.Hyprland
 
 Scope { // Scope
     id: root
-    property bool pinned: ConfigOptions?.dock.pinnedOnStartup ?? false
+    readonly property bool pinned: ConfigOptions?.dock.pinnedOnStartup ?? false
 
     GlobalShortcut {
         name: "dockToggle"
-        description: qsTr("Toggles dock pinning on press")
+        description: qsTr("Toggles automatic dock hiding")
 
         onPressed: {
-            root.pinned = !root.pinned;
+            const automaticallyHide = root.pinned;
+            ConfigLoader.setConfigValueAndSave("dock.pinnedOnStartup", !automaticallyHide);
+            ConfigLoader.setConfigValueAndSave("dock.hoverToReveal", automaticallyHide);
         }
     }
 
@@ -109,25 +111,6 @@ Scope { // Scope
                             spacing: 3
                             property real padding: 5
 
-                            VerticalButtonGroup {
-                                Layout.topMargin: Appearance.sizes.hyprlandGapsOut // why does this work
-                                GroupButton { // Pin button
-                                    baseWidth: 35
-                                    baseHeight: 35
-                                    clickedWidth: baseWidth
-                                    clickedHeight: baseHeight + 20
-                                    buttonRadius: Appearance.rounding.normal
-                                    toggled: root.pinned
-                                    onClicked: root.pinned = !root.pinned
-                                    contentItem: MaterialSymbol {
-                                        text: "keep"
-                                        horizontalAlignment: Text.AlignHCenter
-                                        iconSize: Appearance.font.pixelSize.larger
-                                        color: root.pinned ? Appearance.m3colors.m3onPrimary : Appearance.colors.colOnLayer0
-                                    }
-                                }
-                            }
-                            DockSeparator {}
                             DockApps { id: dockApps; }
                             DockSeparator {}
                             DockButton {
