@@ -8,5 +8,6 @@ require("execs")
 require("general")
 require("rules")
 require("colors")
+require("app_rules")
 
 require("keybinds")
