@@ -13,6 +13,7 @@ Singleton {
     property bool overviewOpen: false
     property bool workspaceShowNumbers: false
     property bool gameMode: false
+    property bool screenLocked: false
 
     function applyGameMode(): void {
         Hyprland.dispatch("function() hl.config({ animations = { enabled = false }, decoration = { shadow = { enabled = false }, blur = { enabled = false }, rounding = 0 }, general = { gaps_in = 0, gaps_out = 0, border_size = 1, allow_tearing = true } }) end");
@@ -34,6 +35,13 @@ Singleton {
             if (event.name === "configreloaded" && root.gameMode)
                 root.applyGameMode();
         }
+    }
+
+    // Recover external hyprlock state if Carbon starts or reloads while the session is locked.
+    Process {
+        running: true
+        command: ["pidof", "hyprlock"]
+        onExited: exitCode => root.screenLocked = exitCode === 0
     }
 
     // Game mode outlives the shell, so recover it from the compositor instead of assuming it is off

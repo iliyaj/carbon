@@ -53,6 +53,9 @@ ShellRoot {
         target: "carbon"
 
         function ping(): void {}
+        function setScreenLocked(locked: bool): void {
+            GlobalStates.screenLocked = locked
+        }
     }
 
     function initializeNightLight(): void {

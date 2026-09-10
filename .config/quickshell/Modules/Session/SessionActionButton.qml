@@ -15,21 +15,30 @@ RippleButton {
     property bool keyboardDown: false
     property real size: 120
 
-    buttonRadius: (button.focus || button.down) ? size / 2 : Appearance.rounding.verylarge
+    buttonRadius: Appearance.rounding.verylarge
     colBackground: button.keyboardDown ? Appearance.colors.colSecondaryContainerActive :
-        button.focus ? Appearance.colors.colPrimary :
         Appearance.colors.colSecondaryContainer
-    colBackgroundHover: Appearance.colors.colPrimary
+    colBackgroundHover: Appearance.colors.colSecondaryContainerHover
     colRipple: Appearance.colors.colPrimaryActive
-    property color colText: (button.down || button.keyboardDown || button.focus || button.hovered) ?
-        Appearance.m3colors.m3onPrimary : Appearance.colors.colOnLayer0
+    property color colText: Appearance.colors.colOnLayer0
 
     Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
     background.implicitHeight: size
     background.implicitWidth: size
 
-    Behavior on buttonRadius {
-        animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
+    onHoveredChanged: {
+        if (hovered)
+            button.forceActiveFocus()
+    }
+
+    Rectangle {
+        anchors.fill: parent
+        z: 2
+        visible: button.activeFocus
+        color: "transparent"
+        radius: button.buttonRadius
+        border.width: 2
+        border.color: Appearance.colors.colPrimary
     }
 
     Keys.onPressed: (event) => {

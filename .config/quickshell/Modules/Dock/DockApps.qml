@@ -98,7 +98,8 @@ Item {
         property var appTopLevel: root.lastHoveredButton?.appToplevel
 
         // Gating only on hover + a non-empty toplevel list; the readiness loop walked the wrong children and the un-guarded mapFromItem binding threw on every re-evaluation.
-        property bool shouldShow: (popupMouseArea.containsMouse || root.buttonHovered)
+        property bool shouldShow: !GlobalStates.screenLocked
+            && (popupMouseArea.containsMouse || root.buttonHovered)
             && (appTopLevel?.toplevels?.length ?? 0) > 0
 
         property bool show: false
@@ -120,6 +121,18 @@ Item {
 
         onShouldShowChanged: {
             updateTimer.restart();
+        }
+
+        Connections {
+            target: GlobalStates
+            function onScreenLockedChanged() {
+                if (GlobalStates.screenLocked) {
+                    updateTimer.stop();
+                    previewPopup.show = false;
+                    root.buttonHovered = false;
+                    root.lastHoveredButton = null;
+                }
+            }
         }
 
         Timer {
@@ -199,8 +212,8 @@ Item {
                                 windowButton.modelData?.activate();
                             }
                             contentItem: ColumnLayout {
-                                implicitWidth: screencopyView.implicitWidth
-                                implicitHeight: screencopyView.implicitHeight
+                                implicitWidth: screencopyLoader.implicitWidth
+                                implicitHeight: screencopyLoader.implicitHeight
 
                                 ButtonGroup {
                                     contentWidth: parent.width - anchors.margins * 2
@@ -235,18 +248,23 @@ Item {
                                         }
                                     }
                                 }
-                                ScreencopyView {
-                                    id: screencopyView
-                                    captureSource: windowButton.modelData
-                                    live: true
-                                    paintCursor: true
-                                    constraintSize: Qt.size(root.maxWindowPreviewWidth, root.maxWindowPreviewHeight)
-                                    layer.enabled: true
-                                    layer.effect: OpacityMask {
-                                        maskSource: Rectangle {
-                                            width: screencopyView.width
-                                            height: screencopyView.height
-                                            radius: Appearance.rounding.small
+                                Loader {
+                                    id: screencopyLoader
+                                    active: previewPopup.show && !GlobalStates.screenLocked
+
+                                    sourceComponent: ScreencopyView {
+                                        id: screencopyView
+                                        captureSource: windowButton.modelData
+                                        live: true
+                                        paintCursor: true
+                                        constraintSize: Qt.size(root.maxWindowPreviewWidth, root.maxWindowPreviewHeight)
+                                        layer.enabled: true
+                                        layer.effect: OpacityMask {
+                                            maskSource: Rectangle {
+                                                width: screencopyView.width
+                                                height: screencopyView.height
+                                                radius: Appearance.rounding.small
+                                            }
                                         }
                                     }
                                 }
