@@ -51,7 +51,9 @@ Item {
                 // Pinned apps
                 const pinnedApps = ConfigOptions?.dock.pinnedApps ?? [];
                 for (const appId of pinnedApps) {
-                    if (!map.has(appId.toLowerCase())) map.set(appId.toLowerCase(), ({
+                    const key = appId.toLowerCase();
+                    if (!map.has(key)) map.set(key, ({
+                        appId: appId,
                         pinned: true,
                         toplevels: []
                     }));
@@ -59,22 +61,25 @@ Item {
 
                 // Separator
                 if (pinnedApps.length > 0) {
-                    map.set("SEPARATOR", { pinned: false, toplevels: [] });
+                    map.set("SEPARATOR", { appId: "SEPARATOR", pinned: false, toplevels: [] });
                 }
 
                 // Open windows
                 for (const toplevel of ToplevelManager.toplevels.values) {
-                    if (!map.has(toplevel.appId.toLowerCase())) map.set(toplevel.appId.toLowerCase(), ({
+                    const appId = toplevel.appId;
+                    const key = appId.toLowerCase(); // Deduplicate case-insensitively without changing the ID used for metadata lookup.
+                    if (!map.has(key)) map.set(key, ({
+                        appId: appId,
                         pinned: false,
                         toplevels: []
                     }));
-                    map.get(toplevel.appId.toLowerCase()).toplevels.push(toplevel);
+                    map.get(key).toplevels.push(toplevel);
                 }
 
                 var values = [];
 
-                for (const [key, value] of map) {
-                    values.push({ appId: key, toplevels: value.toplevels, pinned: value.pinned });
+                for (const value of map.values()) {
+                    values.push({ appId: value.appId, toplevels: value.toplevels, pinned: value.pinned });
                 }
 
                 return values;

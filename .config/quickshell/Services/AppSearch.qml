@@ -184,6 +184,10 @@ Singleton {
             if (replacedName != str) return replacedName;
         }
 
+        // Desktop metadata is authoritative and must not depend on whether an app is visible in the drawer.
+        const desktopEntry = DesktopEntries.byId(str);
+        if (desktopEntry) return desktopEntry.icon;
+
         // If it gets detected normally, no need to guess
         if (iconExists(str)) return str;
 
@@ -201,6 +205,9 @@ Singleton {
             guessStr = firstEntry.icon
             if (iconExists(guessStr)) return guessStr;
         }
+
+        const heuristicEntry = DesktopEntries.heuristicLookup(str);
+        if (heuristicEntry) return heuristicEntry.icon;
 
         // Give up
         return str;
