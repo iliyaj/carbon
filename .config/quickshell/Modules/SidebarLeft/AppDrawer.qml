@@ -57,12 +57,14 @@ Item {
 
     function togglePinnedToTop(entry) {
         const id = AppSearch.entryId(entry)
-        const pinned = Array.from(ConfigOptions?.appDrawer.pinnedApps ?? [])
+        let pinned = Array.from(ConfigOptions?.appDrawer.pinnedApps ?? [])
             .filter(p => p.length > 0)
-        const index = pinned.findIndex(p => p.toLowerCase() === id)
-        if (index >= 0) {
-            pinned.splice(index, 1)
-        } else {
+        const currentlyPinned = AppSearch.isPinnedToTop(entry)
+        pinned = pinned.filter(p => p.toLowerCase() !== id)
+        if (!currentlyPinned) {
+            const hidden = Array.from(ConfigOptions?.appDrawer.hiddenApps ?? [])
+                .filter(h => h.length > 0 && h.toLowerCase() !== id)
+            ConfigLoader.setConfigValueAndSave("appDrawer.hiddenApps", hidden)
             pinned.push(id)
         }
         ConfigLoader.setConfigValueAndSave("appDrawer.pinnedApps", pinned)
@@ -70,14 +72,16 @@ Item {
 
     function toggleHidden(entry) {
         const id = AppSearch.entryId(entry)
-        const hidden = Array.from(ConfigOptions?.appDrawer.hiddenApps ?? [])
+        let hidden = Array.from(ConfigOptions?.appDrawer.hiddenApps ?? [])
             .filter(h => h.length > 0)
-        const index = hidden.findIndex(h => h.toLowerCase() === id)
-        if (index >= 0) {
-            hidden.splice(index, 1)
-        } else {
+        const currentlyHidden = AppSearch.isHidden(entry)
+        hidden = hidden.filter(h => h.toLowerCase() !== id)
+        if (!currentlyHidden) {
             hidden.push(id)
         }
+        const pinned = Array.from(ConfigOptions?.appDrawer.pinnedApps ?? [])
+            .filter(p => p.length > 0 && p.toLowerCase() !== id)
+        ConfigLoader.setConfigValueAndSave("appDrawer.pinnedApps", pinned)
         ConfigLoader.setConfigValueAndSave("appDrawer.hiddenApps", hidden)
     }
 

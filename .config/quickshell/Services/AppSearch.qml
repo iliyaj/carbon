@@ -13,38 +13,29 @@ Singleton {
     id: root
     property bool sloppySearch: ConfigOptions?.search.sloppy ?? false
     property real scoreThreshold: 0.2
-    property var substitutions: ({
-        "gnome-tweaks": "org.gnome.tweaks",
-        "pavucontrol-qt": "pavucontrol",
-        "footclient": "foot",
-        "zen": "zen-browser",
-        "brave-browser": "brave-desktop",
-        "proton.vpn.app.gtk": "proton-vpn-logo",
-        "monero-core": "monero-custom",
-        "code": "visual-studio-code",
-        "Spotify": "spotify",
-        "Logseq": "logseq",
-        "btop": "btop",
-        "pcsx2-qt": "pcsx2"
-    })
-    property var regexSubstitutions: [
-        {
-            "regex": /^steam_app_(\\d+)$/,
-            "replace": "steam_icon_$1"
-        },
-        {
-            "regex": /Minecraft.*/,
-            "replace": "minecraft"
-        },
-        {
-            "regex": /.*polkit.*/,
-            "replace": "system-lock-screen"
-        },
-        {
-            "regex": /gcr.prompter/,
-            "replace": "system-lock-screen"
+    readonly property var substitutions: ConfigOptions?.apps.iconSubstitutions ?? ({})
+    readonly property var regexSubstitutions: {
+        const configured = ConfigOptions?.apps.iconRegexSubstitutions ?? []
+        const compiled = []
+        for (const substitution of configured) {
+            const pattern = substitution?.pattern
+            const replacement = substitution?.replace
+            if (typeof pattern !== "string" || pattern.length === 0
+                    || typeof replacement !== "string" || replacement.length === 0) {
+                console.warn("[AppSearch] Ignoring incomplete icon substitution")
+                continue
+            }
+            try {
+                compiled.push({
+                    regex: new RegExp(pattern, substitution.flags ?? ""),
+                    replace: replacement
+                })
+            } catch (error) {
+                console.warn("[AppSearch] Invalid icon substitution pattern:", pattern, error)
+            }
         }
-    ]
+        return compiled
+    }
 
     // Apple App Library style grouping: maps freedesktop Categories= entries
     // to iOS-like groups. Rules are checked in order, first match wins, so
@@ -114,14 +105,15 @@ Singleton {
     readonly property var pinnedIds: (ConfigOptions?.appDrawer.pinnedApps ?? []).map(id => id.toLowerCase())
 
     function isPinnedToTop(entry): bool {
-        return pinnedIds.indexOf(entryId(entry)) !== -1;
+        // Hidden wins if old or externally edited config contains the ID in both lists.
+        return !root.isHidden(entry) && pinnedIds.indexOf(entryId(entry)) !== -1;
     }
 
     // Ordered list of { name, icon, apps } for the categorized app drawer
     readonly property var groupedList: {
         const pinnedApps = root.pinnedIds
             .map(id => root.list.find(a => entryId(a) === id))
-            .filter(a => a !== undefined);
+            .filter(a => a !== undefined && !root.isHidden(a));
         const pinnedSet = {};
         for (const app of pinnedApps) pinnedSet[entryId(app)] = true;
 
@@ -178,8 +170,9 @@ Singleton {
         if (!str || str.length == 0) return "image-missing";
 
         // Normal substitutions
-        if (substitutions[str])
-            return substitutions[str];
+        const configuredIcon = substitutions[str]
+        if (typeof configuredIcon === "string" && configuredIcon.length > 0)
+            return configuredIcon;
 
         // Regex substitutions
         for (let i = 0; i < regexSubstitutions.length; i++) {

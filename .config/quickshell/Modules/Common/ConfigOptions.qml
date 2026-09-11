@@ -33,6 +33,8 @@ Singleton {
         property string networkEthernet: "kcmshell6 kcm_networkmanagement"
         property string taskManager: "missioncenter"
         property string terminal: "kitty -1" // This is only for shell actions
+        property var iconSubstitutions: ({}) // User-owned app ID or class -> icon name overrides
+        property var iconRegexSubstitutions: [] // User-owned { pattern, replace } overrides
     }
 
     property QtObject background: QtObject {
@@ -88,17 +90,13 @@ Singleton {
         property real hoverRegionHeight: 3
         property bool pinnedOnStartup: false
         property bool hoverToReveal: false // When false, only reveals on empty workspace
-        property list<string> pinnedApps: [ // IDs of pinned entries
-            "org.kde.dolphin", "kitty",]
+        property list<string> pinnedApps: [] // IDs of pinned entries
     }
 
     property QtObject appDrawer: QtObject {
         property list<string> pinnedApps: [] // IDs of apps pinned to the top of the app drawer
         property list<string> hiddenApps: [] // IDs of apps hidden from the app drawer
-        property var categoryOverrides: ({ // Desktop entry id -> category, for apps whose Categories= put them somewhere unhelpful
-            "monero-gui": "Productivity & Finance",
-            "com.github.johnfactotum.foliate": "Information & Reading"
-        })
+        property var categoryOverrides: ({}) // Desktop entry id -> user-selected category
     }
 
     property QtObject language: QtObject {

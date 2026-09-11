@@ -62,6 +62,10 @@ See the [installation guide](INSTALL.md) for the Git bootstrap and troubleshooti
 
 The cheatsheet reads Hyprland's live bind inventory and is the authoritative list after installation.
 
+## Application drawer
+
+Carbon automatically lists installed `.desktop` entries. To add a missing app, place its desktop entry in `$XDG_DATA_HOME/applications` (normally `~/.local/share/applications`), then open `Super+A`; right-click apps to pin, hide, or move them to another category. Those choices and optional `apps.iconSubstitutions` belong in `$XDG_CONFIG_HOME/carbon/config.json`, not the repository.
+
 ## Project layout
 
 - `.config/hypr/` - modular Hyprland Lua configuration and safe machine override example
