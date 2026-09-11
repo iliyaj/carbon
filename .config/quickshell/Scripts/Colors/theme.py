@@ -53,6 +53,8 @@ REGION_KEY = WALLPAPER_GENERATED_DIR / "least_busy_region.key"
 TERMINAL_DIR = GENERATED_DIR / "terminal"
 TERM_SCHEME = QUICKSHELL_DIR / "Scripts/Terminal/scheme-base.toml"
 MATUGEN_CONFIG = SCRIPT_DIR / "matugen.toml"
+QMMP_CONFIG = CONFIG_HOME / "qmmp/qmmp.conf"
+QMMP_SKIN_SCRIPT = SCRIPT_DIR / "qmmp_skin.py"
 HYPRLOCK_CONFIG = GENERATED_DIR / "hyprlock.conf"
 HYPRLOCK_TEMPLATE = CONFIG_HOME / "hypr/hyprlock.conf.template"
 KDE_GLOBALS = CONFIG_HOME / "kdeglobals"
@@ -376,6 +378,39 @@ def update_hyprlock(palette_source: str) -> None:
     atomic_write(HYPRLOCK_CONFIG, content)
 
 
+def update_qmmp_skin() -> None:
+    if not COLORS_JSON.is_file() or not QMMP_CONFIG.is_file() or not QMMP_SKIN_SCRIPT.is_file():
+        return
+    try:
+        settings = QMMP_CONFIG.read_text()
+    except OSError as error:
+        print(f"theme.py: could not read Qmmp settings: {error}", file=sys.stderr)
+        return
+    if not re.search(r"^current_ui=skinned\s*$", settings, flags=re.MULTILINE):
+        return
+    match = re.search(r"^skin_path=(.+?)\s*$", settings, flags=re.MULTILINE)
+    if not match:
+        return
+
+    skin = Path(match.group(1)).expanduser()
+    if not skin.is_absolute():
+        skin = QMMP_CONFIG.parent / skin
+    source = skin.with_name(f"{skin.stem}.original{skin.suffix}")
+    if not source.is_file():
+        return
+    result = run([
+        sys.executable,
+        QMMP_SKIN_SCRIPT,
+        "--source", source,
+        "--output", skin,
+        "--palette", COLORS_JSON,
+        "--reload-qmmp",
+    ], check=False, capture=True)
+    if result.returncode != 0:
+        message = result.stderr.strip() or f"exit status {result.returncode}"
+        print(f"theme.py: could not update the Qmmp skin: {message}", file=sys.stderr)
+
+
 # The quiet region depends only on the wallpaper and the screens, so a palette change cannot move it
 def generate_least_busy_region(source: str, monitors: list[dict]) -> None:
     source_path = Path(source)
@@ -460,6 +495,7 @@ def main() -> int:
     update_hyprlock(palette_source)
     if palette_source:
         generate_least_busy_region(palette_source, monitors)
+    update_qmmp_skin()
     return 0
 
 
