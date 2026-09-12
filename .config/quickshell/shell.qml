@@ -32,7 +32,7 @@ import "./Services/"
 
 // Enable or disable modules here. 
 ShellRoot {
-    property bool enableBar: true
+    property bool enableBar: ConfigOptions.bar.enable
     property bool enableBackgroundWidgets: true
     property bool enableCheatsheet: true
     property bool enableClickVisualizer: true
@@ -86,6 +86,12 @@ ShellRoot {
     Recorder {}
 
     LazyLoader { active: enableBar; component: Bar {} }
+    LazyLoader {
+        active: !enableBar
+            || (!ConfigOptions.bar.modules.showLeftSidebarButton
+                && !ConfigOptions.bar.modules.showRightSidebarButton)
+        component: BarSettingsRecovery {}
+    }
     LazyLoader { active: enableBackgroundWidgets && ConfigOptions.background.showClock; component: BackgroundWidgets {} }
     LazyLoader { active: enableCheatsheet; component: Cheatsheet {} }
     LazyLoader { active: enableClickVisualizer && ConfigOptions.accessibility.showMouseClicks; component: ClickVisualizer {} }

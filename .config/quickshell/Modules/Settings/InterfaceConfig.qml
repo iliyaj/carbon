@@ -55,6 +55,24 @@ ContentPage {
         title: "Bar"
 
         ContentSubsection {
+            title: "Visibility"
+            ConfigRow {
+                uniform: true
+                ConfigSwitch {
+                    text: "Top bar"
+                    checked: ConfigOptions.bar.enable
+                    onCheckedChanged: {
+                        ConfigLoader.setConfigValueAndSave("bar.enable", checked);
+                    }
+                    StyledToolTip {
+                        content: "Shows the top bar and reserves its edge space. Turning it off lets windows use the full screen."
+                    }
+                }
+                Item { Layout.fillWidth: true }
+            }
+        }
+
+        ContentSubsection {
             title: "Appearance"
             ConfigRow {
                 uniform: true
@@ -80,6 +98,7 @@ ContentPage {
 
         ContentSubsection {
             title: "Contents"
+            tooltip: "If the bar or both navigation buttons are off, a recovery settings button appears in the bottom-right corner."
             GridLayout {
                 columns: 2
                 columnSpacing: Appearance.spacing.md

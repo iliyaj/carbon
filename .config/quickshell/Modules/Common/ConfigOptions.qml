@@ -50,6 +50,7 @@ Singleton {
     }
 
     property QtObject bar: QtObject {
+        property bool enable: true
         property bool bottom: false // Instead of top
         property bool borderless: false // true for no grouping of items
         property bool showBackground: true
