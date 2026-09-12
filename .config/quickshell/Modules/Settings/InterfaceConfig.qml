@@ -9,6 +9,19 @@ import qs.Modules.Common.Widgets
 ContentPage {
     forceWidth: true
 
+    component BarItemSwitch: ConfigSwitch {
+        id: barItemSwitch
+
+        required property string settingKey
+        required property string description
+
+        onCheckedChanged: ConfigLoader.setConfigValueAndSave(settingKey, checked)
+
+        StyledToolTip {
+            content: barItemSwitch.description
+        }
+    }
+
     ContentSection {
         title: "Desktop"
 
@@ -66,78 +79,131 @@ ContentPage {
         }
 
         ContentSubsection {
-            title: "Buttons"
+            title: "Contents"
             GridLayout {
                 columns: 2
                 columnSpacing: Appearance.spacing.md
                 rowSpacing: 0
                 uniformCellWidths: true
 
-                ConfigSwitch {
-                    text: "Screen snip"
-                    checked: ConfigOptions.bar.utilButtons.showScreenSnip
-                    onCheckedChanged: {
-                        ConfigLoader.setConfigValueAndSave("bar.utilButtons.showScreenSnip", checked);
-                    }
+                BarItemSwitch {
+                    text: "App drawer button"
+                    settingKey: "bar.modules.showLeftSidebarButton"
+                    description: "Opens the app drawer and left sidebar."
+                    checked: ConfigOptions.bar.modules.showLeftSidebarButton
                 }
-                ConfigSwitch {
-                    text: "Screen snip (delayed)"
-                    checked: ConfigOptions.bar.utilButtons.showScreenSnipDelayed
-                    onCheckedChanged: {
-                        ConfigLoader.setConfigValueAndSave("bar.utilButtons.showScreenSnipDelayed", checked);
-                    }
-                    StyledToolTip {
-                        content: "Adds a button that waits 3 seconds before opening the region picker"
-                    }
+                BarItemSwitch {
+                    text: "Quick settings button"
+                    settingKey: "bar.modules.showRightSidebarButton"
+                    description: "Opens notifications, calendar, volume mixer, and quick settings."
+                    checked: ConfigOptions.bar.modules.showRightSidebarButton
                 }
-                ConfigSwitch {
-                    text: "Clipboard"
-                    checked: ConfigOptions.bar.utilButtons.showClipboard
-                    onCheckedChanged: {
-                        ConfigLoader.setConfigValueAndSave("bar.utilButtons.showClipboard", checked);
-                    }
+                BarItemSwitch {
+                    text: "Active window"
+                    settingKey: "bar.modules.showActiveWindow"
+                    description: "Shows the icon and title of the focused application."
+                    checked: ConfigOptions.bar.modules.showActiveWindow
                 }
-                ConfigSwitch {
+                BarItemSwitch {
+                    text: "Minimized windows"
+                    settingKey: "bar.modules.showMinimizedWindows"
+                    description: "Shows restorable icons for Carbon-minimized windows."
+                    checked: ConfigOptions.bar.modules.showMinimizedWindows
+                }
+                BarItemSwitch {
+                    text: "RAM usage"
+                    settingKey: "bar.modules.showResources"
+                    description: "Shows current memory usage."
+                    checked: ConfigOptions.bar.modules.showResources
+                }
+                BarItemSwitch {
+                    text: "Media"
+                    settingKey: "bar.modules.showMedia"
+                    description: "Shows the current player and opens media controls."
+                    checked: ConfigOptions.bar.modules.showMedia
+                }
+                BarItemSwitch {
+                    text: "Workspaces"
+                    settingKey: "bar.modules.showWorkspaces"
+                    description: "Shows workspace status and navigation."
+                    checked: ConfigOptions.bar.modules.showWorkspaces
+                }
+                BarItemSwitch {
                     text: "Clock and date"
+                    settingKey: "bar.showClock"
+                    description: "Shows the current time and, when space allows, the date."
                     checked: ConfigOptions.bar.showClock
-                    onCheckedChanged: {
-                        ConfigLoader.setConfigValueAndSave("bar.showClock", checked);
-                    }
                 }
-                ConfigSwitch {
+                BarItemSwitch {
+                    text: "Battery"
+                    settingKey: "bar.modules.showBattery"
+                    description: "Shows charge status when a laptop battery is available."
+                    checked: ConfigOptions.bar.modules.showBattery
+                }
+                BarItemSwitch {
+                    text: "System tray"
+                    settingKey: "bar.modules.showSystemTray"
+                    description: "Shows status icons supplied by background applications."
+                    checked: ConfigOptions.bar.modules.showSystemTray
+                }
+            }
+        }
+
+        ContentSubsection {
+            title: "Utility buttons"
+            GridLayout {
+                columns: 2
+                columnSpacing: Appearance.spacing.md
+                rowSpacing: 0
+                uniformCellWidths: true
+
+                BarItemSwitch {
+                    text: "Screen snip"
+                    settingKey: "bar.utilButtons.showScreenSnip"
+                    description: "Opens the region screenshot picker."
+                    checked: ConfigOptions.bar.utilButtons.showScreenSnip
+                }
+                BarItemSwitch {
+                    text: "Screen snip (delayed)"
+                    settingKey: "bar.utilButtons.showScreenSnipDelayed"
+                    description: "Waits three seconds before opening the region screenshot picker."
+                    checked: ConfigOptions.bar.utilButtons.showScreenSnipDelayed
+                }
+                BarItemSwitch {
+                    text: "Clipboard"
+                    settingKey: "bar.utilButtons.showClipboard"
+                    description: "Opens clipboard history in the overview."
+                    checked: ConfigOptions.bar.utilButtons.showClipboard
+                }
+                BarItemSwitch {
                     text: "Mic toggle"
+                    settingKey: "bar.utilButtons.showMicToggle"
+                    description: "Mutes or unmutes the default microphone."
                     checked: ConfigOptions.bar.utilButtons.showMicToggle
-                    onCheckedChanged: {
-                        ConfigLoader.setConfigValueAndSave("bar.utilButtons.showMicToggle", checked);
-                    }
                 }
-                ConfigSwitch {
+                BarItemSwitch {
                     text: "Keyboard toggle"
+                    settingKey: "bar.utilButtons.showKeyboardToggle"
+                    description: "Shows or hides the on-screen keyboard."
                     checked: ConfigOptions.bar.utilButtons.showKeyboardToggle
-                    onCheckedChanged: {
-                        ConfigLoader.setConfigValueAndSave("bar.utilButtons.showKeyboardToggle", checked);
-                    }
                 }
-                ConfigSwitch {
+                BarItemSwitch {
                     text: "Dark/Light toggle"
+                    settingKey: "bar.utilButtons.showDarkModeToggle"
+                    description: "Switches the generated theme between dark and light modes."
                     checked: ConfigOptions.bar.utilButtons.showDarkModeToggle
-                    onCheckedChanged: {
-                        ConfigLoader.setConfigValueAndSave("bar.utilButtons.showDarkModeToggle", checked);
-                    }
                 }
-                ConfigSwitch {
+                BarItemSwitch {
                     text: "Color picker"
+                    settingKey: "bar.utilButtons.showColorPicker"
+                    description: "Picks a screen color and copies it to the clipboard."
                     checked: ConfigOptions.bar.utilButtons.showColorPicker
-                    onCheckedChanged: {
-                        ConfigLoader.setConfigValueAndSave("bar.utilButtons.showColorPicker", checked);
-                    }
                 }
-                ConfigSwitch {
+                BarItemSwitch {
                     text: "File manager"
+                    settingKey: "bar.utilButtons.showFileManager"
+                    description: "Opens Dolphin."
                     checked: ConfigOptions.bar.utilButtons.showFileManager
-                    onCheckedChanged: {
-                        ConfigLoader.setConfigValueAndSave("bar.utilButtons.showFileManager", checked);
-                    }
                 }
             }
         }

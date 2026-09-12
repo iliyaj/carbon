@@ -50,6 +50,20 @@ Scope {
                     Appearance.sizes.barCenterSideModuleWidth
             readonly property int requiredCenterSideModuleWidth: Math.max(configuredCenterSideModuleWidth,
                 Math.ceil(rightCenterGroupContent.implicitWidth))
+            readonly property bool utilityButtonsVisible: ConfigOptions.bar.verbose && useShortenedForm === 0 && (
+                ConfigOptions.bar.utilButtons.showScreenSnip
+                || ConfigOptions.bar.utilButtons.showScreenSnipDelayed
+                || ConfigOptions.bar.utilButtons.showColorPicker
+                || ConfigOptions.bar.utilButtons.showClipboard
+                || ConfigOptions.bar.utilButtons.showFileManager
+                || ConfigOptions.bar.utilButtons.showMicToggle
+                || ConfigOptions.bar.utilButtons.showKeyboardToggle
+                || ConfigOptions.bar.utilButtons.showDarkModeToggle
+            )
+            readonly property bool batteryVisible: ConfigOptions.bar.modules.showBattery
+                && useShortenedForm < 2 && UPower.displayDevice.isLaptopBattery
+            readonly property bool rightCenterVisible: ConfigOptions.bar.showClock
+                || utilityButtonsVisible || batteryVisible
             property int centerSideModuleWidth: configuredCenterSideModuleWidth
 
             // A button may expand the paired modules, but hiding one must not resize the media title
@@ -116,6 +130,7 @@ Scope {
 
                             RippleButton { // Left sidebar button
                                 id: leftSidebarButton
+                                visible: ConfigOptions.bar.modules.showLeftSidebarButton
                                 Layout.margins: 4
                                 Layout.leftMargin: Appearance.spacing.xs
                                 Layout.fillWidth: false
@@ -149,7 +164,9 @@ Scope {
                             }
 
                             ActiveWindow {
-                                visible: barRoot.useShortenedForm === 0
+                                visible: ConfigOptions.bar.modules.showActiveWindow
+                                    && barRoot.useShortenedForm === 0
+                                Layout.leftMargin: leftSidebarButton.visible ? 0 : Appearance.spacing.xs
                                 Layout.rightMargin: Appearance.rounding.screenRounding
                                 Layout.fillWidth: true
                                 Layout.fillHeight: true
@@ -166,24 +183,31 @@ Scope {
 
                     BarGroup {
                         id: leftCenterGroup
-                        Layout.preferredWidth: barRoot.centerSideModuleWidth
+                        visible: ConfigOptions.bar.modules.showResources || mediaWidget.visible
+                        Layout.preferredWidth: mediaWidget.visible ? barRoot.centerSideModuleWidth : -1
                         Layout.fillHeight: true
 
                         Resources {
+                            visible: ConfigOptions.bar.modules.showResources
                             Layout.fillWidth: barRoot.useShortenedForm === 2
                         }
 
                         Media {
-                            visible: barRoot.useShortenedForm < 2
+                            id: mediaWidget
+                            visible: ConfigOptions.bar.modules.showMedia && barRoot.useShortenedForm < 2
                             Layout.fillWidth: true
                         }
 
                     }
 
-                    VerticalBarSeparator {visible: ConfigOptions?.bar.borderless}
+                    VerticalBarSeparator {
+                        visible: ConfigOptions?.bar.borderless && leftCenterGroup.visible
+                            && (middleCenterGroup.visible || rightCenterGroup.visible)
+                    }
 
                     BarGroup {
                         id: middleCenterGroup
+                        visible: ConfigOptions.bar.modules.showWorkspaces
                         padding: workspacesWidget.widgetPadding
                         Layout.fillHeight: true
 
@@ -204,13 +228,17 @@ Scope {
                         }
                     }
 
-                    VerticalBarSeparator {visible: ConfigOptions?.bar.borderless}
+                    VerticalBarSeparator {
+                        visible: ConfigOptions?.bar.borderless && middleCenterGroup.visible
+                            && rightCenterGroup.visible
+                    }
 
                     MouseArea {
                         id: rightCenterGroup
+                        visible: barRoot.rightCenterVisible
                         implicitWidth: rightCenterGroupContent.implicitWidth
                         implicitHeight: rightCenterGroupContent.implicitHeight
-                        Layout.preferredWidth: barRoot.centerSideModuleWidth
+                        Layout.preferredWidth: ConfigOptions.bar.showClock ? barRoot.centerSideModuleWidth : -1
                         Layout.fillHeight: true
 
                         onPressed: {
@@ -229,12 +257,12 @@ Scope {
                             }
 
                             UtilButtons {
-                                visible: (ConfigOptions.bar.verbose && barRoot.useShortenedForm === 0)
+                                visible: barRoot.utilityButtonsVisible
                                 Layout.alignment: Qt.AlignVCenter
                             }
 
                             BatteryIndicator {
-                                visible: (barRoot.useShortenedForm < 2 && UPower.displayDevice.isLaptopBattery)
+                                visible: barRoot.batteryVisible
                                 Layout.alignment: Qt.AlignVCenter
                             }
                         }
@@ -274,6 +302,7 @@ Scope {
 
                             RippleButton { // Right sidebar button
                                 id: rightSidebarButton
+                                visible: ConfigOptions.bar.modules.showRightSidebarButton
                                 Layout.margins: 4
                                 Layout.rightMargin: Appearance.spacing.xs
                                 Layout.fillHeight: true
@@ -306,14 +335,21 @@ Scope {
                             }
 
                             SysTray {
+                                id: systemTrayWidget
                                 bar: barRoot
-                                visible: barRoot.useShortenedForm === 0
+                                visible: ConfigOptions.bar.modules.showSystemTray
+                                    && barRoot.useShortenedForm === 0
+                                Layout.rightMargin: rightSidebarButton.visible ? 0 : Appearance.spacing.xs
                                 Layout.fillWidth: false
                                 Layout.fillHeight: true
                             }
 
                             MinimizedWindows {
                                 bar: barRoot
+                                visible: ConfigOptions.bar.modules.showMinimizedWindows
+                                    && minimizedWindows.length > 0
+                                Layout.rightMargin: rightSidebarButton.visible || systemTrayWidget.visible
+                                    ? 0 : Appearance.spacing.xs
                                 Layout.fillWidth: false
                                 Layout.fillHeight: true
                             }

@@ -56,6 +56,17 @@ Singleton {
         property bool verbose: true
         property bool showClock: true
         property list<string> screenList: [] // List of names, like "eDP-1", find out with 'hyprctl monitors' command
+        property QtObject modules: QtObject {
+            property bool showLeftSidebarButton: true
+            property bool showActiveWindow: true
+            property bool showResources: true
+            property bool showMedia: true
+            property bool showWorkspaces: true
+            property bool showBattery: true
+            property bool showRightSidebarButton: true
+            property bool showSystemTray: true
+            property bool showMinimizedWindows: true
+        }
         property QtObject utilButtons: QtObject {
             property bool showScreenSnip: true
             property bool showScreenSnipDelayed: true
