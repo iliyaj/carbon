@@ -99,7 +99,8 @@ Scope {
 
     function prepareRecording(captureArguments: var, withAudio: bool): void {
         const videosDirectory = FileUtils.trimFileProtocol(Directories.videos)
-        outputPath = `${videosDirectory}/recording_${timestamp()}.mp4`
+        const recordingDirectory = `${videosDirectory}/debug`
+        outputPath = `${recordingDirectory}/recording_${timestamp()}.mp4`
         const recorderArguments = ["--pixel-format", "yuv420p", "-f", outputPath].concat(captureArguments)
 
         if (!withAudio) {
@@ -120,7 +121,7 @@ Scope {
             pendingCommand = [`${Directories.scriptPath}/Audio/record-mix.sh`, microphone, `${sinkName}.monitor`].concat(recorderArguments)
         }
 
-        createDirectoryProcess.command = ["mkdir", "-p", videosDirectory]
+        createDirectoryProcess.command = ["mkdir", "-p", recordingDirectory]
         createDirectoryProcess.running = true
     }
 
@@ -128,7 +129,7 @@ Scope {
         id: createDirectoryProcess
         onExited: (exitCode, exitStatus) => {
             if (exitCode !== 0) {
-                root.notify("Recording cancelled", "Could not create the Videos directory")
+                root.notify("Recording cancelled", "Could not create the recording directory")
                 root.pendingCommand = []
                 return
             }
