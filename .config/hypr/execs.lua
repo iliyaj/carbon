@@ -13,6 +13,7 @@ local polkit_agent = lib.first_existing({
 
 local compositor_services = {
     "awww-daemon.service",
+    "carbon-stall-recorder.service",
     "quickshell.service",
     "hypridle.service",
 }
