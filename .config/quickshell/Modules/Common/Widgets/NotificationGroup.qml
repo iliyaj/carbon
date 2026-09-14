@@ -35,6 +35,8 @@ Item { // Notification group area
     property bool multipleNotifications: notificationCount > 1
     property bool expanded: false
     property bool popup: false
+    readonly property var popupNotification: popup ? (notifications[0] ?? null) : null
+    readonly property bool popupClosing: popupNotification?.popupClosing ?? false
     property real padding: 10
     property real popupEnterOffset: popup ? Appearance.sizes.notificationPopupWidth + dismissOvershoot : 0
     implicitHeight: background.implicitHeight
@@ -74,10 +76,13 @@ Item { // Notification group area
     onNotificationGroupChanged: captureGroup(notificationGroup)
     Component.onCompleted: captureGroup(notificationGroup)
 
-    function destroyWithAnimation() {
+    property bool timeoutDismissal: false
+
+    function destroyWithAnimation(timeoutDismissal = false) {
         if (destroyAnimation.running)
             return;
 
+        root.timeoutDismissal = timeoutDismissal;
         root.dismissIds = root.notifications.map(notif => notif.id);
         if (root.qmlParent) root.qmlParent.resetDrag()
         background.anchors.leftMargin = background.anchors.leftMargin; // Break binding
@@ -97,8 +102,16 @@ Item { // Notification group area
             easing.bezierCurve: Appearance.animation.elementMove.bezierCurve
         }
         onFinished: () => {
-            Notifications.discardNotifications(root.dismissIds);
+            if (root.timeoutDismissal)
+                root.dismissIds.forEach(id => Notifications.finishPopupTimeout(id));
+            else
+                Notifications.discardNotifications(root.dismissIds);
         }
+    }
+
+    onPopupClosingChanged: {
+        if (popupClosing)
+            root.destroyWithAnimation(true);
     }
 
     NumberAnimation {

@@ -129,7 +129,8 @@ hl.layer_rule({ match = { namespace = "quickshell:sidebarLeft" }, animation = "s
 hl.layer_rule({ match = { namespace = "quickshell:osk" }, animation = "slide bottom" })
 hl.layer_rule({ match = { namespace = "quickshell:dock" }, animation = "slide bottom" })
 hl.layer_rule({ match = { namespace = "quickshell:session" }, blur = true, no_anim = true, ignore_alpha = 0 })
-hl.layer_rule({ match = { namespace = "quickshell:notificationPopup" }, animation = "fade" })
+-- Card motion exposes blur-edge halos, and animating the surface corrupts client decorations beneath it.
+hl.layer_rule({ match = { namespace = "quickshell:notificationPopup" }, no_anim = true, blur = false, blur_popups = false })
 hl.layer_rule({ match = { namespace = "quickshell:onScreenDisplay" }, blur = false, blur_popups = false })
 hl.layer_rule({ match = { namespace = "quickshell:backgroundWidgets" }, blur = true, ignore_alpha = 0.05 })
 

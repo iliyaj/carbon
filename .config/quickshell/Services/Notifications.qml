@@ -32,6 +32,7 @@ Singleton {
         property string summary: notification?.summary ?? ""
         property double time
         property bool isTransient: notification?.transient ?? false
+        property bool popupClosing: false
         property string urgency: notification?.urgency.toString() ?? "normal"
         property Timer timer
         property bool closing: false // Keep destroyed source bindings from blanking an exiting row
@@ -351,8 +352,10 @@ Singleton {
 
     function timeoutNotification(id) {
         const index = root.list.findIndex((notif) => notif.id === id);
-        if (root.list[index] != null)
+        if (root.list[index] != null) {
+            root.list[index].popupClosing = false;
             root.list[index].popup = false;
+        }
         root.timeout(id);
     }
 
@@ -363,7 +366,7 @@ Singleton {
     }
 
     function restartPopupTimer(notif) {
-        if (!notif)
+        if (!notif || notif.popupClosing)
             return;
 
         if (notif.timer) {
@@ -406,6 +409,20 @@ Singleton {
 
         notif.timer = null;
         root.pausedPopupIds.delete(id);
+        if (!notif.popup) {
+            root.finishPopupTimeout(id);
+            return;
+        }
+
+        // Keep the layer alive until the card slides away because fading it corrupts client decorations beneath it.
+        notif.popupClosing = true;
+    }
+
+    function finishPopupTimeout(id) {
+        const notif = root.list.find(candidate => candidate.id === id) ?? null;
+        if (!notif)
+            return;
+
         if (!notif.isTransient) {
             root.timeoutNotification(id);
             return;
@@ -418,11 +435,12 @@ Singleton {
     }
 
     function timeoutAll() {
-        root.popupList.forEach((notif) => {
-            root.timeout(notif.id);
-        })
-        root.popupList.forEach((notif) => {
-            notif.popup = false;
+        root.popupList.forEach(notif => {
+            if (notif.timer && !notif.timer.firing)
+                notif.timer.destroy();
+            notif.timer = null;
+            root.pausedPopupIds.delete(notif.id);
+            notif.popupClosing = true;
         });
     }
 
