@@ -34,7 +34,6 @@ Singleton {
     // Cleanup on init
     Component.onCompleted: {
         Quickshell.execDetached(["bash", "-c", `mkdir -p '${shellConfig}'`])
-        Quickshell.execDetached(["bash", "-c", `mkdir -p '${favicons}'`])
         // Recent covers make the media popup instant after a shell reload.
         Quickshell.execDetached(["bash", "-c", `mkdir -p '${coverArt}'; find '${coverArt}' -type f -mtime +7 -delete`])
         Quickshell.execDetached(["bash", "-c", `rm -rf '${latexOutput}'; mkdir -p '${latexOutput}'`])

@@ -1,15 +1,9 @@
 import qs.Modules.Common
-import qs.Modules.Common.Widgets
-import qs.Services
 import qs.Modules.Common.Functions
 import Qt5Compat.GraphicalEffects
-import Qt.labs.platform
 import QtQuick
-import QtQuick.Controls
-import QtQuick.Layouts
 import Quickshell.Io
 import Quickshell.Widgets
-import Quickshell.Hyprland
 
 IconImage {
     id: root
@@ -19,26 +13,26 @@ IconImage {
     property real size: 32
     property string downloadUserAgent: ConfigOptions?.networking.userAgent ?? ""
     property string faviconDownloadPath: Directories.favicons
-    property string domainName: url.includes("vertexaisearch") ? displayText : StringUtils.getDomain(url)
-    property string faviconUrl: `https://www.google.com/s2/favicons?domain=${domainName}&sz=32`
-    property string fileName: `${domainName}.ico`
-    property string faviconFilePath: `${faviconDownloadPath}/${fileName}`
-    property string urlToLoad
+    readonly property string domainName: root.url.includes("vertexaisearch") ? root.displayText : (StringUtils.getDomain(root.url) ?? "")
 
     Process {
         id: faviconDownloadProcess
         running: false
-        command: ["bash", "-c", `[ -f ${faviconFilePath} ] || curl -s '${root.faviconUrl}' -o '${faviconFilePath}' -L -H 'User-Agent: ${downloadUserAgent}'`]
+        command: ["python3", `${Directories.scriptPath}/Images/favicon.py`, "--",
+            root.domainName, root.faviconDownloadPath, root.downloadUserAgent]
+        stdout: StdioCollector {
+            id: downloadOutput
+        }
         onExited: (exitCode, exitStatus) => {
-            root.urlToLoad = root.faviconFilePath
+            root.source = exitCode === 0 && exitStatus === 0 ? downloadOutput.text.trim() : ""
         }
     }
 
     Component.onCompleted: {
-        faviconDownloadProcess.running = true
+        faviconDownloadProcess.running = root.domainName.length > 0
     }
 
-    source: Qt.resolvedUrl(root.urlToLoad)
+    source: ""
     implicitSize: root.size
 
     layer.enabled: true
