@@ -367,7 +367,6 @@ def update_hyprlock(palette_source: str) -> None:
     colors = json.loads(COLORS_JSON.read_text())
     replacements = {
         "$text_color": f"rgba({colors['primary_fixed'].removeprefix('#')}FF)",
-        "$entry_background_color": f"rgba({colors['on_primary_fixed'].removeprefix('#')}11)",
         "$entry_border_color": f"rgba({colors['outline'].removeprefix('#')}55)",
         "$entry_color": f"rgba({colors['primary_fixed'].removeprefix('#')}FF)",
     }
