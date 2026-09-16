@@ -52,6 +52,35 @@ ContentPage {
     }
 
     ContentSection {
+        title: "Windows"
+
+        ConfigRow {
+            uniform: true
+            ConfigSwitch {
+                text: "Focus follows mouse"
+                checked: ConfigOptions.windows.focusFollowsMouse
+                onCheckedChanged: {
+                    ConfigLoader.setConfigValueAndSave("windows.focusFollowsMouse", checked);
+                    applyFocusTimer.restart(); // keep the compositor work off the click
+                }
+                StyledToolTip {
+                    content: "Focuses the window under the pointer as it moves. Turn off to require a click, so hovering never changes focus."
+                }
+            }
+            Item { Layout.fillWidth: true }
+        }
+
+        Timer {
+            id: applyFocusTimer
+            interval: 200
+            onTriggered: {
+                ConfigLoader.flushConfig(); // reload re-reads config.json
+                Quickshell.execDetached(["hyprctl", "reload"]);
+            }
+        }
+    }
+
+    ContentSection {
         title: "Bar"
 
         ContentSubsection {

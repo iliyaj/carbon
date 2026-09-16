@@ -4,6 +4,7 @@
 -- Look, feel, input and monitors. Was hyprland/general.conf + custom/general.conf.
 
 local lib = require("lib")
+local focus_follows_mouse = lib.carbon_config_bool("focusFollowsMouse", true)
 
 hl.monitor({
     output   = lib.setting("MONITOR_OUTPUT", ""),
@@ -15,12 +16,12 @@ hl.monitor({
 
 hl.config({
     general = {
-        -- gaps_in counts on both neighbours, so 2 matches the 6px that gaps_out + border leaves at the screen edge
-        gaps_in = 2,
-        gaps_out = 5,
+        -- gaps_in counts on both neighbours: 2 x gaps_in + 2 x border leaves 6px between windows, matching gaps_out + border at the screen edge
+        gaps_in = 1,
+        gaps_out = 4,
         gaps_workspaces = 50,
 
-        border_size = 1,
+        border_size = 2,
         col = {
             active_border = "rgba(0DB7D4FF)",
             inactive_border = "rgba(31313600)",
@@ -80,8 +81,9 @@ hl.config({
         repeat_delay = 250,
         repeat_rate = 35,
 
-        -- Pointer focus is detached from keyboard focus so activating a window never warps the cursor
-        follow_mouse = 2,
+        -- Hover focus comes from settings; click mode also drops the floating/tiled crossing exception so the pointer alone never grabs focus
+        follow_mouse = focus_follows_mouse and 1 or 2,
+        float_switch_override_focus = focus_follows_mouse and 1 or 0,
 
         touchpad = {
             natural_scroll = true,

@@ -7,7 +7,7 @@
 hl.config({
     general = {
         col = {
-            active_border = "rgba(e2e2e239)",
+            active_border = "rgba(e2e2e2FF)",
             inactive_border = "rgba(91919130)",
         },
     },
@@ -24,15 +24,7 @@ hl.window_rule({
 local lib = require("lib")
 local hyprbars = lib.setting("HYPRBARS_PLUGIN",
     "/var/cache/hyprpm/" .. (os.getenv("USER") or "") .. "/hyprland-plugins/hyprbars.so")
-local config_home = os.getenv("XDG_CONFIG_HOME") or (lib.home .. "/.config")
-local config_file = io.open(config_home .. "/carbon/config.json", "r")
-local window_controls_enabled = false
-
-if config_file then
-    local config = config_file:read("*a")
-    config_file:close()
-    window_controls_enabled = config:match('"showWindowControls"%s*:%s*true') ~= nil
-end
+local window_controls_enabled = lib.carbon_config_bool("showWindowControls", false)
 
 if window_controls_enabled and lib.file_exists(hyprbars) then hl.plugin.load(hyprbars) end
 

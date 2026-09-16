@@ -191,6 +191,7 @@ Singleton {
         property bool showTitlebar: true // Client-side decoration for shell apps
         property bool centerTitle: true
         property bool showWindowControls: false
+        property bool focusFollowsMouse: true
     }
 
     property QtObject hacks: QtObject {
