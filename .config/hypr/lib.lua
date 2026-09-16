@@ -32,6 +32,15 @@ function M.carbon_config_bool(key, default)
     return default
 end
 
+function M.material_color(name, default)
+    local state_home = os.getenv("XDG_STATE_HOME") or (M.home .. "/.local/state")
+    local f = io.open(state_home .. "/quickshell/user/generated/colors.json", "r")
+    if not f then return default end
+    local text = f:read("*a") or ""
+    f:close()
+    return text:match('"' .. name .. '"%s*:%s*"(#%x%x%x%x%x%x)"') or default
+end
+
 local user_env = nil
 
 local function load_user_env()

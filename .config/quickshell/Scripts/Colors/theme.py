@@ -495,6 +495,8 @@ def main() -> int:
     if palette_source:
         generate_least_busy_region(palette_source, monitors)
     update_qmmp_skin()
+    if shutil.which("hyprctl"):
+        run(["hyprctl", "reload"], check=False)
     return 0
 
 
