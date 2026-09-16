@@ -188,6 +188,14 @@ Singleton {
         const desktopEntry = DesktopEntries.byId(str);
         if (desktopEntry) return desktopEntry.icon;
 
+        // Some applications append a numeric process ID to each window's app ID.
+        // Only normalize it when the base ID is backed by installed desktop metadata.
+        const instanceBase = str.replace(/_[0-9]+$/, "");
+        if (instanceBase !== str) {
+            const instanceEntry = DesktopEntries.byId(instanceBase);
+            if (instanceEntry) return instanceEntry.icon;
+        }
+
         // If it gets detected normally, no need to guess
         if (iconExists(str)) return str;
 
