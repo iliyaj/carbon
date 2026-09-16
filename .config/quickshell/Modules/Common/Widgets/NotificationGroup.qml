@@ -53,6 +53,16 @@ Item { // Notification group area
         dragIndexDiff == 1 ? Math.max(0, parentDragDistance * 0.3) :
         dragIndexDiff == 2 ? Math.max(0, parentDragDistance * 0.1) : 0
 
+    // A single card's title is its summary, unless the message lives in the summary itself
+    // (empty body), in which case the item renders it as the wrapping body and the app names it.
+    function titleFor(notification, multiple) {
+        if (multiple)
+            return notification?.appName ?? "";
+        if (String(notification?.body ?? "").trim().length > 0)
+            return notification?.summary ?? "";
+        return String(notification?.appName ?? "").trim() || (notification?.summary ?? "");
+    }
+
     function captureGroup(group) {
         if (!group || !group.notifications || group.notifications.length === 0)
             return;
@@ -69,7 +79,7 @@ Item { // Notification group area
             "mainImage": multiple ? "" : (first?.image ?? ""),
             "iconSummary": latest?.summary ?? "",
             "latestImage": latest?.image ?? "",
-            "title": multiple ? (group.appName ?? "") : (first?.summary ?? ""),
+            "title": root.titleFor(first, multiple),
         };
     }
 
@@ -281,7 +291,7 @@ Item { // Notification group area
                         id: topTextRow
                         anchors.left: parent.left
                         anchors.right: expandButton.left
-                        anchors.verticalCenter: parent.verticalCenter
+                        anchors.top: parent.top
                         spacing: 5
                         StyledText {
                             id: appName
@@ -298,6 +308,7 @@ Item { // Notification group area
                         StyledText {
                             id: timeText
                             // Layout.fillWidth: true
+                            Layout.alignment: Qt.AlignTop
                             Layout.rightMargin: 10
                             horizontalAlignment: Text.AlignLeft
                             text: NotificationUtils.getFriendlyNotifTimeString(root.displayGroup.time)
@@ -308,7 +319,7 @@ Item { // Notification group area
                     NotificationGroupExpandButton {
                         id: expandButton
                         anchors.right: parent.right
-                        anchors.verticalCenter: parent.verticalCenter
+                        anchors.top: parent.top
                         count: root.notificationCount
                         expanded: root.expanded
                         fontSize: topRow.fontSize

@@ -268,9 +268,14 @@ Item { // Notification item area
                 StyledText {
                     id: summaryText
                     visible: !root.onlyNotification
+                    // Collapsed summaries elide on one line; the expanded card wraps them in full.
+                    Layout.fillWidth: root.expanded
+                    Layout.preferredWidth: root.expanded ? -1 : Math.min(summaryText.implicitWidth, root.width - root.padding * 2)
                     font.pixelSize: root.fontSize
                     color: Appearance.colors.colOnLayer2
-                    elide: Text.ElideRight
+                    elide: root.expanded ? Text.ElideNone : Text.ElideRight
+                    wrapMode: root.expanded ? Text.WrapAtWordBoundaryOrAnywhere : Text.NoWrap
+                    maximumLineCount: root.expanded ? -1 : 1
                     text: root.notificationData.summary
                 }
                 StyledText {
@@ -302,10 +307,17 @@ Item { // Notification item area
                     color: Appearance.colors.colSubtext
                     wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                     textFormat: Text.RichText
+                    // A bodyless single notification carries its message in the summary; show it
+                    // here so it wraps across the full card width instead of eliding in the header.
+                    readonly property string messageText: {
+                        if (String(root.notificationData.body ?? "").trim().length > 0)
+                            return root.notificationData.body;
+                        return root.onlyNotification ? root.notificationData.summary : "";
+                    }
                     text: {
                         const availableWidth = Math.max(1, background.width - root.padding * 2);
                         return `<style>img{max-width:${availableWidth}px;}</style>` +
-                               `${processNotificationBody(notificationData.body, notificationData.appName || notificationData.summary).replace(/\n/g, "<br/>")}`
+                               `${processNotificationBody(messageText, notificationData.appName || notificationData.summary).replace(/\n/g, "<br/>")}`
                     }
 
                     onLinkActivated: (link) => {
