@@ -17,7 +17,7 @@ clock_ticks="$(getconf CLK_TCK)"
 page_kib=$(( $(getconf PAGESIZE) / 1024 ))
 whole_disk_pattern='^(nvme[0-9]+n[0-9]+|sd[a-z]+|vd[a-z]+|mmcblk[0-9]+)$'
 
-header_line=$'timestamp\tload1\tmem_available_kib\tcpu_some10\tmemory_some10\tdisk_inflight\tdisk_io_ms\tblocked_count\tblocked_tasks\thypr_state\thypr_ms\tcarbon_state\tcarbon_ms\tcarbon_stall_s\tqs_cpu_pct\tqs_rss_mib\tqs_main_state\tqs_main_wchan\tqs_blocked_threads'
+header_line=$'timestamp\tload1\tmem_available_kib\tcpu_some10\tmemory_some10\tdisk_inflight\tdisk_io_ms\tblocked_count\tblocked_tasks\thypr_state\thypr_ms\tcarbon_state\tcarbon_ms\tcarbon_stall_s\tqs_cpu_pct\tqs_rss_mib\tqs_main_state\tqs_main_wchan\tqs_blocked_threads\thypr_detail\tcarbon_detail'
 
 usage() {
     cat <<'EOF'
@@ -93,18 +93,30 @@ shell_blocked_threads() {
 }
 
 probe() {
-    local started finished result
+    local started finished status stderr_text detail result
 
     started="$(date +%s%3N)"
-    if timeout "$probe_timeout" "$@" >/dev/null 2>&1; then
-        result="ok"
-    elif [ "$?" -eq 124 ]; then
-        result="timeout"
-    else
-        result="error"
-    fi
+    stderr_text="$(timeout "$probe_timeout" "$@" 2>&1 >/dev/null)"
+    status=$?
     finished="$(date +%s%3N)"
-    printf '%s %d\n' "$result" "$((finished - started))"
+
+    case "$status" in
+        0) result="ok" ;;
+        124) result="timeout" ;;
+        126 | 127) result="unavailable" ;;
+        *) result="error" ;;
+    esac
+
+    detail="$(printf '%s' "$stderr_text" | tr '\t\r\n' '   ' | cut -c1-120)"
+    [ -n "$detail" ] || detail="-"
+    printf '%s %d %s\n' "$result" "$((finished - started))" "$detail"
+}
+
+probe_failed() {
+    case "$1" in
+        error | timeout) return 0 ;;
+        *) return 1 ;;
+    esac
 }
 
 write_header() {
@@ -122,7 +134,7 @@ write_gap_marker() {
         return 0
     fi
 
-    printf '%s\t-\t-\t-\t-\t-\t-\t-\t-\t-\t-\trecorder-gap\t%d\t-\t-\t-\t-\t-\t-\n' \
+    printf '%s\t-\t-\t-\t-\t-\t-\t-\t-\t-\t-\trecorder-gap\t%d\t-\t-\t-\t-\t-\t-\t-\t-\n' \
         "$(date '+%Y-%m-%dT%H:%M:%S.%3N%:z')" "$(( (now_epoch - last_epoch) * 1000 ))" >> "$live_log"
 }
 
@@ -150,7 +162,8 @@ run_recorder() {
     local sample_number=0
     local timestamp load1 mem_available cpu_some memory_some
     local disk_inflight disk_io_ms disk_io_ms_previous=0 disk_io_delta
-    local blocked_count blocked_names hypr_state hypr_ms carbon_state carbon_ms
+    local blocked_count blocked_names hypr_state hypr_ms hypr_detail
+    local carbon_state carbon_ms carbon_detail
     local stall_started_ms=0 carbon_stall_s
     local qs_pid="" qs_state qs_wchan qs_cpu qs_rss qs_blocked
     local qs_ticks_previous=0 qs_epoch_previous=0
@@ -219,28 +232,34 @@ run_recorder() {
             fi
         fi
 
-        read -r hypr_state hypr_ms < <(probe hyprctl activeworkspace)
-        read -r carbon_state carbon_ms < <(probe qs ipc call carbon ping)
+        read -r hypr_state hypr_ms hypr_detail < <(probe hyprctl activeworkspace)
+        read -r carbon_state carbon_ms carbon_detail < <(probe qs ipc call carbon ping)
 
-        if [ "$carbon_state" = "ok" ] && [ "$hypr_state" = "ok" ]; then
+        if probe_failed "$hypr_state" || probe_failed "$carbon_state"; then
+            [ "$stall_started_ms" -ne 0 ] || stall_started_ms="$now_ms"
+        elif [ "$hypr_state" = "ok" ] && [ "$carbon_state" = "ok" ]; then
             auto_capture_armed=1
             stall_started_ms=0
+        fi
+        # "unavailable" probes leave the stall clock running: no healthy sample
+        # has been observed yet, so accumulated stall time must stay honest.
+        if [ "$stall_started_ms" -eq 0 ]; then
             carbon_stall_s="0.0"
         else
-            [ "$stall_started_ms" -ne 0 ] || stall_started_ms="$now_ms"
             carbon_stall_s="$(awk -v ms="$(( $(date +%s%3N) - stall_started_ms ))" \
                 'BEGIN { printf "%.1f", ms / 1000 }')"
         fi
 
-        printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+        printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
             "$timestamp" "$load1" "$mem_available" "$cpu_some" "$memory_some" \
             "$disk_inflight" "$disk_io_delta" "$blocked_count" "$blocked_names" \
             "$hypr_state" "$hypr_ms" "$carbon_state" "$carbon_ms" "$carbon_stall_s" \
-            "$qs_cpu" "$qs_rss" "$qs_state" "$qs_wchan" "$qs_blocked" >> "$live_log"
+            "$qs_cpu" "$qs_rss" "$qs_state" "$qs_wchan" "$qs_blocked" \
+            "$hypr_detail" "$carbon_detail" >> "$live_log"
 
         # Ignore normal initialization, but preserve evidence when startup never becomes healthy.
         if [ "$auto_capture" = "1" ] &&
-            { [ "$carbon_state" != "ok" ] || [ "$hypr_state" != "ok" ]; } &&
+            { probe_failed "$carbon_state" || probe_failed "$hypr_state"; } &&
             { [ "$auto_capture_armed" = "1" ] ||
                 [ "$((now_ms - recorder_started_ms))" -ge "$((startup_grace_seconds * 1000))" ]; } &&
             [ "$((now_ms - last_capture_ms))" -ge "$((auto_capture_gap * 1000))" ]; then
