@@ -211,6 +211,28 @@ Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
 
+            // Handle wheels in front of ScrollView, which otherwise consumes them first.
+            Item {
+                anchors.fill: parent
+                z: 1
+
+                WheelHandler {
+                    // Wayland can deliver mouse wheels through a touchpad-classified device.
+                    acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                    target: root.searching ? appGrid : categoryView.contentItem
+                    onWheel: event => {
+                        const view = target as Flickable
+                        // One wheel detent moves 250px; preserve smaller high-resolution deltas.
+                        const delta = event.angleDelta.y !== 0 ? event.angleDelta.y * (250 / 120) : event.pixelDelta.y
+                        const minimumY = view.originY
+                        const maximumY = minimumY + Math.max(0, view.contentHeight - view.height)
+                        view.cancelFlick()
+                        view.contentY = Math.max(minimumY, Math.min(view.contentY - delta, maximumY))
+                        event.accepted = true
+                    }
+                }
+            }
+
             // Categorized view (Apple App Library style), shown while not searching
             ScrollView {
                 id: categoryView
