@@ -22,7 +22,7 @@ The shell is modular: `shell.qml` loads major surfaces through `LazyLoader`, whi
 
 ## Supported system
 
-Carbon currently supports **Arch Linux only** (by the way...) and is tested on a Wayland desktop with Hyprland 0.56's Lua configuration API and Arch's stable Quickshell package. Other distributions, compositors, Hyprland's retired hyprlang configuration format, and X11 are unsupported.
+Carbon currently supports **Arch Linux only** and is tested on a Wayland desktop with Hyprland 0.56's Lua configuration API and Arch's stable Quickshell package. Other distributions, compositors, Hyprland's retired hyprlang configuration format, and X11 are unsupported.
 
 I develop and daily-drive Carbon on one machine: an x86 Intel Raptor Lake CPU with an integrated GPU and a beefy amount of RAM. It runs buttery smooth on my machine, but that might just mean that I tuned it to this hardware and my display. You could hit bugs I never see. I plan to test on AMD and Nvidia graphics and in a VM, but I haven't yet.
 
