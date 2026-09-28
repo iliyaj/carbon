@@ -59,8 +59,8 @@ Item {
                     }));
                 }
 
-                // Separator
-                if (pinnedApps.length > 0) {
+                // Separate pinned apps only when an unpinned window follows them.
+                if (pinnedApps.length > 0 && ToplevelManager.toplevels.values.some(toplevel => !map.has(toplevel.appId.toLowerCase()))) {
                     map.set("SEPARATOR", { appId: "SEPARATOR", pinned: false, toplevels: [] });
                 }
 
