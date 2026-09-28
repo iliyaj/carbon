@@ -99,9 +99,20 @@ Scope {
 
     function prepareRecording(captureArguments: var, withAudio: bool): void {
         const videosDirectory = FileUtils.trimFileProtocol(Directories.videos)
-        const recordingDirectory = `${videosDirectory}/debug`
-        outputPath = `${recordingDirectory}/recording_${timestamp()}.mp4`
-        const recorderArguments = ["--pixel-format", "yuv420p", "-f", outputPath].concat(captureArguments)
+        const recordingDirectory = withAudio ? videosDirectory : `${videosDirectory}/debug`
+        outputPath = `${recordingDirectory}/recording_${timestamp()}.${withAudio ? "mov" : "mp4"}`
+        const recorderArguments = ["--pixel-format", withAudio ? "yuv422p" : "yuv420p"]
+        // Resolve on Linux can import DNxHR and MP3 directly from MOV.
+        if (withAudio) {
+            const frameRate = Math.round(Number(Hyprland.focusedMonitor?.lastIpcObject.refreshRate ?? 0))
+            if (!Number.isFinite(frameRate) || frameRate <= 0) {
+                notify("Recording cancelled", "Could not determine the monitor refresh rate")
+                return
+            }
+            // Parallel encoding keeps DNxHR from falling behind at high refresh rates.
+            recorderArguments.push("-D", "-r", String(frameRate), "-c", "dnxhd", "-p", "profile=dnxhr_lb", "-p", "threads=8", "-C", "libmp3lame")
+        }
+        recorderArguments.push("-f", outputPath, ...captureArguments)
 
         if (!withAudio) {
             pendingCommand = ["wf-recorder"].concat(recorderArguments)
