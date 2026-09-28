@@ -1,6 +1,8 @@
 [Unit]
 Description=awww Wayland wallpaper daemon for Carbon
 Documentation=https://codeberg.org/LGFae/awww
+# Nagame checks for awww at startup and its own daemon launch currently aborts.
+Before=nagame.service
 
 [Service]
 Type=simple
