@@ -110,7 +110,8 @@ Scope {
                 return
             }
             // Parallel encoding keeps DNxHR from falling behind at high refresh rates.
-            recorderArguments.push("-D", "-r", String(frameRate), "-c", "dnxhd", "-p", "profile=dnxhr_lb", "-p", "threads=8", "-C", "libmp3lame")
+            // DNxHR decodes as BT.709; convert RGB with that matrix and label the limited YUV range.
+            recorderArguments.push("-D", "-r", String(frameRate), "-c", "dnxhd", "-p", "profile=dnxhr_lb", "-p", "color_range=tv", "-p", "threads=8", "-F", "scale=out_color_matrix=bt709:out_range=tv,format=yuv422p", "-C", "libmp3lame")
         }
         recorderArguments.push("-f", outputPath, ...captureArguments)
 
