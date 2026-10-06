@@ -48,11 +48,6 @@ Singleton {
     property bool configAvailable: false
     readonly property string modelName: "MX Master 3"
     property string deviceName: "MX Master 3"
-    property int dpi: 0
-    property bool smartShiftEnabled: false
-    property int smartShiftThreshold: 0
-    property bool hiResScrollEnabled: false
-    property bool naturalScroll: false
     property bool thumbwheelDiverted: false
     property bool thumbwheelInverted: false
     property string thumbwheelLeftAction: ""
@@ -85,11 +80,6 @@ Singleton {
             return
 
         root.deviceName = root.capture(text, /name\s*:\s*"([^"]+)"/i, "MX Master 3")
-        root.dpi = Number(root.capture(text, /dpi\s*:\s*(\d+)/i, "0"))
-        root.smartShiftEnabled = root.capture(text, /smartshift\s*:\s*\{[\s\S]*?on\s*:\s*(true|false)/i, "false") === "true"
-        root.smartShiftThreshold = Number(root.capture(text, /smartshift\s*:\s*\{[\s\S]*?threshold\s*:\s*(\d+)/i, "0"))
-        root.hiResScrollEnabled = root.capture(text, /hiresscroll\s*:\s*\{[\s\S]*?hires\s*:\s*(true|false)/i, "false") === "true"
-        root.naturalScroll = root.capture(text, /hiresscroll\s*:\s*\{[\s\S]*?invert\s*:\s*(true|false)/i, "false") === "true"
         root.thumbwheelDiverted = root.capture(text, /thumbwheel\s*:\s*\{[\s\S]*?divert\s*:\s*(true|false)/i, "false") === "true"
         root.thumbwheelInverted = root.capture(text, /thumbwheel\s*:\s*\{[\s\S]*?invert\s*:\s*(true|false)/i, "false") === "true"
         root.thumbwheelLeftAction = root.capture(text, /thumbwheel\s*:\s*\{[\s\S]*?left\s*:\s*\{[\s\S]*?keys\s*:\s*\[([^\]]+)\]/i, "").replace(/[\"']/g, "").replace(/KEY_/g, "")

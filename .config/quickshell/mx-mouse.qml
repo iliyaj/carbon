@@ -84,53 +84,6 @@ ApplicationWindow {
         return action.split(" + ").map(key => names[key] ?? key).join(" + ")
     }
 
-    component StatTile: Rectangle {
-        id: statTile
-
-        required property string icon
-        required property string label
-        required property string value
-
-        implicitHeight: 72
-        radius: Appearance.rounding.normal
-        color: root.raisedColor
-        border.width: 1
-        border.color: root.outlineColor
-
-        RowLayout {
-            anchors {
-                fill: parent
-                margins: Appearance.spacing.md
-            }
-            spacing: Appearance.spacing.sm
-
-            MaterialSymbol {
-                text: statTile.icon
-                iconSize: 20
-                color: root.accentColor
-            }
-
-            ColumnLayout {
-                Layout.fillWidth: true
-                spacing: 1
-
-                StyledText {
-                    text: statTile.value
-                    color: root.primaryText
-                    font.pixelSize: Appearance.font.pixelSize.normal
-                    font.weight: Font.DemiBold
-                }
-                StyledText {
-                    text: statTile.label
-                    color: root.secondaryText
-                    font.pixelSize: Appearance.font.pixelSize.smaller
-                    elide: Text.ElideRight
-                    Layout.fillWidth: true
-                }
-            }
-        }
-    }
-
     component ControlRow: Rectangle {
         id: controlRow
 
@@ -333,12 +286,8 @@ ApplicationWindow {
 
                 Image {
                     anchors {
-                        top: parent.top
-                        left: parent.left
-                        right: parent.right
-                        bottom: stats.top
+                        fill: parent
                         margins: Appearance.spacing.md
-                        topMargin: Appearance.spacing.md
                     }
                     source: MXMaster3.imageSource
                     sourceSize.width: 1100
@@ -347,51 +296,6 @@ ApplicationWindow {
                     verticalAlignment: Image.AlignVCenter
                     opacity: 0.94
                     smooth: true
-                }
-
-                Rectangle {
-                    anchors {
-                        left: parent.left
-                        right: parent.right
-                        bottom: parent.bottom
-                    }
-                    height: 150
-                    gradient: Gradient {
-                        GradientStop { position: 0; color: "#090b0e00" }
-                        GradientStop { position: 0.35; color: "#090b0ed9" }
-                        GradientStop { position: 1; color: "#090b0eff" }
-                    }
-                }
-
-                RowLayout {
-                    id: stats
-                    anchors {
-                        left: parent.left
-                        right: parent.right
-                        bottom: parent.bottom
-                        margins: Appearance.spacing.lg
-                    }
-                    z: 2
-                    spacing: Appearance.spacing.sm
-
-                    StatTile {
-                        Layout.fillWidth: true
-                        icon: "speed"
-                        value: MXMaster3.dpi > 0 ? `${MXMaster3.dpi}` : "—"
-                        label: qsTr("DPI")
-                    }
-                    StatTile {
-                        Layout.fillWidth: true
-                        icon: "tune"
-                        value: MXMaster3.smartShiftEnabled ? `${MXMaster3.smartShiftThreshold}` : qsTr("Off")
-                        label: qsTr("SmartShift")
-                    }
-                    StatTile {
-                        Layout.fillWidth: true
-                        icon: "360"
-                        value: MXMaster3.hiResScrollEnabled ? qsTr("Hi-res") : qsTr("Standard")
-                        label: MXMaster3.naturalScroll ? qsTr("Natural scroll") : qsTr("Standard direction")
-                    }
                 }
             }
 
