@@ -1,5 +1,6 @@
 import qs.Modules.Common
 import qs.Modules.Common.Functions
+import qs.Modules.ScreenRecorder
 import QtQuick
 import Quickshell
 import Quickshell.Hyprland
@@ -9,7 +10,7 @@ Scope {
     id: root
 
     readonly property bool recording: recorderProcess.running
-    readonly property bool selectingRegion: regionProcess.running
+    readonly property bool selectingRegion: regionChooser.active
     readonly property string recorderUnit: "carbon-screen-recorder.service"
     property bool stopRequested: false
     property var pendingCommand: []
@@ -36,7 +37,7 @@ Scope {
     function toggleRegion(): void {
         if (stopOrCancel())
             return
-        regionProcess.running = true
+        regionChooser.active = true
     }
 
     function toggleFullscreen(withAudio: bool): void {
@@ -62,12 +63,12 @@ Scope {
     }
 
     function stopOrCancel(): bool {
-        if (recorderProcess.running) {
-            stopRecording()
+        if (regionChooser.active) {
+            regionChooser.active = false
             return true
         }
-        if (regionProcess.running) {
-            regionProcess.signal(15)
+        if (recorderProcess.running) {
+            stopRecording()
             return true
         }
         return false
@@ -99,7 +100,7 @@ Scope {
 
     function prepareRecording(captureArguments: var, withAudio: bool): void {
         const videosDirectory = FileUtils.trimFileProtocol(Directories.videos)
-        const recordingDirectory = withAudio ? videosDirectory : `${videosDirectory}/debug`
+        const recordingDirectory = withAudio || captureArguments.includes("--geometry") ? videosDirectory : `${videosDirectory}/debug`
         outputPath = `${recordingDirectory}/recording_${timestamp()}.${withAudio ? "mov" : "mp4"}`
         const recorderArguments = ["--pixel-format", withAudio ? "yuv422p" : "yuv420p"]
         // Resolve on Linux can import DNxHR and MP3 directly from MOV.
@@ -112,6 +113,9 @@ Scope {
             // Parallel encoding keeps DNxHR from falling behind at high refresh rates.
             // DNxHR decodes as BT.709; convert RGB with that matrix and label the limited YUV range.
             recorderArguments.push("-D", "-r", String(frameRate), "-c", "dnxhd", "-p", "profile=dnxhr_lb", "-p", "color_range=tv", "-p", "threads=8", "-F", "scale=out_color_matrix=bt709:out_range=tv,format=yuv422p", "-C", "libmp3lame")
+        } else {
+            // Match the screen's RGB colours and tell players how to decode the YUV video.
+            recorderArguments.push("-p", "color_range=tv", "-p", "colorspace=bt709", "-F", "scale=out_color_matrix=bt709:out_range=tv,format=yuv420p")
         }
         recorderArguments.push("-f", outputPath, ...captureArguments)
 
@@ -153,17 +157,16 @@ Scope {
         }
     }
 
-    Process {
-        id: regionProcess
-        // Keep slurp's stdin closed.
-        command: ["sh", "-c", "exec slurp </dev/null"]
-        stdout: StdioCollector {}
-        onExited: (exitCode, exitStatus) => {
-            const geometry = stdout.text.trim()
-            if (exitCode === 0 && geometry.length > 0)
+    Loader {
+        id: regionChooser
+        active: false
+        sourceComponent: RegionSelection {
+            screen: Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) ?? Quickshell.screens[0]
+            onCancelled: regionChooser.active = false
+            onAccepted: geometry => {
+                regionChooser.active = false
                 root.startRegion(geometry, false)
-            else
-                root.notify("Recording cancelled", "Selection was cancelled")
+            }
         }
     }
 

@@ -132,6 +132,8 @@ hl.layer_rule({ match = { namespace = "quickshell:session" }, blur = true, no_an
 -- Card motion exposes blur-edge halos, and animating the surface corrupts client decorations beneath it.
 hl.layer_rule({ match = { namespace = "quickshell:notificationPopup" }, no_anim = true, blur = false, blur_popups = false })
 hl.layer_rule({ match = { namespace = "quickshell:onScreenDisplay" }, blur = false, blur_popups = false })
+-- Selection must stay sharp and disappear immediately before the first captured frame.
+hl.layer_rule({ match = { namespace = "quickshell:recorder" }, no_anim = true, blur = false, blur_popups = false })
 hl.layer_rule({ match = { namespace = "quickshell:backgroundWidgets" }, blur = true, ignore_alpha = 0.05 })
 
 -- outfoxxed's shell
