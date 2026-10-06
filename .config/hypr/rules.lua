@@ -8,6 +8,14 @@ hl.window_rule({ match = { xwayland = true }, no_blur = true })
 -- Modal dialogs should stay clear of the bar and remain reachable for keyboard or mouse input.
 hl.window_rule({ match = { modal = true }, float = true, center = true })
 
+-- Inkscape's bitmap import options can request a screen-height window despite fitting in a small dialog.
+hl.window_rule({
+    match = { class = "^org\\.inkscape\\.Inkscape$", title = "^.* bitmap image import$" },
+    float = true,
+    size = "420 260",
+    center = true,
+})
+
 
 for _, class in ipairs({
     "^(blueberry\\.py)$",
