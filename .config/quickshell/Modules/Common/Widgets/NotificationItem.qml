@@ -369,8 +369,7 @@ Item { // Notification item area
                                 ((actionsFlickable.width - actionRowLayout.spacing * (root.fillerButtonCount - 1)) / root.fillerButtonCount) :
                                 (contentItem.implicitWidth + leftPadding + rightPadding)
                             onClicked: {
-                                Quickshell.execDetached(["env", "ANNOTATE_IMG=" + root.screenshotPath,
-                                    "qs", "-p", FileUtils.trimFileProtocol(`${Directories.config}/quickshell/annotator.qml`)]);
+                                ScreenClip.editImage(root.screenshotPath);
                             }
                             contentItem: MaterialSymbol {
                                 iconSize: Appearance.font.pixelSize.large

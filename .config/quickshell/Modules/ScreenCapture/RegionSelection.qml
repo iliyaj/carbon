@@ -10,7 +10,7 @@ PanelWindow {
     id: root
     anchors { left: true; right: true; top: true; bottom: true }
     exclusionMode: ExclusionMode.Ignore
-    WlrLayershell.namespace: "quickshell:recorder"
+    WlrLayershell.namespace: "quickshell:screenCapture"
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
     color: "transparent"
@@ -18,27 +18,33 @@ PanelWindow {
     signal accepted(string geometry)
     signal cancelled()
 
+    property string acceptText: qsTr("Capture screenshot")
+    property url backgroundSource
+    property alias ratioIndex: ratioPicker.currentIndex
+    property size initialSize: Qt.size(1080, 1350)
+    property int dimensionStep: 1
     property int regionX: 0
     property int regionY: 0
-    property int regionWidth: 2
-    property int regionHeight: 2
+    property int regionWidth: dimensionStep
+    property int regionHeight: dimensionStep
     property bool drawing: false
-    readonly property int maxWidth: Math.floor(screen.width / 2) * 2
-    readonly property int maxHeight: Math.floor(screen.height / 2) * 2
+    readonly property int maxWidth: Math.floor(screen.width / dimensionStep) * dimensionStep
+    readonly property int maxHeight: Math.floor(screen.height / dimensionStep) * dimensionStep
     readonly property var ratios: [0, 4 / 5, 1, 9 / 16, 16 / 9, 4 / 3, 3 / 2]
     readonly property real ratio: ratioPicker.currentIndex < ratios.length
         ? ratios[ratioPicker.currentIndex] : customRatioValue
+    onRatioChanged: applyRatio()
     readonly property real customRatioValue: {
         const parts = customRatio.text.trim().split(":")
         return /^[1-9]\d{0,4}\s*:\s*[1-9]\d{0,4}$/.test(customRatio.text.trim())
             ? Number(parts[0]) / Number(parts[1]) : 0
     }
     readonly property bool validInputs: widthInput.acceptableInput && heightInput.acceptableInput
-        && Number(widthInput.text) % 2 === 0 && Number(heightInput.text) % 2 === 0
+        && Number(widthInput.text) % dimensionStep === 0 && Number(heightInput.text) % dimensionStep === 0
         && (ratioPicker.currentIndex !== ratios.length || customRatioValue > 0)
 
-    function even(value: real): int {
-        return Math.max(2, Math.floor(value / 2) * 2)
+    function aligned(value: real): int {
+        return Math.max(dimensionStep, Math.floor(value / dimensionStep) * dimensionStep)
     }
 
     function moveTo(x: real, y: real): void {
@@ -48,15 +54,15 @@ PanelWindow {
 
     function fitSize(w: real, h: real): void {
         const factor = Math.min(1, maxWidth / w, maxHeight / h)
-        regionWidth = even(w * factor)
-        regionHeight = even(h * factor)
+        regionWidth = aligned(w * factor)
+        regionHeight = aligned(h * factor)
         moveTo(regionX, regionY)
     }
 
     function editSize(value: string, horizontal: bool): void {
         const number = Number(value)
         const maximum = horizontal ? maxWidth : maxHeight
-        if (!/^[1-9]\d*$/.test(value) || number > maximum || number % 2 !== 0)
+        if (!/^[1-9]\d*$/.test(value) || number > maximum || number % dimensionStep !== 0)
             return
         // Typing dimensions is exact; ratio presets constrain mouse resizing only.
         ratioPicker.currentIndex = 0
@@ -76,7 +82,7 @@ PanelWindow {
     }
 
     Component.onCompleted: {
-        fitSize(1080, 1350)
+        fitSize(initialSize.width, initialSize.height)
         moveTo((screen.width - regionWidth) / 2, (screen.height - regionHeight) / 2)
         canvas.forceActiveFocus()
     }
@@ -86,6 +92,12 @@ PanelWindow {
         anchors.fill: parent
         focus: true
         Keys.onEscapePressed: root.cancelled()
+
+        Image {
+            anchors.fill: parent
+            source: root.backgroundSource
+            cache: false
+        }
 
         // Four rectangles dim the desktop without tinting the selected pixels.
         Rectangle { width: parent.width; height: root.regionY; color: "#88000000" }
@@ -120,8 +132,8 @@ PanelWindow {
                     return
                 const endX = Math.max(0, Math.min(mouse.x, width))
                 const endY = Math.max(0, Math.min(mouse.y, height))
-                let w = Math.max(2, Math.abs(endX - startX))
-                let h = Math.max(2, Math.abs(endY - startY))
+                let w = Math.max(root.dimensionStep, Math.abs(endX - startX))
+                let h = Math.max(root.dimensionStep, Math.abs(endY - startY))
                 if (root.ratio > 0) {
                     w = Math.min(w, h * root.ratio)
                     h = w / root.ratio
@@ -205,10 +217,10 @@ PanelWindow {
                             let top = original.y
                             let right = original.x + original.width
                             let bottom = original.y + original.height
-                            if (hx === 0) left = Math.max(0, Math.min(left + dx, right - 2))
-                            if (hx === 1) right = Math.min(root.width, Math.max(right + dx, left + 2))
-                            if (hy === 0) top = Math.max(0, Math.min(top + dy, bottom - 2))
-                            if (hy === 1) bottom = Math.min(root.height, Math.max(bottom + dy, top + 2))
+                            if (hx === 0) left = Math.max(0, Math.min(left + dx, right - root.dimensionStep))
+                            if (hx === 1) right = Math.min(root.width, Math.max(right + dx, left + root.dimensionStep))
+                            if (hy === 0) top = Math.max(0, Math.min(top + dy, bottom - root.dimensionStep))
+                            if (hy === 1) bottom = Math.min(root.height, Math.max(bottom + dy, top + root.dimensionStep))
                             let w = right - left
                             let h = bottom - top
                             if (root.ratio > 0) {
@@ -260,7 +272,7 @@ PanelWindow {
                         id: widthInput
                         Layout.preferredWidth: 80
                         text: String(root.regionWidth)
-                        validator: IntValidator { bottom: 2; top: root.maxWidth }
+                        validator: IntValidator { bottom: root.dimensionStep; top: root.maxWidth }
                         color: Appearance.m3colors.m3onSurface
                         font.pixelSize: Appearance.font.pixelSize.normal
                         selectByMouse: true
@@ -275,7 +287,7 @@ PanelWindow {
                         id: heightInput
                         Layout.preferredWidth: 80
                         text: String(root.regionHeight)
-                        validator: IntValidator { bottom: 2; top: root.maxHeight }
+                        validator: IntValidator { bottom: root.dimensionStep; top: root.maxHeight }
                         color: Appearance.m3colors.m3onSurface
                         font.pixelSize: Appearance.font.pixelSize.normal
                         selectByMouse: true
@@ -290,7 +302,6 @@ PanelWindow {
                         Layout.fillWidth: true
                         model: [qsTr("Free"), "4:5", "1:1", "9:16", "16:9", "4:3", "3:2", qsTr("Custom ratio")]
                         currentIndex: 1
-                        onActivated: root.applyRatio()
                     }
                 }
                 TextField {
@@ -300,13 +311,13 @@ PanelWindow {
                     placeholderText: qsTr("Width:height, e.g. 4:5")
                     color: Appearance.m3colors.m3onSurface
                     selectByMouse: true
-                    onTextEdited: root.applyRatio()
                     background: Rectangle { radius: 4; color: Appearance.colors.colSurfaceContainer }
                 }
                 StyledText {
                     Layout.fillWidth: true
                     text: root.validInputs ? qsTr("Drag the box to move it. Drag outside to select again.")
-                        : qsTr("Enter even dimensions that fit on this screen.")
+                        : root.dimensionStep === 2 ? qsTr("Enter even dimensions that fit on this screen.")
+                        : qsTr("Enter pixel dimensions that fit on this screen.")
                     wrapMode: Text.WordWrap
                     font.pixelSize: Appearance.font.pixelSize.small
                 }
@@ -314,7 +325,7 @@ PanelWindow {
                     Layout.alignment: Qt.AlignRight
                     DialogButton { buttonText: qsTr("Cancel"); onClicked: root.cancelled() }
                     DialogButton {
-                        buttonText: qsTr("Start recording")
+                        buttonText: root.acceptText
                         enabled: root.validInputs
                         onClicked: root.confirm()
                     }

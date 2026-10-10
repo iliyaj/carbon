@@ -1,6 +1,6 @@
 import qs.Modules.Common
 import qs.Modules.Common.Functions
-import qs.Modules.ScreenRecorder
+import qs.Modules.ScreenCapture
 import QtQuick
 import Quickshell
 import Quickshell.Hyprland
@@ -161,6 +161,8 @@ Scope {
         id: regionChooser
         active: false
         sourceComponent: RegionSelection {
+            acceptText: qsTr("Start recording")
+            dimensionStep: 2
             screen: Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) ?? Quickshell.screens[0]
             onCancelled: regionChooser.active = false
             onAccepted: geometry => {

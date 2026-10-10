@@ -26,6 +26,7 @@ singleton Notifications 1.0 Notifications.qml
 singleton PersistentStateManager 1.0 PersistentStateManager.qml
 Recorder 1.0 Recorder.qml
 singleton ResourceUsage 1.0 ResourceUsage.qml
+singleton ScreenClip 1.0 ScreenClip.qml
 singleton SystemInfo 1.0 SystemInfo.qml
 singleton Todo 1.0 Todo.qml
 singleton Ydotool 1.0 Ydotool.qml

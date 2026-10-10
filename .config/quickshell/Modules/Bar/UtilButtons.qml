@@ -25,7 +25,7 @@ Item {
             visible: ConfigOptions.bar.utilButtons.showScreenSnip
             sourceComponent: CircleUtilButton {
                 Layout.alignment: Qt.AlignVCenter
-                onClicked: Hyprland.dispatch("hl.dsp.exec_cmd([[hyprshot --freeze --mode region --output-folder ~/Pictures/Screenshots]])")
+                onClicked: ScreenClip.open(false)
                 MaterialSymbol {
                     horizontalAlignment: Qt.AlignHCenter
                     fill: 1
@@ -40,28 +40,12 @@ Item {
             active: ConfigOptions.bar.utilButtons.showScreenSnipDelayed
             visible: ConfigOptions.bar.utilButtons.showScreenSnipDelayed
             sourceComponent: CircleUtilButton {
-                id: delayedSnipButton
-                property int countdown: 0
                 Layout.alignment: Qt.AlignVCenter
-                onClicked: {
-                    if (delayedSnipButton.countdown > 0) return;
-                    delayedSnipButton.countdown = 3;
-                    countdownTimer.restart();
-                    Hyprland.dispatch("hl.dsp.exec_cmd([[sleep 3 && hyprshot --freeze --mode region --output-folder ~/Pictures/Screenshots]])")
-                }
+                onClicked: ScreenClip.open(true)
                 Item {
                     implicitWidth: snipIcon.implicitWidth
                     implicitHeight: snipIcon.implicitHeight
 
-                    Timer {
-                        id: countdownTimer
-                        interval: 1000
-                        repeat: true
-                        onTriggered: {
-                            delayedSnipButton.countdown -= 1;
-                            if (delayedSnipButton.countdown <= 0) stop();
-                        }
-                    }
                     MaterialSymbol {
                         id: snipIcon
                         anchors.centerIn: parent
@@ -70,12 +54,12 @@ Item {
                         text: "timer"
                         iconSize: Appearance.font.pixelSize.large
                         color: Appearance.colors.colOnLayer2
-                        visible: delayedSnipButton.countdown === 0
+                        visible: ScreenClip.countdown === 0
                     }
                     StyledText {
                         anchors.centerIn: parent
-                        visible: delayedSnipButton.countdown > 0
-                        text: delayedSnipButton.countdown
+                        visible: ScreenClip.countdown > 0
+                        text: ScreenClip.countdown
                         font.pixelSize: Appearance.font.pixelSize.small
                         font.weight: Font.Bold
                         color: Appearance.colors.colOnLayer2
