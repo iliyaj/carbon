@@ -10,6 +10,11 @@ Singleton {
         }
     }
 
+    property QtObject screenshot: QtObject {
+        property var lastRegion: null
+        property var lastStyle: null
+    }
+
     property QtObject nightLight: QtObject {
         property bool enabled: true
     }

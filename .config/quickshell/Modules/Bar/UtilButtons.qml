@@ -26,6 +26,7 @@ Item {
             sourceComponent: CircleUtilButton {
                 Layout.alignment: Qt.AlignVCenter
                 onClicked: ScreenClip.open(false)
+                altAction: () => ScreenClip.showOptions()
                 MaterialSymbol {
                     horizontalAlignment: Qt.AlignHCenter
                     fill: 1
@@ -41,7 +42,8 @@ Item {
             visible: ConfigOptions.bar.utilButtons.showScreenSnipDelayed
             sourceComponent: CircleUtilButton {
                 Layout.alignment: Qt.AlignVCenter
-                onClicked: ScreenClip.open(true)
+                onClicked: ScreenClip.countdown > 0 ? ScreenClip.cancelDelayed() : ScreenClip.open(true)
+                altAction: () => ScreenClip.showOptions()
                 Item {
                     implicitWidth: snipIcon.implicitWidth
                     implicitHeight: snipIcon.implicitHeight

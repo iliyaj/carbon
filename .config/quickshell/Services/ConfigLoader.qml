@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 
 import qs.Modules.Common
 import qs.Modules.Common.Functions
+import "../Modules/ScreenCapture/screenshot_preferences.js" as ScreenshotPreferences
 import QtQuick
 import Quickshell
 import Quickshell.Io
@@ -21,6 +22,7 @@ Singleton {
     property var preventNextNotification: false
     property bool savePending: false
     property string lastSavedContent: ""
+    property var persistedConfig: ({})
 
     function loadConfig() {
         // FileView.preload already starts the initial asynchronous read. Calling
@@ -41,6 +43,8 @@ Singleton {
             if (json === null || Array.isArray(json) || typeof json !== "object")
                 throw new Error("Config root must be an object")
 
+            if (json.screenshot !== undefined) json.screenshot = ScreenshotPreferences.validate(json.screenshot);
+            root.persistedConfig = json;
             ObjectUtils.applyToQtObject(ConfigOptions, json);
             if (root.firstLoad)
                 root.firstLoad = false;
@@ -52,6 +56,12 @@ Singleton {
     }
 
     function setLiveConfigValue(nestedKey, value) {
+        if (nestedKey.startsWith("screenshot.")) {
+            const key = nestedKey.slice(11);
+            const validated = ScreenshotPreferences.validate({ [key]: value });
+            ConfigOptions.screenshot[key] = validated[key];
+            return;
+        }
         let keys = nestedKey.split(".");
         let obj = ConfigOptions;
         let parents = [obj];
@@ -82,7 +92,8 @@ Singleton {
     }
 
     function saveConfig() {
-        const plainConfig = ObjectUtils.toPlainObject(ConfigOptions)
+        const plainConfig = ScreenshotPreferences.merge(root.persistedConfig, ObjectUtils.toPlainObject(ConfigOptions))
+        plainConfig.screenshot = ObjectUtils.toPlainObject(ConfigOptions.screenshot)
         const jsonContent = JSON.stringify(plainConfig, null, 2)
         root.lastSavedContent = jsonContent
         configFileView.setText(jsonContent)

@@ -4,6 +4,43 @@ import QtQuick
 import Quickshell
 
 Singleton {
+    property QtObject screenshot: QtObject {
+        property var toolOrder: ["select", "pen", "line", "arrow", "rect", "fill", "ellipse", "marker", "text", "counter", "conceal", "pixelate", "blur", "solid", "invert"]
+        property string defaultTool: "arrow"
+        property bool rememberStyle: false
+        property string color: "#ff3b30"
+        property int strokeWidth: 3
+        property bool rounded: false
+        property var palette: ["#ff3b30", "#ffff00", "#34c759", "#00bfff", "#af52de", "#ffffff", "#000000"]
+        property string fontFamily: ""
+        property int fontSize: 28
+        property bool fontBold: false
+        property bool fontItalic: false
+        property bool fontUnderline: false
+        property bool fontStrikeout: false
+        property string fontAlign: "left"
+        property int delay: 0
+        property int delayedDelay: 3
+        property bool concurrent: false
+        property bool acceptOnSelection: false
+        property string directory: ""
+        property string filenamePattern: "'Screenshot_'yyyy-MM-dd_HH.mm.ss.zzz"
+        property string format: "png"
+        property int quality: 90
+        property string clipboardFormat: "png"
+        property bool saveAfterCopy: false
+        property bool copyPathAfterSave: false
+        property bool pinSmoothing: true
+        property real overlayOpacity: 0.5333333333
+        property string contrast: "theme"
+        property bool showHelp: false
+        property bool notifications: true
+        property bool gridEnabled: false
+        property int gridSpacing: 10
+        property bool magnifier: false
+        property var shortcuts: ({})
+    }
+
     property QtObject accessibility: QtObject {
         property bool showMouseClicks: false
     }

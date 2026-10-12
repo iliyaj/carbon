@@ -60,7 +60,12 @@ ShellRoot {
 
     function initializeNightLight(): void {
         if (PersistentStateManager.allowWriteback)
-            NightLight.enabled
+            void NightLight.enabled
+    }
+
+    Component.onDestruction: {
+        ScreenClip.cancel()
+        ScreenPins.clear()
     }
 
     // Force initialization of some singletons
@@ -70,6 +75,9 @@ ShellRoot {
         PersistentStateManager.loadStates()
         initializeNightLight()
         Idle.inhibit
+        // Instantiate capture owners before reload transfers their temporary-resource lists.
+        void ScreenClip.busy
+        void ScreenPins.owned
         Cliphist.refresh()
         FirstRunExperience.load()
     }
