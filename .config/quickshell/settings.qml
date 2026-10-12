@@ -47,6 +47,11 @@ ApplicationWindow {
             component: "Modules/Settings/ServicesConfig.qml"
         },
         {
+            name: "Screenshots",
+            icon: "screenshot",
+            component: "Modules/Settings/ScreenshotConfig.qml"
+        },
+        {
             name: "About",
             icon: "info",
             component: "Modules/Settings/About.qml"
@@ -67,8 +72,7 @@ ApplicationWindow {
         PersistentStateManager.loadStates()
     }
 
-    // Wide enough for the five tabs at their 160px minimum, since content only needs 606
-    minimumWidth: 820
+    minimumWidth: 980
     minimumHeight: 400
     width: 840
     height: 900
