@@ -124,11 +124,12 @@ hl.bind("SUPER + SHIFT + T", hl.dsp.exec_cmd(
 hl.bind("SUPER + SHIFT + C", hl.dsp.exec_cmd("hyprpicker -a"),
     { description = "Utilities: Pick color (Hex) >> clipboard" })
 
-hl.bind("Print", hl.dsp.exec_cmd("grim - | wl-copy"),
+hl.bind("Print", hl.dsp.exec_cmd("qs ipc call screenClip desktop true"),
     { description = "Utilities: Screenshot >> clipboard" })
-hl.bind("CTRL + Print", hl.dsp.exec_cmd(
-    "mkdir -p $(xdg-user-dir PICTURES)/Screenshots && grim $(xdg-user-dir PICTURES)/Screenshots/Screenshot_\"$(date '+%Y-%m-%d_%H.%M.%S')\".png"),
-    { description = "Utilities: Screenshot >> clipboard & file" })
+hl.bind("CTRL + Print", hl.dsp.exec_cmd("qs ipc call screenClip desktop false"),
+    { description = "Utilities: Screenshot >> file" })
+hl.bind("SUPER + CTRL + Print", hl.dsp.exec_cmd("qs ipc call screenClip editor"),
+    { description = "Utilities: Select region and edit screenshot" })
 
 hl.bind("SUPER + ALT + R", hl.dsp.exec_cmd("qs ipc call recorder toggleRegion"),
     { description = "Utilities: Record region (no sound)" })

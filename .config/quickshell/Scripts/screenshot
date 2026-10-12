@@ -1,0 +1,132 @@
+#!/usr/bin/env python3
+"""Capture through Carbon's running shell and wait for its actual output."""
+
+import argparse
+import json
+from pathlib import Path
+import signal
+import subprocess
+import sys
+import time
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__, epilog="No output flags means save + copy. --raw alone performs neither. Exit codes: 0 success, 1 error, 2 cancelled, 124 timeout, 130 interrupted.")
+    parser.add_argument("--qs-path", help="Quickshell configuration path (default: running Carbon shell)")
+    parser.add_argument("--target", choices=("active", "monitor", "desktop"), default="active")
+    parser.add_argument("--monitor", help="Named monitor; implies --target monitor")
+    selection = parser.add_mutually_exclusive_group()
+    selection.add_argument("--all", action="store_true", help="Capture the whole target without selection")
+    selection.add_argument("--last", action="store_true", help="Reuse the last region for this layout")
+    parser.add_argument("--region", help="Initial region: x,y,width,height in captured image pixels")
+    parser.add_argument("--delay", type=int, help="Whole seconds before freezing the desktop")
+    parser.add_argument("--accept-on-selection", action="store_true", default=None)
+    parser.add_argument("--concurrent", action="store_true", default=None)
+    parser.add_argument("--edit", action="store_true", help="Edit, then use Finish request to apply the requested outputs")
+    parser.add_argument("--image", help="Edit an existing image; preserves the original")
+    parser.add_argument("--save", nargs="?", const="", help="Save to an absolute path, or the configured folder")
+    parser.add_argument("--copy", action="store_true", help="Copy image bytes")
+    parser.add_argument("--pin", action="store_true", help="Create a floating pin")
+    parser.add_argument("--format", help="File format (default: screenshot preference)")
+    parser.add_argument("--quality", type=int, help="Encoder quality, 1–100")
+    parser.add_argument("--clipboard-format", choices=("png", "jpeg"))
+    output = parser.add_mutually_exclusive_group()
+    output.add_argument("--raw", action="store_true", help="Write only PNG bytes to stdout")
+    output.add_argument("--geometry", action="store_true", help="Write x,y widthxheight in source image pixels")
+    parser.add_argument("--timeout", type=float, default=0, help="Maximum wait in seconds; 0 waits until completion")
+    parser.add_argument("--preferences", action="store_true", help="Read validated screenshot preferences as JSON")
+    parser.add_argument("--set", nargs=2, metavar=("KEY", "JSON_VALUE"), help="Update one screenshot preference through ConfigLoader")
+    args = parser.parse_args()
+    command = ["qs"] + (["-p", args.qs_path] if args.qs_path else []) + ["ipc", "call", "screenClip"]
+
+    def ipc(method, *values):
+        process = subprocess.run(command + [method, *values], capture_output=True, text=True)
+        if process.returncode:
+            raise RuntimeError(process.stderr.strip() or "Could not contact Carbon's running shell.")
+        return json.loads(process.stdout)
+
+    identifier = ""
+    signal.signal(signal.SIGTERM, lambda *_: (_ for _ in ()).throw(KeyboardInterrupt()))
+    try:
+        if args.preferences or args.set:
+            patch = {}
+            if args.set:
+                try:
+                    value = json.loads(args.set[1])
+                except ValueError:
+                    value = args.set[1]
+                patch[args.set[0]] = value
+            response = ipc("preferences", json.dumps(patch))
+            if response.get("error"):
+                raise ValueError(response["error"])
+            print(json.dumps(response["preferences"], indent=2))
+            return 0
+        if args.timeout < 0:
+            raise ValueError("Timeout must be non-negative.")
+        request = {"target": "monitor" if args.monitor else args.target, "monitor": args.monitor,
+                   "selection": "all" if args.all else "last" if args.last else "region",
+                   "edit": args.edit, "wait": True}
+        for key, value in (("delay", args.delay), ("concurrent", args.concurrent),
+                           ("acceptOnSelection", args.accept_on_selection), ("format", args.format),
+                           ("quality", args.quality), ("clipboardFormat", args.clipboard_format)):
+            if value is not None:
+                request[key] = value
+        if args.region:
+            numbers = list(map(int, args.region.split(",")))
+            if len(numbers) != 4:
+                raise ValueError("Region requires x,y,width,height.")
+            request["region"] = dict(zip(("x", "y", "width", "height"), numbers))
+        if args.save is not None or args.copy or args.pin or args.raw or args.geometry:
+            request["outputs"] = (["save"] if args.save is not None else []) + (["copy"] if args.copy else []) + (["pin"] if args.pin else [])
+        if args.save:
+            request["path"] = args.save
+        if args.image:
+            request["image"] = args.image
+        response = ipc("request", json.dumps(request))
+        identifier = response["id"]
+        if not identifier:
+            raise ValueError(response["error"])
+        started = time.monotonic()
+        while True:
+            response = ipc("result", identifier)
+            if response["state"] == "completed":
+                if args.raw:
+                    with Path(response["image"]).open("rb") as image:
+                        while chunk := image.read(65536):
+                            sys.stdout.buffer.write(chunk)
+                elif args.geometry:
+                    region = response["region"]
+                    print(f'{region["x"]},{region["y"]} {region["width"]}x{region["height"]}')
+                else:
+                    response.pop("image", None)  # the source is released when this client exits
+                    print(json.dumps(response))
+                return 0
+            if response["state"] in ("cancelled", "failed", "missing"):
+                print(response.get("error") or "Screenshot cancelled.", file=sys.stderr)
+                return 2 if response["state"] == "cancelled" else 1
+            if args.timeout and time.monotonic() - started >= args.timeout:
+                print("Screenshot timed out.", file=sys.stderr)
+                return 124
+            # Native IPC calls return immediately; retain the session until bytes are consumed.
+            time.sleep(0.15)
+    except KeyboardInterrupt:
+        print("Screenshot interrupted.", file=sys.stderr)
+        return 130
+    except (OSError, ValueError, RuntimeError) as error:
+        print(str(error), file=sys.stderr)
+        return 1
+    finally:
+        if identifier:
+            try:
+                subprocess.run(command + ["cancel", identifier], capture_output=True, timeout=5)
+                for _ in range(40):
+                    if ipc("result", identifier)["state"] in ("completed", "cancelled", "failed", "missing"):
+                        break
+                    time.sleep(0.05)
+                subprocess.run(command + ["release", identifier], capture_output=True, timeout=5)
+            except (OSError, ValueError, RuntimeError, subprocess.TimeoutExpired):
+                pass  # shell exit/reload owns cleanup if the native endpoint has disappeared
+
+
+if __name__ == "__main__":
+    sys.exit(main())
