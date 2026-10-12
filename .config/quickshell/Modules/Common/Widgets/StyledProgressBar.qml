@@ -17,6 +17,7 @@ ProgressBar {
     property real waveAmplitudeMultiplier: wavy ? 0.5 : 0
     property real waveFrequency: 6
     property real waveFps: 60
+    property bool showStopPoint: true
 
     Behavior on waveAmplitudeMultiplier {
         animation: Appearance?.animation.elementMoveFast.numberAnimation.createObject(this)
@@ -118,6 +119,7 @@ ProgressBar {
             color: root.trackColor
         }
         Rectangle { // Stop point
+            visible: root.showStopPoint
             anchors.right: parent.right
             width: valueBarGap
             height: valueBarGap

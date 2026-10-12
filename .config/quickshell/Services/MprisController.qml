@@ -177,6 +177,14 @@ Singleton {
         return trackLength
     }
 
+    // Restart by seeking because players like Spotify often restart without the Seeked signal Quickshell needs.
+    function previous(player: MprisPlayer): void {
+        if (player?.canSeek && player.positionSupported && player.position > 3)
+            player.position = 0
+        else if (player?.canGoPrevious)
+            player.previous()
+    }
+
     function filterPlayers(discoveredPlayers): var {
         // Quickshell can briefly leave a null entry while an MPRIS service disappears.
         const directPlayers = discoveredPlayers.filter(player => player !== null
@@ -374,8 +382,7 @@ Singleton {
         }
 
         function previous(): void {
-            if (root.activePlayer?.canGoPrevious)
-                root.activePlayer.previous()
+            root.previous(root.activePlayer)
         }
 
         function pauseAll(): void {

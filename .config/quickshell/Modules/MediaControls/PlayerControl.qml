@@ -283,7 +283,7 @@ Item { // Player instance
                         }
                         TrackChangeButton {
                             iconName: "skip_previous"
-                            onClicked: playerController.player?.previous()
+                            onClicked: MprisController.previous(playerController.player)
                         }
                         Item {
                             id: progressBarContainer
@@ -299,6 +299,7 @@ Item { // Player instance
                                     ? playerController.trackPosition / playerController.trackLength
                                     : 0
                                 wavy: playerController.playing
+                                showStopPoint: false
                             }
                         }
                         TrackChangeButton {
