@@ -30,14 +30,42 @@ local window_controls_enabled = lib.carbon_config_bool("showWindowControls", fal
 
 if window_controls_enabled and lib.file_exists(hyprbars) then hl.plugin.load(hyprbars) end
 
+-- hyprbars places the first button at the bar edge on either side.
+local actions = {
+    close = "hyprctl dispatch 'hl.dsp.window.close()'",
+    maximize = "hyprctl dispatch 'hl.dsp.window.fullscreen({ mode = [[maximized]], action = [[toggle]] })'",
+    minimize = "hyprctl dispatch 'hl.dsp.window.move({ workspace = [[special]], follow = false })'",
+    float = "hyprctl dispatch 'function() require([[lib]]).toggle_floating() end'",
+}
+
+local button_styles = {
+    carbon = {
+        { action = "close", icon = "󰅖" },
+        { action = "maximize", icon = "󰖯" },
+        { action = "minimize", icon = "󰖰" },
+        { action = "float", icon = "󰖲" },
+    },
+    macos = {
+        { action = "close", color = "rgb(e8918b)" },
+        { action = "minimize", color = "rgb(e9c98b)" },
+        { action = "maximize", color = "rgb(9bcf92)" },
+        { action = "float", color = "rgb(8fb4e8)" },
+    },
+}
+
 if hl.plugin.hyprbars then
+    local style = lib.carbon_config_string("controlsStyle", "carbon")
+    local buttons = button_styles[style] or button_styles.carbon
+    local macos = buttons == button_styles.macos
+
     hl.config({
         plugin = {
             hyprbars = {
                 bar_text_font = "Rubik, Geist, AR One Sans, Reddit Sans, Inter, Roboto, Ubuntu, Noto Sans, sans-serif",
                 bar_height = 30,
                 bar_padding = 10,
-                bar_button_padding = 5,
+                bar_button_padding = macos and 8 or 5,
+                bar_buttons_alignment = lib.carbon_config_string("controlsSide", "right") == "left" and "left" or "right",
                 bar_precedence_over_border = true,
                 bar_part_of_window = true,
                 bar_color = "rgba(131313FF)",
@@ -46,18 +74,13 @@ if hl.plugin.hyprbars then
         },
     })
 
-    for _, button in ipairs({
-        { icon = "󰅖", action = "hyprctl dispatch 'hl.dsp.window.close()'" },
-        { icon = "󰖯", action = "hyprctl dispatch 'hl.dsp.window.fullscreen({ mode = [[maximized]], action = [[toggle]] })'" },
-        { icon = "󰖰", action = "hyprctl dispatch 'hl.dsp.window.move({ workspace = [[special]], follow = false })'" },
-        { icon = "󰖲", action = "hyprctl dispatch 'function() require([[lib]]).toggle_floating() end'" },
-    }) do
+    for _, button in ipairs(buttons) do
         hl.plugin.hyprbars.add_button({
-            bg_color = "rgba(00000000)",
+            bg_color = button.color or "rgba(00000000)",
             fg_color = "rgb(e2e2e2)",
-            size = 22,
-            icon = button.icon,
-            action = button.action,
+            size = macos and 13 or 22,
+            icon = button.icon or "",
+            action = actions[button.action],
         })
     end
 end

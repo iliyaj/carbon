@@ -56,3 +56,4 @@ StyledTextInput 1.0 StyledTextInput.qml
 StyledToolTip 1.0 StyledToolTip.qml
 VerticalButtonGroup 1.0 VerticalButtonGroup.qml
 WaveVisualizer 1.0 WaveVisualizer.qml
+WindowCloseButton 1.0 WindowCloseButton.qml

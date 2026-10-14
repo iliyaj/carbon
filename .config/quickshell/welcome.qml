@@ -59,10 +59,11 @@ ApplicationWindow {
                     when: !ConfigOptions.windows.centerTitle
                     AnchorChanges {
                         target: welcomeText
-                        anchors.left: welcomeText.parent.left
+                        anchors.left: welcomeText.closeOnLeft ? closeButton.right : welcomeText.parent.left
                         anchors.horizontalCenter: undefined
                     }
                 }
+                readonly property bool closeOnLeft: ConfigOptions.windows.controlsSide === "left"
                 color: Appearance.colors.colOnLayer0
                 text: "Yooooo hi there"
                 font.pixelSize: Appearance.font.pixelSize.title
@@ -89,18 +90,17 @@ ApplicationWindow {
                         }
                     }
                 }
-                RippleButton {
-                    buttonRadius: Appearance.rounding.full
-                    implicitWidth: 35
-                    implicitHeight: 35
+                WindowCloseButton {
+                    visible: !welcomeText.closeOnLeft
                     onClicked: root.close()
-                    contentItem: MaterialSymbol {
-                        anchors.centerIn: parent
-                        horizontalAlignment: Text.AlignHCenter
-                        text: "close"
-                        iconSize: 20
-                    }
                 }
+            }
+            WindowCloseButton {
+                id: closeButton
+                visible: welcomeText.closeOnLeft
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.left: parent.left
+                onClicked: root.close()
             }
         }
         Rectangle { // Content container

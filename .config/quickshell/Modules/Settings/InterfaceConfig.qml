@@ -61,7 +61,7 @@ ContentPage {
                 checked: ConfigOptions.windows.focusFollowsMouse
                 onCheckedChanged: {
                     ConfigLoader.setConfigValueAndSave("windows.focusFollowsMouse", checked);
-                    applyFocusTimer.restart(); // keep the compositor work off the click
+                    applyHyprlandTimer.restart(); // keep the compositor work off the click
                 }
                 StyledToolTip {
                     content: "Focuses the window under the pointer as it moves. Turn off to require a click, so hovering never changes focus."
@@ -70,8 +70,37 @@ ContentPage {
             Item { Layout.fillWidth: true }
         }
 
+        ContentSubsection {
+            title: "Window buttons"
+
+            ConfigSelectionArray {
+                currentValue: ConfigOptions.windows.controlsStyle
+                configOptionName: "windows.controlsStyle"
+                onSelected: (newValue) => {
+                    ConfigLoader.setConfigValueAndSave("windows.controlsStyle", newValue);
+                    applyHyprlandTimer.restart();
+                }
+                options: [
+                    { displayName: "Carbon", value: "carbon" },
+                    { displayName: "macOS", value: "macos" }
+                ]
+            }
+            ConfigSelectionArray {
+                currentValue: ConfigOptions.windows.controlsSide
+                configOptionName: "windows.controlsSide"
+                onSelected: (newValue) => {
+                    ConfigLoader.setConfigValueAndSave("windows.controlsSide", newValue);
+                    applyHyprlandTimer.restart();
+                }
+                options: [
+                    { displayName: "Left", value: "left" },
+                    { displayName: "Right", value: "right" }
+                ]
+            }
+        }
+
         Timer {
-            id: applyFocusTimer
+            id: applyHyprlandTimer
             interval: 200
             onTriggered: {
                 ConfigLoader.flushConfig(); // reload re-reads config.json

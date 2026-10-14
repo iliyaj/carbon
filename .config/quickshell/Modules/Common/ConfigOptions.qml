@@ -228,6 +228,8 @@ Singleton {
         property bool showTitlebar: true // Client-side decoration for shell apps
         property bool centerTitle: true
         property bool showWindowControls: false
+        property string controlsStyle: "carbon" // "carbon" or "macos"
+        property string controlsSide: "right" // "left" or "right"
         property bool focusFollowsMouse: true
     }
 

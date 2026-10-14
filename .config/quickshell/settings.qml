@@ -112,7 +112,7 @@ ApplicationWindow {
             visible: ConfigOptions?.windows.showTitlebar
             Layout.fillWidth: true
             Layout.fillHeight: false
-            implicitHeight: Math.max(titleText.implicitHeight, windowControlsRow.implicitHeight)
+            implicitHeight: Math.max(titleText.implicitHeight, closeButton.implicitHeight)
             StyledText {
                 id: titleText
                 anchors {
@@ -125,31 +125,22 @@ ApplicationWindow {
                     when: !ConfigOptions.windows.centerTitle
                     AnchorChanges {
                         target: titleText
-                        anchors.left: titleText.parent.left
+                        anchors.left: titleText.closeOnLeft ? closeButton.right : titleText.parent.left
                         anchors.horizontalCenter: undefined
                     }
                 }
+                readonly property bool closeOnLeft: ConfigOptions.windows.controlsSide === "left"
                 color: Appearance.colors.colOnLayer0
                 text: "Settings"
                 font.pixelSize: Appearance.font.pixelSize.title
                 font.family: Appearance.font.family.title
             }
-            RowLayout { // Window controls row
-                id: windowControlsRow
+            WindowCloseButton {
+                id: closeButton
                 anchors.verticalCenter: parent.verticalCenter
-                anchors.right: parent.right
-                RippleButton {
-                    buttonRadius: Appearance.rounding.full
-                    implicitWidth: 35
-                    implicitHeight: 35
-                    onClicked: root.close()
-                    contentItem: MaterialSymbol {
-                        anchors.centerIn: parent
-                        horizontalAlignment: Text.AlignHCenter
-                        text: "close"
-                        iconSize: 20
-                    }
-                }
+                anchors.left: titleText.closeOnLeft ? parent.left : undefined
+                anchors.right: titleText.closeOnLeft ? undefined : parent.right
+                onClicked: root.close()
             }
         }
 

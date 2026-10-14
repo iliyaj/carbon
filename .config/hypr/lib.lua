@@ -20,16 +20,24 @@ end
 
 M.home = os.getenv("HOME")
 
-function M.carbon_config_bool(key, default)
+local function carbon_config_text()
     local config_home = os.getenv("XDG_CONFIG_HOME") or (M.home .. "/.config")
     local f = io.open(config_home .. "/carbon/config.json", "r")
-    if not f then return default end
+    if not f then return "" end
     local text = f:read("*a") or ""
     f:close()
-    local value = text:match('"' .. key .. '"%s*:%s*([%a]+)')
+    return text
+end
+
+function M.carbon_config_bool(key, default)
+    local value = carbon_config_text():match('"' .. key .. '"%s*:%s*([%a]+)')
     if value == "true" then return true end
     if value == "false" then return false end
     return default
+end
+
+function M.carbon_config_string(key, default)
+    return carbon_config_text():match('"' .. key .. '"%s*:%s*"([^"]*)"') or default
 end
 
 function M.material_color(name, default)
