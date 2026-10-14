@@ -73,29 +73,30 @@ ContentPage {
         ContentSubsection {
             title: "Window buttons"
 
-            ConfigSelectionArray {
-                currentValue: ConfigOptions.windows.controlsStyle
-                configOptionName: "windows.controlsStyle"
-                onSelected: (newValue) => {
-                    ConfigLoader.setConfigValueAndSave("windows.controlsStyle", newValue);
-                    applyHyprlandTimer.restart();
+            ConfigRow {
+                uniform: true
+                ConfigSwitch {
+                    text: "Color"
+                    checked: ConfigOptions.windows.colorControls
+                    onCheckedChanged: {
+                        ConfigLoader.setConfigValueAndSave("windows.colorControls", checked);
+                        applyHyprlandTimer.restart();
+                    }
+                    StyledToolTip {
+                        content: "Shows colored dots instead of light icons."
+                    }
                 }
-                options: [
-                    { displayName: "Carbon", value: "carbon" },
-                    { displayName: "macOS", value: "macos" }
-                ]
-            }
-            ConfigSelectionArray {
-                currentValue: ConfigOptions.windows.controlsSide
-                configOptionName: "windows.controlsSide"
-                onSelected: (newValue) => {
-                    ConfigLoader.setConfigValueAndSave("windows.controlsSide", newValue);
-                    applyHyprlandTimer.restart();
+                ConfigSwitch {
+                    text: "Left side"
+                    checked: ConfigOptions.windows.controlsOnLeft
+                    onCheckedChanged: {
+                        ConfigLoader.setConfigValueAndSave("windows.controlsOnLeft", checked);
+                        applyHyprlandTimer.restart();
+                    }
+                    StyledToolTip {
+                        content: "Places the buttons at the left edge of the title bar instead of the right."
+                    }
                 }
-                options: [
-                    { displayName: "Left", value: "left" },
-                    { displayName: "Right", value: "right" }
-                ]
             }
         }
 

@@ -2,10 +2,10 @@ import QtQuick
 import qs.Modules.Common
 import qs.Modules.Common.Widgets
 
-RippleButton { // hyprbars already draws the close dot in macOS style
+RippleButton { // hyprbars already draws the close dot in color style
     id: root
 
-    visible: ConfigOptions.windows.controlsStyle !== "macos"
+    visible: !ConfigOptions.windows.colorControls
     implicitWidth: visible ? 35 : 0
     implicitHeight: 35
     buttonRadius: Appearance.rounding.full

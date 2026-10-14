@@ -39,13 +39,13 @@ local actions = {
 }
 
 local button_styles = {
-    carbon = {
+    light = {
         { action = "close", icon = "󰅖" },
         { action = "maximize", icon = "󰖯" },
         { action = "minimize", icon = "󰖰" },
         { action = "float", icon = "󰖲" },
     },
-    macos = {
+    color = {
         { action = "close", color = "rgb(e8918b)" },
         { action = "minimize", color = "rgb(e9c98b)" },
         { action = "maximize", color = "rgb(9bcf92)" },
@@ -54,9 +54,8 @@ local button_styles = {
 }
 
 if hl.plugin.hyprbars then
-    local style = lib.carbon_config_string("controlsStyle", "carbon")
-    local buttons = button_styles[style] or button_styles.carbon
-    local macos = buttons == button_styles.macos
+    local color = lib.carbon_config_bool("colorControls", false)
+    local buttons = color and button_styles.color or button_styles.light
 
     hl.config({
         plugin = {
@@ -64,8 +63,8 @@ if hl.plugin.hyprbars then
                 bar_text_font = "Rubik, Geist, AR One Sans, Reddit Sans, Inter, Roboto, Ubuntu, Noto Sans, sans-serif",
                 bar_height = 30,
                 bar_padding = 10,
-                bar_button_padding = macos and 8 or 5,
-                bar_buttons_alignment = lib.carbon_config_string("controlsSide", "right") == "left" and "left" or "right",
+                bar_button_padding = color and 8 or 5,
+                bar_buttons_alignment = lib.carbon_config_bool("controlsOnLeft", false) and "left" or "right",
                 bar_precedence_over_border = true,
                 bar_part_of_window = true,
                 bar_color = "rgba(131313FF)",
@@ -78,7 +77,7 @@ if hl.plugin.hyprbars then
         hl.plugin.hyprbars.add_button({
             bg_color = button.color or "rgba(00000000)",
             fg_color = "rgb(e2e2e2)",
-            size = macos and 13 or 22,
+            size = color and 13 or 22,
             icon = button.icon or "",
             action = actions[button.action],
         })

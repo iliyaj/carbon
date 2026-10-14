@@ -63,7 +63,7 @@ ApplicationWindow {
                         anchors.horizontalCenter: undefined
                     }
                 }
-                readonly property bool closeOnLeft: ConfigOptions.windows.controlsSide === "left"
+                readonly property bool closeOnLeft: ConfigOptions.windows.controlsOnLeft
                 color: Appearance.colors.colOnLayer0
                 text: "Yooooo hi there"
                 font.pixelSize: Appearance.font.pixelSize.title
