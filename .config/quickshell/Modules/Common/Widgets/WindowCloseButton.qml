@@ -2,42 +2,17 @@ import QtQuick
 import qs.Modules.Common
 import qs.Modules.Common.Widgets
 
-Item { // matches the hyprbars window-controls style
+RippleButton { // hyprbars already draws the close dot in macOS style
     id: root
 
-    signal clicked
-
-    readonly property bool macos: ConfigOptions.windows.controlsStyle === "macos"
-
-    implicitWidth: 35
+    visible: ConfigOptions.windows.controlsStyle !== "macos"
+    implicitWidth: visible ? 35 : 0
     implicitHeight: 35
-
-    RippleButton {
-        visible: !root.macos
-        anchors.fill: parent
-        buttonRadius: Appearance.rounding.full
-        onClicked: root.clicked()
-        contentItem: MaterialSymbol {
-            anchors.centerIn: parent
-            horizontalAlignment: Text.AlignHCenter
-            text: "close"
-            iconSize: 20
-        }
-    }
-
-    Rectangle {
-        visible: root.macos
+    buttonRadius: Appearance.rounding.full
+    contentItem: MaterialSymbol {
         anchors.centerIn: parent
-        width: 13
-        height: 13
-        radius: width / 2
-        color: "#e8918b"
-
-        MouseArea {
-            anchors.fill: parent
-            anchors.margins: -4
-            cursorShape: Qt.PointingHandCursor
-            onClicked: root.clicked()
-        }
+        horizontalAlignment: Text.AlignHCenter
+        text: "close"
+        iconSize: 20
     }
 }
