@@ -6,6 +6,7 @@ import qs.Services
 import "../ScreenCapture/screenshot_preferences.js" as ScreenshotPreferences
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Dialogs as NativeDialogs
 import QtQuick.Layouts
 
 ContentPage {
@@ -38,6 +39,62 @@ ContentPage {
             color: Appearance.colors.colLayer2
             border.width: input.activeFocus ? 2 : 1
             border.color: input.activeFocus ? Appearance.m3colors.m3primary : Appearance.m3colors.m3outlineVariant
+        }
+    }
+
+    component ColourButton: RippleButton {
+        id: colourButton
+        required property color swatchColour
+        property string label: ""
+        implicitWidth: label.length > 0 ? swatchContent.implicitWidth + 24 : 44
+        implicitHeight: 44
+        buttonRadius: 22
+        colBackground: Appearance.colors.colLayer2
+        Accessible.name: label.length > 0 ? label : qsTr("Edit colour %1").arg(swatchColour)
+        contentItem: RowLayout {
+            id: swatchContent
+            spacing: Appearance.spacing.sm
+            Rectangle {
+                Layout.alignment: Qt.AlignCenter
+                implicitWidth: 28
+                implicitHeight: 28
+                radius: 14
+                color: colourButton.swatchColour
+                border.width: 1
+                border.color: Appearance.m3colors.m3outline
+            }
+            StyledText {
+                visible: colourButton.label.length > 0
+                text: colourButton.label
+                color: Appearance.colors.colOnLayer2
+            }
+        }
+        StyledToolTip { content: colourButton.swatchColour.toString().toUpperCase() }
+    }
+
+    function chooseColour(key: string, index: int): void {
+        colourDialog.preferenceKey = key;
+        colourDialog.paletteIndex = index;
+        colourDialog.selectedColor = key === "color" ? ConfigOptions.screenshot.color
+            : index >= 0 ? ConfigOptions.screenshot.palette[index] : ConfigOptions.screenshot.color;
+        colourDialog.open();
+    }
+
+    NativeDialogs.ColorDialog {
+        id: colourDialog
+        property string preferenceKey: "color"
+        property int paletteIndex: -1
+        title: preferenceKey === "color" ? qsTr("Drawing colour") : qsTr("Palette colour")
+        onAccepted: {
+            const colour = selectedColor.toString();
+            if (preferenceKey === "color") {
+                root.setValue("color", colour);
+            } else {
+                const palette = ConfigOptions.screenshot.palette.slice();
+                if (paletteIndex < 0) palette.push(colour);
+                else if (paletteIndex < palette.length) palette[paletteIndex] = colour;
+                root.setValue("palette", palette);
+            }
         }
     }
 
@@ -75,7 +132,8 @@ ContentPage {
                     Layout.fillWidth: true
                     StyledText {
                         visible: !["bool", "tools"].includes(fieldRow.modelData.type)
-                        text: fieldRow.modelData.label
+                        text: fieldRow.modelData.type === "palette" ? qsTr("Palette")
+                            : fieldRow.modelData.type === "color" ? qsTr("Drawing colour") : fieldRow.modelData.label
                         Layout.fillWidth: true
                         wrapMode: Text.WordWrap
                     }
@@ -128,16 +186,83 @@ ContentPage {
                         currentIndex: model.indexOf(ConfigOptions.screenshot[fieldRow.modelData.key])
                         onActivated: index => root.setValue(fieldRow.modelData.key, model[index])
                     }
+                    ColourButton {
+                        visible: fieldRow.modelData.type === "color"
+                        swatchColour: ConfigOptions.screenshot.color
+                        label: qsTr("Choose colour")
+                        onClicked: root.chooseColour("color", -1)
+                    }
+                    Flow {
+                        Layout.fillWidth: true
+                        visible: fieldRow.modelData.type === "palette"
+                        spacing: Appearance.spacing.sm
+                        Repeater {
+                            model: fieldRow.modelData.type === "palette" ? ConfigOptions.screenshot.palette : []
+                            delegate: Item {
+                                id: paletteSwatch
+                                required property string modelData
+                                required property int index
+                                width: 52
+                                height: 52
+                                ColourButton {
+                                    anchors.left: parent.left
+                                    anchors.bottom: parent.bottom
+                                    swatchColour: paletteSwatch.modelData
+                                    onClicked: root.chooseColour("palette", paletteSwatch.index)
+                                }
+                                RippleButton {
+                                    anchors.right: parent.right
+                                    anchors.top: parent.top
+                                    implicitWidth: 20
+                                    implicitHeight: 20
+                                    buttonRadius: 10
+                                    colBackground: Appearance.colors.colLayer2
+                                    enabled: ConfigOptions.screenshot.palette.length > 1
+                                    Accessible.name: qsTr("Remove colour %1").arg(paletteSwatch.modelData)
+                                    contentItem: MaterialSymbol {
+                                        text: "close"
+                                        iconSize: 14
+                                        color: Appearance.colors.colOnLayer2
+                                    }
+                                    onClicked: {
+                                        const palette = ConfigOptions.screenshot.palette.slice();
+                                        palette.splice(paletteSwatch.index, 1);
+                                        root.setValue("palette", palette);
+                                    }
+                                    StyledToolTip { content: qsTr("Remove colour") }
+                                }
+                            }
+                        }
+                        Item {
+                            width: 44
+                            height: 52
+                            RippleButton {
+                                anchors.bottom: parent.bottom
+                                width: 44
+                                height: 44
+                                buttonRadius: 22
+                                colBackground: Appearance.colors.colLayer2
+                                enabled: ConfigOptions.screenshot.palette.length < 32
+                                Accessible.name: qsTr("Add colour")
+                                contentItem: MaterialSymbol {
+                                    text: "add"
+                                    iconSize: 24
+                                    horizontalAlignment: Text.AlignHCenter
+                                    color: Appearance.colors.colOnLayer2
+                                }
+                                onClicked: root.chooseColour("palette", -1)
+                                StyledToolTip { content: qsTr("Add colour") }
+                            }
+                        }
+                    }
                     RoundedField {
                         Layout.fillWidth: true
-                        visible: !["bool", "int", "tools"].includes(fieldRow.modelData.type) && fieldRow.modelData.choices === undefined
-                        text: fieldRow.modelData.type === "palette"
-                            ? JSON.stringify(ConfigOptions.screenshot[fieldRow.modelData.key]) : String(ConfigOptions.screenshot[fieldRow.modelData.key])
+                        visible: !["bool", "int", "tools", "palette", "color"].includes(fieldRow.modelData.type) && fieldRow.modelData.choices === undefined
+                        text: String(ConfigOptions.screenshot[fieldRow.modelData.key])
                         selectByMouse: true
                         onEditingFinished: {
                             try {
-                                const value = fieldRow.modelData.type === "palette" ? JSON.parse(text)
-                                    : fieldRow.modelData.type === "real" ? Number(text) : text;
+                                const value = fieldRow.modelData.type === "real" ? Number(text) : text;
                                 root.setValue(fieldRow.modelData.key, value);
                             } catch (error) { root.errorMessage = error.message; }
                         }
