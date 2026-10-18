@@ -42,6 +42,7 @@ RoundCorner 1.0 RoundCorner.qml
 SecondaryTabButton 1.0 SecondaryTabButton.qml
 SelectionDialog 1.0 SelectionDialog.qml
 SelectionGroupButton 1.0 SelectionGroupButton.qml
+StyledComboBox 1.0 StyledComboBox.qml
 StyledLabel 1.0 StyledLabel.qml
 StyledListView 1.0 StyledListView.qml
 StyledProgressBar 1.0 StyledProgressBar.qml
