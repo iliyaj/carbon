@@ -4,45 +4,20 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Io
-import Quickshell.Services.UPower
+import qs.Services
 
 Singleton {
     id: root
 
     readonly property string configPath: "/etc/logid.cfg"
     readonly property string imageSource: "root:/Assets/Images/mx-master-3-wireframe.webp"
-    readonly property var batteryDevice: UPower.devices.values.find(device =>
-        device.model?.toLowerCase().includes("mx master 3")) ?? null
-    readonly property bool batteryAvailable: batteryDevice !== null
-        && batteryDevice.ready && batteryDevice.isPresent
-    readonly property string batteryIconName: batteryDevice?.iconName ?? ""
-    readonly property bool batteryLow: /low|caution|empty/.test(root.batteryIconName)
-    readonly property string batteryText: {
-        if (!root.batteryAvailable)
-            return qsTr("Battery unavailable")
-        if (root.batteryIconName.includes("full"))
-            return qsTr("Battery full")
-        if (root.batteryIconName.includes("good"))
-            return qsTr("Battery good")
-        if (root.batteryIconName.includes("low") || root.batteryIconName.includes("caution"))
-            return qsTr("Battery low")
-        if (root.batteryIconName.includes("empty"))
-            return qsTr("Battery empty")
-        return qsTr("Battery available")
-    }
-    readonly property string batteryMaterialIcon: {
-        if (!root.batteryAvailable)
-            return "battery_unknown"
-        if (root.batteryIconName.includes("full"))
-            return "battery_full"
-        if (root.batteryIconName.includes("good"))
-            return "battery_5_bar"
-        if (root.batteryIconName.includes("low"))
-            return "battery_2_bar"
-        if (root.batteryIconName.includes("caution") || root.batteryIconName.includes("empty"))
-            return "battery_alert"
-        return "battery_4_bar"
-    }
+    readonly property var batteryDevice: DeviceBatteries.devices.find(device =>
+        device.name.toLowerCase().includes("mx master 3")) ?? null
+    readonly property bool batteryAvailable: batteryDevice?.available ?? false
+    readonly property bool batteryLow: DeviceBatteries.isLow(batteryDevice)
+    readonly property string batteryText: batteryAvailable
+        ? qsTr("Battery: %1").arg(DeviceBatteries.levelText(batteryDevice)) : qsTr("Battery unavailable")
+    readonly property string batteryMaterialIcon: DeviceBatteries.batteryIcon(batteryDevice)
 
     property bool daemonRunning: false
     property bool configAvailable: false

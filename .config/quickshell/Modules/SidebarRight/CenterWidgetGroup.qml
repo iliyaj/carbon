@@ -1,6 +1,7 @@
 import qs.Modules.Common
 import qs.Modules.Common.Widgets
 import qs.Services
+import qs.Modules.SidebarRight.Batteries
 import "./Calendar"
 import "./Notifications"
 import "./Todo"
@@ -17,7 +18,11 @@ Rectangle {
     color: Appearance.colors.colLayer1
 
     property int selectedTab: 0
-    property var tabButtonList: [{"icon": "notifications", "name": qsTr("Notifications")}, {"icon": "volume_up", "name": qsTr("Volume mixer")}]
+    property var tabButtonList: [
+        {"icon": "notifications", "name": qsTr("Notifications")},
+        {"icon": "volume_up", "name": qsTr("Volume mixer")},
+        {"icon": "battery_full", "name": qsTr("Batteries")}
+    ]
 
     Keys.onPressed: (event) => {
         if (event.key === Qt.Key_PageDown || event.key === Qt.Key_PageUp) {
@@ -77,6 +82,7 @@ Rectangle {
 
             NotificationList {}
             VolumeMixer {}
+            Batteries {}
         }
     }
 }
