@@ -16,7 +16,6 @@ singleton HyprlandData 1.0 HyprlandData.qml
 singleton HyprlandKeybinds 1.0 HyprlandKeybinds.qml
 singleton Idle 1.0 Idle.qml
 singleton LatexRenderer 1.0 LatexRenderer.qml
-singleton MXMaster3 1.0 MXMaster3.qml
 singleton MaterialThemeLoader 1.0 MaterialThemeLoader.qml
 singleton MicLevel 1.0 MicLevel.qml
 singleton MprisController 1.0 MprisController.qml

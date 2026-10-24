@@ -13,18 +13,17 @@ ContentPage {
 
     forceWidth: true
 
-    function openMXMouse(): void {
-        const window = HyprlandData.windowList.find(client =>
-            client.class === "org.quickshell" && client.title === "MX Master 3")
+    readonly property DesktopEntry openLogiEntry: Array.from(DesktopEntries.applications.values)
+        .find(entry => entry.id === "openlogi") ?? null
+
+    function openOpenLogi(): void {
+        const window = HyprlandData.windowList.find(client => client.class === root.openLogiEntry.startupClass)
         if (window?.address) {
             Hyprland.dispatch(`hl.dsp.focus({ window = ${LuaUtils.stringLiteral(`address:${window.address}`)} })`)
             return
         }
 
-        Quickshell.execDetached([
-            "/usr/bin/quickshell", "--no-duplicate", "--path",
-            FileUtils.trimFileProtocol(`${Directories.config}/quickshell/mx-mouse.qml`)
-        ])
+        root.openLogiEntry.execute()
     }
 
     ContentSection {
@@ -172,12 +171,20 @@ ContentPage {
         title: "Devices"
 
         RippleButtonWithIcon {
+            visible: root.openLogiEntry !== null
             materialIcon: "mouse"
-            mainText: qsTr("Open MX Master 3 controls")
-            onClicked: root.openMXMouse()
+            mainText: qsTr("Open OpenLogi")
+            onClicked: root.openOpenLogi()
             StyledToolTip {
-                content: qsTr("View the active MX Master 3 button configuration")
+                content: qsTr("Configure Logitech mouse buttons, DPI and SmartShift")
             }
+        }
+        StyledText {
+            Layout.fillWidth: true
+            visible: root.openLogiEntry === null
+            text: qsTr("OpenLogi is not installed. Install it from the AUR to configure Logitech devices: yay -S openlogi-bin")
+            color: Appearance.m3colors.m3outline
+            wrapMode: Text.Wrap
         }
     }
 

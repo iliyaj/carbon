@@ -47,5 +47,5 @@ ttf-material-symbols-variable
 ttf-jetbrains-mono-nerd
 
 # Optional integrations are intentionally not installed by the base manifest:
-# bluez-utils, plasma-nm, bluedevil, wlogout, easyeffects, fcitx5, logiops,
+# bluez-utils, plasma-nm, bluedevil, wlogout, easyeffects, fcitx5, openlogi,
 # pavucontrol, and mission-center.
