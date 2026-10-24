@@ -22,6 +22,7 @@ singleton MprisController 1.0 MprisController.qml
 singleton NagameDisplay 1.0 NagameDisplay.qml
 singleton Network 1.0 Network.qml
 singleton NightLight 1.0 NightLight.qml
+singleton Notes 1.0 Notes.qml
 singleton Notifications 1.0 Notifications.qml
 singleton PersistentStateManager 1.0 PersistentStateManager.qml
 Recorder 1.0 Recorder.qml
@@ -29,5 +30,4 @@ singleton ResourceUsage 1.0 ResourceUsage.qml
 singleton ScreenClip 1.0 ScreenClip.qml
 singleton ScreenPins 1.0 ScreenPins.qml
 singleton SystemInfo 1.0 SystemInfo.qml
-singleton Todo 1.0 Todo.qml
 singleton Ydotool 1.0 Ydotool.qml

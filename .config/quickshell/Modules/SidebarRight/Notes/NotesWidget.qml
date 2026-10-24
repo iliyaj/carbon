@@ -1,10 +1,8 @@
 import qs.Modules.Common
 import qs.Modules.Common.Widgets
 import qs.Services
-import qs.Modules.Common.Functions
 import QtQuick
 import QtQuick.Controls
-import QtQuick.Effects
 import QtQuick.Layouts
 import Quickshell
 
@@ -29,16 +27,11 @@ Item {
         anchors.fill: parent
         spacing: 0
 
-        TaskList {
+        NoteList {
             Layout.topMargin: 10
             Layout.fillWidth: true
             Layout.fillHeight: true
             listBottomPadding: root.fabSize + root.fabMargins * 2
-            emptyPlaceholderIcon: "note"
-            emptyPlaceholderText: qsTr("No notes yet")
-            taskList: Todo.list
-                .map(function(item, i) { return Object.assign({}, item, {originalIndex: i}); })
-                .reverse()
         }
     }
 
@@ -56,10 +49,7 @@ Item {
         anchors.rightMargin: root.fabMargins + (fabButton.baseSize - baseSize) / 2
         anchors.bottomMargin: root.fabMargins
 
-        onClicked: {
-            const folder = Directories.todoPath.substring(0, Directories.todoPath.lastIndexOf('/'))
-            Quickshell.execDetached(["xdg-open", folder])
-        }
+        onClicked: Quickshell.execDetached(["xdg-open", Directories.notesPath])
 
         contentItem: MaterialSymbol {
             text: "folder_open"
@@ -112,7 +102,7 @@ Item {
 
         onVisibleChanged: {
             if (!visible) {
-                todoInput.text = ""
+                noteInput.text = ""
                 fabButton.focus = true
             }
         }
@@ -140,12 +130,11 @@ Item {
             color: Appearance.colors.colSurfaceContainerHigh
             radius: Appearance.rounding.normal
 
-            function addTask() {
-                if (todoInput.text.length > 0) {
-                    Todo.addTask(todoInput.text)
-                    todoInput.text = ""
+            function addNote() {
+                if (noteInput.text.length > 0) {
+                    Notes.add(noteInput.text)
+                    noteInput.text = ""
                     root.showAddDialog = false
-
                 }
             }
 
@@ -165,7 +154,7 @@ Item {
                 }
 
                 TextField {
-                    id: todoInput
+                    id: noteInput
                     Layout.fillWidth: true
                     Layout.leftMargin: 16
                     Layout.rightMargin: 16
@@ -177,19 +166,19 @@ Item {
                     placeholderText: qsTr("Note content")
                     placeholderTextColor: Appearance.m3colors.m3outline
                     focus: root.showAddDialog
-                    onAccepted: dialog.addTask()
+                    onAccepted: dialog.addNote()
 
                     background: Rectangle {
                         anchors.fill: parent
                         radius: Appearance.rounding.verysmall
                         border.width: 2
-                        border.color: todoInput.activeFocus ? Appearance.colors.colPrimary : Appearance.m3colors.m3outline
+                        border.color: noteInput.activeFocus ? Appearance.colors.colPrimary : Appearance.m3colors.m3outline
                         color: "transparent"
                     }
 
                     cursorDelegate: Rectangle {
                         width: 1
-                        color: todoInput.activeFocus ? Appearance.colors.colPrimary : "transparent"
+                        color: noteInput.activeFocus ? Appearance.colors.colPrimary : "transparent"
                         radius: 1
                     }
                 }
@@ -207,8 +196,8 @@ Item {
                     }
                     DialogButton {
                         buttonText: qsTr("Add")
-                        enabled: todoInput.text.length > 0
-                        onClicked: dialog.addTask()
+                        enabled: noteInput.text.length > 0
+                        onClicked: dialog.addNote()
                     }
                 }
             }

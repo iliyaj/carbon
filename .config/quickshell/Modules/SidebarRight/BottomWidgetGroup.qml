@@ -2,7 +2,7 @@ import qs.Modules.Common
 import qs.Modules.Common.Widgets
 import qs.Services
 import "./Calendar"
-import "./Todo"
+import qs.Modules.SidebarRight.Notes
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -18,7 +18,7 @@ Rectangle {
     property bool collapsed: PersistentStates.sidebar.bottomGroup.collapsed
     property var tabs: [
         {"type": "calendar", "name": "Calendar", "icon": "calendar_month", "widget": calendarWidget},
-        {"type": "todo", "name": "Notes", "icon": "note", "widget": todoWidget}
+        {"type": "notes", "name": "Notes", "icon": "note", "widget": notesWidget}
     ]
 
     Behavior on implicitHeight {
@@ -94,7 +94,7 @@ Rectangle {
         }
 
         StyledText {
-            property int noteCount: Todo.list.length;
+            property int noteCount: Notes.model.count
             Layout.margins: 10
             Layout.leftMargin: 0
             text: `${DateTime.collapsedCalendarFormat}   •   ${noteCount} note${noteCount !== 1 ? "s" : ""}`
@@ -227,10 +227,10 @@ Rectangle {
         }
     }
 
-    // To Do component
+    // Notes component
     Component {
-        id: todoWidget
-        TodoWidget {
+        id: notesWidget
+        NotesWidget {
             anchors.fill: parent
             anchors.margins: 5
         }

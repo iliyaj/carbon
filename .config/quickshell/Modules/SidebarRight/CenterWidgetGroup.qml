@@ -4,7 +4,6 @@ import qs.Services
 import qs.Modules.SidebarRight.Batteries
 import "./Calendar"
 import "./Notifications"
-import "./Todo"
 import "./VolumeMixer"
 import Qt5Compat.GraphicalEffects
 import QtQuick

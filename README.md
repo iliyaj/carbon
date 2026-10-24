@@ -15,7 +15,7 @@ Carbon started as a fork of [end-4/dots-hyprland](https://github.com/end-4/dots-
 | Desktop navigation | Live workspace overview, fuzzy launcher, application drawer, dock, minimized-window restore, and cheatsheet |
 | Shell surfaces | Configurable bar, system tray, notification popups, sidebars, session menu, screen corners, and on-screen display |
 | Controls | Audio mixer, brightness, media, network and Bluetooth toggles, idle inhibition, game mode, screenshots, and recording |
-| Personal tools | Calendar, todo list, translator, clipboard history, annotator, on-screen keyboard, and wallpaper-aware theming |
+| Personal tools | Calendar, Markdown notes, translator, clipboard history, annotator, on-screen keyboard, and wallpaper-aware theming |
 | Configuration | Material Design 3 palette generation, a settings application, safe per-machine monitor overrides, and live Quickshell reloads |
 
 The shell is modular: `shell.qml` loads major surfaces through `LazyLoader`, while reusable state and system integrations live under `.config/quickshell/Services`.

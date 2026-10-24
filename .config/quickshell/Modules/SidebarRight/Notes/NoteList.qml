@@ -3,18 +3,14 @@ import qs.Modules.Common.Widgets
 import qs.Services
 import Qt5Compat.GraphicalEffects
 import QtQuick
-import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
 
 Item {
     id: root
-    required property var taskList;
-    property string emptyPlaceholderIcon
-    property string emptyPlaceholderText
-    property int todoListItemSpacing: 5
-    property int todoListItemPadding: 8
+    property int noteSpacing: 5
+    property int notePadding: 8
     property int listBottomPadding: 80
 
     Flickable {
@@ -37,21 +33,21 @@ Item {
             width: parent.width
             spacing: 0
             Repeater {
-                model: ScriptModel {
-                    values: taskList
-                }
+                model: Notes.model
                 delegate: Item {
-                    id: todoItem
-                    property bool pendingDelete: false
+                    id: noteItem
+                    required property string filePath
+                    required property date fileModified
+                    readonly property var note: Notes.parse(noteFile.text())
                     property bool enableHeightAnimation: false
 
                     Layout.fillWidth: true
-                    implicitHeight: todoItemRectangle.implicitHeight + todoListItemSpacing
+                    implicitHeight: noteRectangle.implicitHeight + root.noteSpacing
                     height: implicitHeight
                     clip: true
 
                     Behavior on implicitHeight {
-                        enabled: enableHeightAnimation
+                        enabled: noteItem.enableHeightAnimation
                         NumberAnimation {
                             duration: Appearance.animation.elementMoveFast.duration
                             easing.type: Appearance.animation.elementMoveFast.type
@@ -61,35 +57,38 @@ Item {
 
                     function startDelete() {
                         enableHeightAnimation = true
-                        todoItem.implicitHeight = 0
+                        noteItem.implicitHeight = 0
                         deleteTimer.start()
+                    }
+
+                    FileView {
+                        id: noteFile
+                        path: noteItem.filePath
+                        blockLoading: true // no height jump while the list rebuilds
+                        watchChanges: true
+                        onFileChanged: reload()
                     }
 
                     Timer {
                         id: deleteTimer
                         interval: Appearance.animation.elementMoveFast.duration
                         repeat: false
-                        onTriggered: Todo.deleteItem(modelData.originalIndex)
-                    }
-
-                    Process {
-                        id: copyProcess
-                        function startCopy(text) {
-                            copyProcess.command = ["wl-copy", text]
-                            copyProcess.running = true
+                        onTriggered: {
+                            noteFile.watchChanges = false // skip reloading the deleted file
+                            Notes.remove(noteItem.filePath)
                         }
                     }
 
                     Rectangle {
-                        id: todoItemRectangle
+                        id: noteRectangle
                         anchors.left: parent.left
                         anchors.right: parent.right
                         anchors.bottom: parent.bottom
-                        implicitHeight: todoContentRowLayout.implicitHeight
+                        implicitHeight: noteContentLayout.implicitHeight
                         color: Appearance.colors.colLayer2
                         radius: Appearance.rounding.small
                         ColumnLayout {
-                            id: todoContentRowLayout
+                            id: noteContentLayout
                             anchors.left: parent.left
                             anchors.right: parent.right
 
@@ -97,15 +96,14 @@ Item {
                                 Layout.fillWidth: true // Needed for wrapping
                                 Layout.leftMargin: 10
                                 Layout.rightMargin: 10
-                                Layout.topMargin: todoListItemPadding
-                                id: todoContentText
-                                text: modelData.content
+                                Layout.topMargin: root.notePadding
+                                text: noteItem.note.body
                                 wrapMode: Text.Wrap
                             }
                             RowLayout {
                                 Layout.leftMargin: 10
                                 Layout.rightMargin: 10
-                                Layout.bottomMargin: todoListItemPadding
+                                Layout.bottomMargin: root.notePadding
                                 Item {
                                     Layout.fillWidth: true
                                 }
@@ -113,14 +111,14 @@ Item {
                                     font.pixelSize: Appearance.font.pixelSize.small - 2
                                     color: Appearance.m3colors.m3outline
                                     opacity: 0.5
-                                    text: modelData.createdAt ? Qt.formatDateTime(new Date(modelData.createdAt), "d MMM yyyy, hh:mm") : ""
-                                    visible: modelData.createdAt !== undefined
+                                    text: Qt.formatDateTime(noteItem.note.createdAt ?? noteItem.fileModified, "d MMM yyyy, hh:mm")
                                 }
                                 RowLayout {
                                     spacing: 0
-                                    TodoItemActionButton {
+                                    NoteActionButton {
                                         Layout.fillWidth: false
-                                        onClicked: copyProcess.startCopy(modelData.content)
+                                        tooltipText: qsTr("Copy")
+                                        onClicked: Quickshell.clipboardText = noteItem.note.body
                                         contentItem: MaterialSymbol {
                                             anchors.centerIn: parent
                                             horizontalAlignment: Text.AlignHCenter
@@ -128,22 +126,17 @@ Item {
                                             iconSize: Appearance.font.pixelSize.larger
                                             color: Appearance.colors.colOnLayer1
                                         }
-                                        StyledToolTip {
-                                            content: "Copy"
-                                        }
                                     }
-                                    TodoItemActionButton {
+                                    NoteActionButton {
                                         Layout.fillWidth: false
-                                        onClicked: todoItem.startDelete()
+                                        tooltipText: qsTr("Delete")
+                                        onClicked: noteItem.startDelete()
                                         contentItem: MaterialSymbol {
                                             anchors.centerIn: parent
                                             horizontalAlignment: Text.AlignHCenter
                                             text: "delete_forever"
                                             iconSize: Appearance.font.pixelSize.larger
                                             color: Appearance.colors.colOnLayer1
-                                        }
-                                        StyledToolTip {
-                                            content: "Delete"
                                         }
                                     }
                                 }
@@ -155,14 +148,14 @@ Item {
             }
             // Bottom padding
             Item {
-                implicitHeight: listBottomPadding
+                implicitHeight: root.listBottomPadding
             }
         }
     }
 
     Item { // Placeholder when list is empty
         visible: opacity > 0
-        opacity: taskList.length === 0 ? 1 : 0
+        opacity: Notes.model.count === 0 ? 1 : 0
         anchors.fill: parent
 
         Behavior on opacity {
@@ -177,14 +170,14 @@ Item {
                 Layout.alignment: Qt.AlignHCenter
                 iconSize: 55
                 color: Appearance.m3colors.m3outline
-                text: emptyPlaceholderIcon
+                text: "note"
             }
             StyledText {
                 Layout.alignment: Qt.AlignHCenter
                 font.pixelSize: Appearance.font.pixelSize.normal
                 color: Appearance.m3colors.m3outline
                 horizontalAlignment: Text.AlignHCenter
-                text: emptyPlaceholderText
+                text: qsTr("No notes yet")
             }
         }
     }

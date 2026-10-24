@@ -69,7 +69,7 @@ Item { // Wrapper
         {
             action: "todo",
             execute: (args) => {
-                Todo.addTask(args)
+                Notes.add(args)
             }
         },
     ]
