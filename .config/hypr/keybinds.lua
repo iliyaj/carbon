@@ -137,6 +137,8 @@ hl.bind("CTRL + ALT + R", hl.dsp.exec_cmd("qs ipc call recorder toggleFullscreen
     { description = "Utilities: Record screen (no sound)" })
 hl.bind("SUPER + F9", hl.dsp.exec_cmd("qs ipc call recorder toggleFullscreenAudio"),
     { description = "Utilities: Record screen (with sound)" })
+hl.bind("SUPER + F8", hl.dsp.exec_cmd("qs ipc call recorder toggleVoice"),
+    { description = "Utilities: Record voice (Whisper-ready WAV)" })
 
 hl.bind("SUPER + Backslash", hl.dsp.exec_cmd(stall_recorder .. " capture"),
     { description = "Utilities: Capture desktop stall" })

@@ -15,12 +15,17 @@ Scope {
     property bool stopRequested: false
     property var pendingCommand: []
     property string outputPath: ""
+    readonly property bool recordingVoice: voiceProcess.running
+    readonly property string voiceUnit: "carbon-voice-recorder.service"
+    property bool voiceStopRequested: false
+    property string voiceOutputPath: ""
 
     Connections {
         target: Quickshell
 
         function onReloadCompleted(): void {
             root.stopRecording()
+            root.stopVoice()
         }
     }
 
@@ -80,11 +85,39 @@ Scope {
         Quickshell.execDetached(["systemctl", "--user", "kill", "--kill-who=main", "--signal=SIGINT", recorderUnit])
     }
 
-    function supervisedCommand(command: var): var {
+    function toggleVoice(): void {
+        if (voiceProcess.running) {
+            stopVoice()
+            return
+        }
+
+        const sinkName = Audio.sink?.name ?? ""
+        if (!Audio.sink?.ready || sinkName.length === 0) {
+            notify("Recording cancelled", "The default audio output is not ready")
+            return
+        }
+        const microphone = microphoneName()
+        if (microphone.length === 0) {
+            notify("Recording cancelled", "No microphone source is available")
+            return
+        }
+
+        voiceOutputPath = `${FileUtils.trimFileProtocol(Directories.music)}/Recordings/voice_${timestamp()}.wav`
+        voiceProcess.command = supervisedCommand(voiceUnit, [`${Directories.scriptPath}/Audio/record-voice.sh`, microphone, `${sinkName}.monitor`, voiceOutputPath])
+        voiceStopRequested = false
+        voiceProcess.running = true
+    }
+
+    function stopVoice(): void {
+        voiceStopRequested = true
+        Quickshell.execDetached(["systemctl", "--user", "kill", "--kill-who=main", "--signal=SIGINT", voiceUnit])
+    }
+
+    function supervisedCommand(unit: string, command: var): var {
         return [
             "systemd-run",
             "--user",
-            `--unit=${recorderUnit}`,
+            `--unit=${unit}`,
             "--collect",
             "--quiet",
             "--wait",
@@ -150,7 +183,7 @@ Scope {
                 return
             }
 
-            recorderProcess.command = root.supervisedCommand(root.pendingCommand)
+            recorderProcess.command = root.supervisedCommand(root.recorderUnit, root.pendingCommand)
             root.pendingCommand = []
             root.stopRequested = false
             recorderProcess.running = true
@@ -190,6 +223,24 @@ Scope {
         }
     }
 
+    Process {
+        id: voiceProcess
+        stdout: SplitParser {
+            onRead: line => console.log(`[Recorder] ${line}`)
+        }
+        stderr: SplitParser {
+            onRead: line => console.log(`[Recorder] ${line}`)
+        }
+        onStarted: root.notify("Starting voice recording", root.voiceOutputPath.split("/").pop())
+        onExited: (exitCode, exitStatus) => {
+            if (root.voiceStopRequested || exitCode === 0)
+                root.notify("Voice recording stopped", "The recording was saved")
+            else
+                root.notify("Voice recording failed", `The recorder exited with code ${exitCode}`)
+            root.voiceStopRequested = false
+        }
+    }
+
     IpcHandler {
         target: "recorder"
 
@@ -203,6 +254,10 @@ Scope {
 
         function toggleFullscreenAudio(): void {
             root.toggleFullscreen(true)
+        }
+
+        function toggleVoice(): void {
+            root.toggleVoice()
         }
 
         function startRegion(geometry: string): void {
