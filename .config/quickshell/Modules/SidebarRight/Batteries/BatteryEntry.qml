@@ -60,10 +60,19 @@ Rectangle {
                 color: root.batteryColor
             }
             StyledText {
+                id: levelLabel
                 visible: root.device.available
+                Layout.minimumWidth: widestLevel.advanceWidth
+                horizontalAlignment: Text.AlignRight
                 font.pixelSize: Appearance.font.pixelSize.normal
                 color: root.batteryColor
                 text: DeviceBatteries.levelText(root.device)
+
+                TextMetrics {
+                    id: widestLevel
+                    font: levelLabel.font
+                    text: "~100%"
+                }
             }
 
             RippleButtonWithIcon {
