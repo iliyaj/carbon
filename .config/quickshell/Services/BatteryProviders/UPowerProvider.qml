@@ -1,23 +1,45 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
+import Quickshell
+import Quickshell.Io
 import Quickshell.Services.UPower
 
-QtObject {
+Scope {
     id: root
 
-    readonly property var devices: UPower.devices.values
-        .filter(device => device.ready && !device.powerSupply
-            && device.type !== UPowerDeviceType.Unknown
-            && device.type !== UPowerDeviceType.LinePower)
-        .map(device => root.reading(device))
+    readonly property var devices: supplies.instances.map(supply => supply.reading)
 
-    function reading(device: var): var {
+    Variants {
+        id: supplies
+        model: UPower.devices.values
+            .filter(device => device.ready && !device.powerSupply
+                && device.type !== UPowerDeviceType.Unknown
+                && device.type !== UPowerDeviceType.LinePower)
+
+        QtObject {
+            id: supply
+            required property UPowerDevice modelData
+            readonly property bool kernel: !modelData.nativePath.includes("/") // bluez paths have no sysfs node
+            readonly property FileView uevent: FileView {
+                path: supply.kernel ? `/sys/class/power_supply/${supply.modelData.nativePath}/uevent` : ""
+                printErrors: false
+            }
+            readonly property var reading: root.reading(modelData, kernel ? uevent.text() : null)
+            readonly property Connections refresh: Connections {
+                target: supply.modelData
+                function onPercentageChanged() { supply.uevent.reload() } // upower synthesises one per level
+            }
+        }
+    }
+
+    function reading(device: var, uevent: var): var {
         const address = /(?:^|[^0-9a-f])((?:[0-9a-f]{2}:){5}[0-9a-f]{2})(?:$|[^0-9a-f])/i.exec(device.nativePath)
-        // Quickshell does not expose BatteryLevel; UPower's qualitative icons
-        // distinguish coarse levels from percentages that are safe to display.
-        const match = /^battery-(full|good|low|caution|empty)(?:-|$)/.exec(device.iconName)
-        const level = match ? match[1] : ""
         const available = device.isPresent && device.iconName !== "battery-missing-symbolic"
-        const percentage = available && !level && Number.isFinite(device.percentage)
+        const precise = uevent === null || /^POWER_SUPPLY_CAPACITY=[1-9]/m.test(uevent) // upower's level rule
+        const match = /^POWER_SUPPLY_CAPACITY_LEVEL=(Critical|Low|Normal|High|Full)$/m.exec(uevent ?? "")
+        const level = available && !precise && match ? match[1].toLowerCase() : ""
+        const percentage = available && precise && Number.isFinite(device.percentage)
             && device.percentage >= 0 && device.percentage <= 1
             ? Math.round(device.percentage * 100) : null
         const icons = {
@@ -36,9 +58,9 @@ QtObject {
             address: address ? address[1].toLowerCase() : "",
             name: device.model || qsTr("Battery device"),
             icon: icons[device.type] || "battery_full",
-            available: available && (percentage !== null || level !== ""),
+            available: percentage !== null || level !== "",
             percentage: percentage,
-            level: available ? level : "",
+            level: level,
             chargeState: device.state === UPowerDeviceState.Charging ? "charging"
                 : device.state === UPowerDeviceState.FullyCharged ? "full" : "",
             connected: device.isPresent,

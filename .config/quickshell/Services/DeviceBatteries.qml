@@ -40,16 +40,17 @@ Singleton {
         return remaining.concat(combined).sort((left, right) => left.name.localeCompare(right.name))
     }
 
+    readonly property var levelPercentages: ({ critical: 5, low: 20, normal: 50, high: 70, full: 100 }) // mx master 3 steps
+
+    function percentageOf(device: var): var {
+        return device?.available ? device.percentage ?? root.levelPercentages[device.level] ?? null : null
+    }
+
     function levelText(device: var): string {
-        if (!device?.available)
+        const percentage = percentageOf(device)
+        if (percentage === null)
             return qsTr("Unavailable")
-        if (device.percentage !== null)
-            return qsTr("%1%").arg(device.percentage)
-        const labels = {
-            full: qsTr("Full"), good: qsTr("Good"), low: qsTr("Low"),
-            caution: qsTr("Very low"), empty: qsTr("Empty")
-        }
-        return labels[device.level] || qsTr("Unavailable")
+        return (device.percentage === null ? qsTr("~%1%") : qsTr("%1%")).arg(percentage)
     }
 
     function statusText(device: var): string {
@@ -67,26 +68,20 @@ Singleton {
     }
 
     function isLow(device: var): bool {
-        return !!device?.available && (device.percentage !== null
-            ? device.percentage <= 20 : ["low", "caution", "empty"].includes(device.level))
+        const percentage = percentageOf(device)
+        return percentage !== null && percentage <= 20
     }
 
     function batteryIcon(device: var): string {
-        if (!device?.available)
+        const percentage = percentageOf(device)
+        if (percentage === null)
             return "battery_unknown"
         if (device.chargeState === "charging")
             return "battery_charging_full"
-        if (device.percentage !== null) {
-            if (device.percentage <= 5)
-                return "battery_alert"
-            if (device.percentage >= 95)
-                return "battery_full"
-            return "battery_" + Math.min(6, Math.floor(device.percentage / 15)) + "_bar"
-        }
-        const icons = {
-            full: "battery_full", good: "battery_5_bar", low: "battery_2_bar",
-            caution: "battery_alert", empty: "battery_alert"
-        }
-        return icons[device.level] || "battery_unknown"
+        if (percentage <= 5)
+            return "battery_alert"
+        if (percentage >= 95)
+            return "battery_full"
+        return "battery_" + Math.min(6, Math.floor(percentage / 15)) + "_bar"
     }
 }
