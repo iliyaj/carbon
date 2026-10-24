@@ -356,24 +356,22 @@ def apply_kde(mode: str) -> None:
 
 
 def update_hyprlock(palette_source: str) -> None:
-    if not COLORS_JSON.is_file():
+    if not COLORS_JSON.is_file() or not HYPRLOCK_TEMPLATE.is_file():
         return
-    if HYPRLOCK_CONFIG.is_file():
-        content = HYPRLOCK_CONFIG.read_text()
-    elif HYPRLOCK_TEMPLATE.is_file():
-        content = HYPRLOCK_TEMPLATE.read_text()
-    else:
-        return
+    content = HYPRLOCK_TEMPLATE.read_text()
     colors = json.loads(COLORS_JSON.read_text())
     replacements = {
         "$text_color": f"rgba({colors['primary_fixed'].removeprefix('#')}FF)",
         "$entry_border_color": f"rgba({colors['outline'].removeprefix('#')}55)",
         "$entry_color": f"rgba({colors['primary_fixed'].removeprefix('#')}FF)",
+        "$check_color": f"rgba({colors['primary'].removeprefix('#')}55)",
+        "$fail_color": f"rgba({colors['error'].removeprefix('#')}55)",
     }
     for variable, value in replacements.items():
         content = re.sub(rf"^{re.escape(variable)}\s*=.*$", f"{variable} = {value}", content, flags=re.MULTILINE)
-    if palette_source:
-        content = re.sub(r"^(\s*path\s*=).*$", rf"\1 {palette_source}", content, count=1, flags=re.MULTILINE)
+    wallpaper = palette_source or current_awww_wallpaper()
+    if wallpaper:
+        content = re.sub(r"^(\s*path\s*=).*$", rf"\1 {wallpaper}", content, count=1, flags=re.MULTILINE)
     atomic_write(HYPRLOCK_CONFIG, content)
 
 
