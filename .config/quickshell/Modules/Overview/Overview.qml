@@ -183,20 +183,6 @@ Scope {
         }
     }
     GlobalShortcut {
-        name: "overviewToggleRelease"
-        description: qsTr("Toggles overview on release")
-
-        onReleased: {
-            // Let the compositor finish the Super-key release before changing layer contents.
-            const nextState = !GlobalStates.overviewOpen
-            Qt.callLater(() => {
-                if (nextState && overviewScope.virtualBoxWindowIsActive())
-                    return
-                GlobalStates.overviewOpen = nextState
-            })
-        }
-    }
-    GlobalShortcut {
         name: "overviewClipboardToggle"
         description: qsTr("Toggle clipboard query on overview widget")
 

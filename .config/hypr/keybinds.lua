@@ -49,16 +49,12 @@ local media_next = "playerctl next || playerctl position `bc <<< \"100 * $(playe
 -- Shell
 --------------------------------------------------------------------------------
 
--- These must stay first: Hyprland's global shortcut dispatcher carries the
--- Super press/release lifecycle to Quickshell, which decides whether to toggle.
-hl.bind("SUPER + Super_L", hl.dsp.global("quickshell:overviewToggleRelease"),
-    { description = "Shell: Toggle overview/launcher" })
-hl.bind("SUPER + Super_L", hl.dsp.exec_cmd(qs_alive .. " || pkill fuzzel || fuzzel"))
+-- Let Hyprland cancel the release action when Super is used in another shortcut.
+hl.bind("Super_L", hl.dsp.exec_cmd("qs ipc call overview toggle || pkill fuzzel || fuzzel"),
+    { release = true, description = "Shell: Toggle overview/launcher" })
 
 hl.bind("Super_L", hl.dsp.global("quickshell:workspaceNumber"),
-    { ignore_mods = true, transparent = true })
-hl.bind("Super_L", hl.dsp.global("quickshell:workspaceNumber"),
-    { ignore_mods = true, transparent = true, release = true })
+    { ignore_mods = true, transparent = true, non_consuming = true })
 
 hl.bind("SUPER + V", hl.dsp.global("quickshell:overviewClipboardToggle"),
     { description = "Shell: Clipboard history >> clipboard" })
