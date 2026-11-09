@@ -11,3 +11,9 @@ require("colors")
 require("app_rules")
 
 require("keybinds")
+
+local personal_config = (os.getenv("XDG_CONFIG_HOME") or (os.getenv("HOME") .. "/.config"))
+    .. "/carbon/personal/hyprland.lua"
+if require("lib").file_exists(personal_config) then
+    dofile(personal_config)
+end
