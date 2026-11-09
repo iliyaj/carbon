@@ -226,9 +226,11 @@ ContentPage {
         }
 
         RippleButtonWithIcon {
+            id: applyButton
             Layout.alignment: Qt.AlignRight
             materialIcon: "preview"
             mainText: qsTr("Apply")
+            opacity: applyButton.enabled ? 1 : 0.4
             enabled: {
                 if (NagameDisplay.previewActive || NagameDisplay.loading || !NagameDisplay.outputManagementSupported)
                     return false
