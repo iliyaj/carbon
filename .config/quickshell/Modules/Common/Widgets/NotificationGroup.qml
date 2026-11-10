@@ -33,7 +33,7 @@ Item { // Notification group area
     property var notifications: displayGroup.notifications
     property int notificationCount: notifications.length
     property bool multipleNotifications: notificationCount > 1
-    property bool expanded: false
+    property bool expanded: popup && displayGroup.appName === "Screen clipping"
     property bool popup: false
     readonly property var popupNotification: popup ? (notifications[0] ?? null) : null
     readonly property bool popupClosing: popupNotification?.popupClosing ?? false
