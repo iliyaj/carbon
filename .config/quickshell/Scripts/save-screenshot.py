@@ -84,7 +84,12 @@ def encode(args, target, image_format):
         command += ["-rotate", str(args.rotation)]
     if image_format in ("jpeg", "bmp", "ppm", "pgm", "pbm", "xbm", "xpm"):
         command += ["-background", "white", "-alpha", "remove", "-alpha", "off"]
-    command += ["-quality", str(args.quality), image_format + ":" + str(target)]
+    if image_format == "png":
+        # Use fast lossless compression for interactive screenshot exports.
+        command += ["-define", "png:compression-level=1"]
+    else:
+        command += ["-quality", str(args.quality)]
+    command += [image_format + ":" + str(target)]
     with args.source.open("rb") as source:
         run_process(command, stdin=source)
 
