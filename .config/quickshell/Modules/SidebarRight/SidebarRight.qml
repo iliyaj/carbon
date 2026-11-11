@@ -54,7 +54,8 @@ Scope {
 
         Loader {
             id: sidebarContentLoader
-            active: GlobalStates.sidebarRightOpen
+            // Reuse controls so opening and closing does not rebuild the sidebar.
+            active: true
             anchors {
                 top: parent.top
                 bottom: parent.bottom
