@@ -151,7 +151,6 @@ TabButton {
                 horizontalAlignment: Text.AlignHCenter
                 text: buttonIcon
                 iconSize: Appearance?.font.pixelSize.hugeass ?? 25
-                fill: selected ? 1 : 0
                 color: selected ? button.colActive : button.colInactive
                 Behavior on color {
                     animation: Appearance?.animation.elementMoveFast.colorAnimation.createObject(this)
