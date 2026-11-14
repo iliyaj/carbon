@@ -50,7 +50,7 @@ Singleton {
         property bool transparency: false
         property bool themedResourceColors: false
         property QtObject palette: QtObject {
-            property string type: "auto" // Allowed: auto, scheme-content, scheme-expressive, scheme-fidelity, scheme-fruit-salad, scheme-monochrome, scheme-neutral, scheme-rainbow, scheme-tonal-spot
+            property string type: "auto" // Allowed: auto, scheme-content, scheme-expressive, scheme-fidelity, scheme-fruit-salad, scheme-monochrome, scheme-neutral, scheme-rainbow, scheme-tonal-spot, scheme-triadic, scheme-soft, scheme-bold
         }
     }
 

@@ -16,6 +16,7 @@ parser.add_argument('--size', type=int , default=128 , help='bitmap image size')
 parser.add_argument('--color', type=str, default=None, help='generate colorscheme from color')
 parser.add_argument('--mode', type=str, choices=['dark', 'light'], default='dark', help='dark or light mode')
 parser.add_argument('--scheme', type=str, default='vibrant', help='material scheme to use')
+parser.add_argument('--contrast', type=float, default=0.0, help='Material contrast level from -1 to 1')
 parser.add_argument('--smart', action='store_true', default=False, help='decide scheme type based on image color')
 parser.add_argument('--transparency', type=str, choices=['opaque', 'transparent'], default='opaque', help='enable transparency')
 parser.add_argument('--termscheme', type=str, default=None, help='TOML file containing the terminal scheme for generating term colors')
@@ -95,7 +96,7 @@ elif args.scheme == 'scheme-monochrome':
     from materialyoucolor.scheme.scheme_monochrome import SchemeMonochrome as Scheme
 elif args.scheme == 'scheme-rainbow':
     from materialyoucolor.scheme.scheme_rainbow import SchemeRainbow as Scheme
-elif args.scheme == 'scheme-tonal-spot':
+elif args.scheme in ('scheme-tonal-spot', 'scheme-triadic'):
     from materialyoucolor.scheme.scheme_tonal_spot import SchemeTonalSpot as Scheme
 elif args.scheme == 'scheme-neutral':
     from materialyoucolor.scheme.scheme_neutral import SchemeNeutral as Scheme
@@ -108,7 +109,13 @@ elif args.scheme == 'scheme-vibrant':
 else:
     from materialyoucolor.scheme.scheme_tonal_spot import SchemeTonalSpot as Scheme
 # Generate
-scheme = Scheme(hct, darkmode, 0.0)
+scheme = Scheme(hct, darkmode, args.contrast)
+if args.scheme == 'scheme-triadic':
+    from materialyoucolor.palettes.tonal_palette import TonalPalette
+    # Separate accent families while keeping the wallpaper's neutral surfaces.
+    scheme.primary_palette = TonalPalette.from_hue_and_chroma(hct.hue, 48)
+    scheme.secondary_palette = TonalPalette.from_hue_and_chroma((hct.hue + 120) % 360, 40)
+    scheme.tertiary_palette = TonalPalette.from_hue_and_chroma((hct.hue + 240) % 360, 40)
 
 material_colors = {}
 term_colors = {}

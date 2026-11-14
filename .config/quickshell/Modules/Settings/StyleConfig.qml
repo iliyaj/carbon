@@ -40,6 +40,7 @@ ContentPage {
 
         ContentSubsection {
             title: "Material palette"
+            tooltip: "Triadic mixes three accent hues. Gentle uses softer contrast; Strong uses bolder contrast."
             ConfigSelectionArray {
                 currentValue: ConfigOptions.appearance.palette.type
                 configOptionName: "appearance.palette.type"
@@ -56,7 +57,10 @@ ContentPage {
                     {"value": "scheme-monochrome", "displayName": "Monochrome"},
                     {"value": "scheme-neutral", "displayName": "Neutral"},
                     {"value": "scheme-rainbow", "displayName": "Rainbow"},
-                    {"value": "scheme-tonal-spot", "displayName": "Tonal Spot"}
+                    {"value": "scheme-tonal-spot", "displayName": "Tonal Spot"},
+                    {"value": "scheme-triadic", "displayName": "Triadic"},
+                    {"value": "scheme-soft", "displayName": "Gentle"},
+                    {"value": "scheme-bold", "displayName": "Strong"}
                 ]
             }
         }

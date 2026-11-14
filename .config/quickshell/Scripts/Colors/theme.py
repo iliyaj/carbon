@@ -18,14 +18,19 @@ from typing import Sequence
 
 
 SCHEMES = {
-    "scheme-content",
-    "scheme-expressive",
-    "scheme-fidelity",
-    "scheme-fruit-salad",
-    "scheme-monochrome",
-    "scheme-neutral",
-    "scheme-rainbow",
-    "scheme-tonal-spot",
+    "scheme-content": ("scheme-content", 0.0),
+    "scheme-expressive": ("scheme-expressive", 0.0),
+    "scheme-fidelity": ("scheme-fidelity", 0.0),
+    "scheme-fruit-salad": ("scheme-fruit-salad", 0.0),
+    "scheme-monochrome": ("scheme-monochrome", 0.0),
+    "scheme-neutral": ("scheme-neutral", 0.0),
+    "scheme-rainbow": ("scheme-rainbow", 0.0),
+    "scheme-tonal-spot": ("scheme-tonal-spot", 0.0),
+    "scheme-vibrant": ("scheme-vibrant", 0.0),
+    "scheme-triadic": ("scheme-triadic", 0.0),
+    # Carbon presets use native Material contrast in both color generators.
+    "scheme-soft": ("scheme-tonal-spot", -0.5),
+    "scheme-bold": ("scheme-vibrant", 0.5),
 }
 VIDEO_EXTENSIONS = {".mp4", ".mkv", ".webm"}
 VIDEO_OPTIONS = (
@@ -69,6 +74,7 @@ def run(
     capture: bool = False,
     cwd: Path | None = None,
     env: dict[str, str] | None = None,
+    input_text: str | None = None,
 ) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         [str(part) for part in command],
@@ -77,6 +83,7 @@ def run(
         capture_output=capture,
         cwd=cwd,
         env=env,
+        input=input_text,
     )
 
 
@@ -253,9 +260,21 @@ def set_wallpaper(image: Path, monitors: list[dict]) -> Path:
     return image
 
 
-def generate_material(source_kind: str, source: str, mode: str, scheme: str) -> None:
+def generate_material(source_kind: str, source: str, mode: str, scheme: str, contrast: float) -> None:
+    if scheme == "scheme-triadic":
+        # Render every app from the same custom Material roles as the terminal palette.
+        colors = {
+            re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", name).lower(): {"default": {"color": color}}
+            for name, color in scss_colors().items()
+            if not name.startswith("term")
+        }
+        run([
+            "matugen", "--config", MATUGEN_CONFIG, "--mode", mode, "json", "/dev/stdin",
+        ], input_text=json.dumps({"colors": colors, "mode": mode, "is_dark_mode": mode == "dark"}))
+        return
     command = [
         "matugen", "--config", MATUGEN_CONFIG, "--mode", mode, "--type", scheme,
+        "--contrast", str(contrast),
     ]
     if source_kind == "image":
         command.extend(["--source-color-index", "0"])
@@ -265,11 +284,12 @@ def generate_material(source_kind: str, source: str, mode: str, scheme: str) -> 
     run(command)
 
 
-def generate_scss(source_kind: str, source: str, mode: str, scheme: str) -> None:
+def generate_scss(source_kind: str, source: str, mode: str, scheme: str, contrast: float) -> None:
     command: list[str | Path] = [
         virtualenv_python(), SCRIPT_DIR / "generate_colors_material.py",
         "--mode", mode,
         "--scheme", scheme,
+        "--contrast", str(contrast),
         "--termscheme", TERM_SCHEME,
         "--blend_bg_fg",
         "--cache", STATE_DIR / "user/color.txt",
@@ -464,6 +484,7 @@ def main() -> int:
     if scheme not in SCHEMES:
         print(f"Invalid scheme '{scheme}', using scheme-tonal-spot", file=sys.stderr)
         scheme = "scheme-tonal-spot"
+    scheme, contrast = SCHEMES[scheme]
 
     monitors = monitor_data()
     palette_source = image_text
@@ -484,8 +505,8 @@ def main() -> int:
 
     set_mode(mode)
     GENERATED_DIR.mkdir(parents=True, exist_ok=True)
-    generate_material(source_kind, source, mode, scheme)
-    generate_scss(source_kind, source, mode, scheme)
+    generate_scss(source_kind, source, mode, scheme, contrast)
+    generate_material(source_kind, source, mode, scheme, contrast)
     colors = scss_colors()
     apply_terminal(colors)
     apply_kde(mode)
