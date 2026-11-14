@@ -10,8 +10,8 @@ Item {
     id: root
     property bool showAddDialog: false
     property int dialogMargins: 20
-    property int fabSize: 48
-    property int fabMargins: 14
+    property int fabSize: 36
+    property int fabMargins: 10
 
     Keys.onPressed: (event) => {
         if (event.key === Qt.Key_N) {
@@ -28,6 +28,7 @@ Item {
         spacing: 0
 
         NoteList {
+            id: noteList
             Layout.topMargin: 10
             Layout.fillWidth: true
             Layout.fillHeight: true
@@ -35,54 +36,41 @@ Item {
         }
     }
 
-    // Open notes folder button
-    StyledRectangularShadow {
-        target: folderButton
-        radius: folderButton.buttonRadius
-        blur: 0.6 * Appearance.sizes.elevationMargin
-    }
-    FloatingActionButton {
-        id: folderButton
-        baseSize: 40
-        anchors.right: parent.right
-        anchors.bottom: fabButton.top
-        anchors.rightMargin: root.fabMargins + (fabButton.baseSize - baseSize) / 2
-        anchors.bottomMargin: root.fabMargins
-
-        onClicked: Quickshell.execDetached(["xdg-open", Directories.notesPath])
-
-        contentItem: MaterialSymbol {
-            text: "folder_open"
-            horizontalAlignment: Text.AlignHCenter
-            iconSize: Appearance.font.pixelSize.larger
-            color: Appearance.m3colors.m3onPrimaryContainer
-        }
-
-        StyledToolTip {
-            content: qsTr("Open notes folder")
-        }
-    }
-
-    // + FAB
-    StyledRectangularShadow {
-        target: fabButton
-        radius: fabButton.buttonRadius
-        blur: 0.6 * Appearance.sizes.elevationMargin
-    }
-    FloatingActionButton {
-        id: fabButton
+    RowLayout {
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-        anchors.rightMargin: root.fabMargins
-        anchors.bottomMargin: root.fabMargins
+        anchors.margins: root.fabMargins
+        spacing: 6
 
-        onClicked: root.showAddDialog = true
+        FloatingActionButton {
+            baseSize: root.fabSize
+            implicitWidth: baseSize
+            iconText: "folder_open"
+            Accessible.name: qsTr("Open notes folder")
+            onClicked: Quickshell.execDetached(["xdg-open", Directories.notesPath])
 
-        contentItem: MaterialSymbol {
-            text: "add"
-            horizontalAlignment: Text.AlignHCenter
-            iconSize: Appearance.font.pixelSize.huge
-            color: Appearance.m3colors.m3onPrimaryContainer
+            StyledToolTip { content: qsTr("Open notes folder") }
+        }
+        FloatingActionButton {
+            id: fabButton
+            baseSize: root.fabSize
+            implicitWidth: baseSize
+            iconText: "add"
+            Accessible.name: qsTr("Add note")
+            onClicked: root.showAddDialog = true
+
+            StyledToolTip { content: qsTr("Add note") }
+        }
+        FloatingActionButton {
+            baseSize: root.fabSize
+            implicitWidth: baseSize
+            iconText: Notes.generating ? "hourglass_top" : "auto_awesome"
+            enabled: noteList.canGenerate && !Notes.generating
+            opacity: enabled ? 1 : 0.4
+            Accessible.name: qsTr("Generate title and tags for selected note")
+            onClicked: noteList.generateSelected()
+
+            StyledToolTip { content: qsTr("Generate title and tags for selected note") }
         }
     }
 

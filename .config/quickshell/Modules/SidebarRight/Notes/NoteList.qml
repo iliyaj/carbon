@@ -12,6 +12,14 @@ Item {
     property int noteSpacing: 5
     property int notePadding: 8
     property int listBottomPadding: 80
+    property string selectedFilePath: ""
+    readonly property bool canGenerate: selectedFilePath !== "" && Notes.model.count > 0
+        && Notes.model.indexOf(`file://${selectedFilePath}`) >= 0
+
+    function generateSelected() {
+        if (canGenerate)
+            Notes.regenerate(selectedFilePath)
+    }
 
     Flickable {
         id: flickable
@@ -38,9 +46,10 @@ Item {
                     id: noteItem
                     required property string filePath
                     required property date fileModified
-                    readonly property var note: Notes.parse(noteFile.text())
+                    readonly property string sourceText: noteFile.text()
+                    readonly property var note: Notes.parse(sourceText)
                     property bool expanded: false
-                    property bool enableHeightAnimation: false
+                    property bool deleting: false
 
                     Layout.fillWidth: true
                     implicitHeight: noteRectangle.implicitHeight + root.noteSpacing
@@ -48,7 +57,7 @@ Item {
                     clip: true
 
                     Behavior on implicitHeight {
-                        enabled: noteItem.enableHeightAnimation
+                        enabled: noteItem.deleting
                         NumberAnimation {
                             duration: Appearance.animation.elementMoveFast.duration
                             easing.type: Appearance.animation.elementMoveFast.type
@@ -57,7 +66,9 @@ Item {
                     }
 
                     function startDelete() {
-                        enableHeightAnimation = true
+                        if (root.selectedFilePath === filePath)
+                            root.selectedFilePath = ""
+                        deleting = true
                         noteItem.implicitHeight = 0
                         deleteTimer.start()
                     }
@@ -88,34 +99,44 @@ Item {
                         implicitHeight: noteContentLayout.implicitHeight
                         color: Appearance.colors.colLayer2
                         radius: Appearance.rounding.small
+                        border.width: root.selectedFilePath === noteItem.filePath ? 1 : 0
+                        border.color: Appearance.colors.colPrimary
+
+                        TapHandler {
+                            enabled: !noteItem.deleting
+                            onTapped: root.selectedFilePath = noteItem.filePath
+                        }
+
                         ColumnLayout {
                             id: noteContentLayout
                             anchors.left: parent.left
                             anchors.right: parent.right
 
-                            RippleButton {
+                            RowLayout {
                                 Layout.fillWidth: true
                                 Layout.topMargin: root.notePadding
-                                implicitHeight: titleLayout.implicitHeight + 8
-                                text: noteItem.note.title
-                                onClicked: noteItem.expanded = !noteItem.expanded
+                                spacing: 0
 
-                                contentItem: RowLayout {
-                                    id: titleLayout
-                                    spacing: 6
+                                StyledText {
+                                    Layout.fillWidth: true
+                                    Layout.leftMargin: 10
+                                    Layout.rightMargin: 4
+                                    text: noteItem.note.title
+                                    textFormat: Text.PlainText
+                                    font.bold: true
+                                    wrapMode: Text.Wrap
+                                    maximumLineCount: 2
+                                    elide: Text.ElideRight
+                                }
+                                NoteActionButton {
+                                    Layout.rightMargin: 8
+                                    tooltipText: noteItem.expanded ? qsTr("Collapse note") : qsTr("Expand note")
+                                    Accessible.name: tooltipText
+                                    onClicked: noteItem.expanded = !noteItem.expanded
 
-                                    StyledText {
-                                        Layout.fillWidth: true
-                                        Layout.leftMargin: 10
-                                        text: noteItem.note.title
-                                        textFormat: Text.PlainText
-                                        font.bold: true
-                                        wrapMode: Text.Wrap
-                                        maximumLineCount: 2
-                                        elide: Text.ElideRight
-                                    }
-                                    MaterialSymbol {
-                                        Layout.rightMargin: 8
+                                    contentItem: MaterialSymbol {
+                                        anchors.centerIn: parent
+                                        horizontalAlignment: Text.AlignHCenter
                                         text: noteItem.expanded ? "expand_less" : "expand_more"
                                         iconSize: Appearance.font.pixelSize.larger
                                     }
@@ -153,6 +174,19 @@ Item {
                                             anchors.centerIn: parent
                                             horizontalAlignment: Text.AlignHCenter
                                             text: "content_copy"
+                                            iconSize: Appearance.font.pixelSize.larger
+                                            color: Appearance.colors.colOnLayer1
+                                        }
+                                    }
+                                    NoteActionButton {
+                                        Layout.fillWidth: false
+                                        tooltipText: qsTr("Open note in default app")
+                                        Accessible.name: tooltipText
+                                        onClicked: Quickshell.execDetached(["xdg-open", noteItem.filePath])
+                                        contentItem: MaterialSymbol {
+                                            anchors.centerIn: parent
+                                            horizontalAlignment: Text.AlignHCenter
+                                            text: "open_in_new"
                                             iconSize: Appearance.font.pixelSize.larger
                                             color: Appearance.colors.colOnLayer1
                                         }
