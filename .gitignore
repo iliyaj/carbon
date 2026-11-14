@@ -9,6 +9,7 @@ AGENTS.md
 .env.*
 !.env.example
 /.config/hypr/user.env
+/.config/carbon/openrouter.json
 /.config/quickshell/Scripts/Diagnostics/suspend-probe.sh
 /.config/quickshell/Scripts/Diagnostics/notification-probe.sh
 

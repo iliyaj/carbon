@@ -36,7 +36,7 @@ nano ~/.config/hypr/user.env
 
 `hypridle.conf` suspends after 30 minutes. Laptop users should review its power policy before relying on it.
 
-### Automatic note titles and tags
+### Optional AI note titles and tags
 
 Notes save immediately and show a compact title, with the most recently updated files first. Click anywhere on a card to select it; only the chevron expands its text. The sparkle button regenerates the selected note's title and tags while retaining existing labels. Each card also has Copy, Open in default app, and Delete actions. To generate English titles and topic tags with OpenRouter, install Node.js 22.18 or newer (`sudo pacman -S --needed nodejs`), then create a private configuration file:
 
@@ -54,9 +54,15 @@ nano ~/.config/carbon/openrouter.json
 }
 ```
 
-Each new note sends up to its first 12,000 characters to OpenRouter for two parallel requests: the configured model writes an English title, and `typesafe/jev-1.14` selects up to three topic tags. Tags are saved as an Obsidian-compatible YAML list. The shared topics are `ai`, `programming`, `zig`, `data`, `start_up`, `linux`, `video`, `blockchain`, `cryptography`, and `creativity`; notes without a clear match can have no tags.
+Then explicitly enable **Carbon Settings → Services → Notes → Auto Title and Tags via OpenRouter API**. This is off by default, even when an API key exists. Until enabled, the sparkle button stays dimmed and disabled, and saving notes makes no AI request. Turning it off stops pending generation and keeps saving notes locally; enabling it does not send existing notes.
 
-The key stays in this local file; do not put it in Carbon's repository. Changes apply to the next saved note without restarting. Existing notes are not sent or rewritten automatically. Without a key or Node.js, notes keep a short title from their first line. Each request times out after 20 seconds; a successful title or tag result still saves if the other request fails. Copy always copies the note body.
+While enabled, each new note sends up to its first 12,000 characters to OpenRouter for two parallel requests: the configured model writes an English title, and `typesafe/jev-1.14` selects up to three topic tags. Tags are saved as an Obsidian-compatible YAML list. The shared topics are `ai`, `programming`, `zig`, `data`, `start_up`, `linux`, `video`, `blockchain`, `cryptography`, and `creativity`; notes without a clear match can have no tags.
+
+The key stays in this local file; do not put it in Carbon's repository. The helper requires a regular file owned by your user with no group or other permissions (`chmod 600`), sends the key only in the HTTPS authorization header, rejects redirects, and limits responses to 64 KiB. Use a dedicated OpenRouter key with a small spending limit.
+
+Both requests set `provider.data_collection: "deny"` and `provider.zdr: true`; if no eligible provider is available, the saved note stays intact. For stricter retention, select **ZDR only** in [OpenRouter privacy settings](https://openrouter.ai/settings/privacy), and leave input/output logging and use of inputs/outputs disabled. OpenRouter's [ZDR policy](https://openrouter.ai/docs/guides/features/zdr) follows your account's Safety Retention choice and includes legal retention exceptions. Note text is still processed remotely by OpenRouter and the selected providers.
+
+Changes apply to the next saved note without restarting. Existing notes are sent only when you explicitly regenerate the selected note. Without a key or Node.js, notes keep a short title from their first line. Each request times out after 20 seconds; a successful title or tag result still saves if the other request fails. Copy always copies the note body.
 
 ### Nagame display profiles
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { readFileSync } from "node:fs";
+import { closeSync, constants, fstatSync, openSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 
@@ -25,12 +25,27 @@ const topics = {
 async function request<T>(apiKey: string, endpoint: string, payload: object): Promise<T> {
     const response = await fetch(`https://openrouter.ai/api/${endpoint}`, {
         method: "POST",
+        redirect: "error",
         headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ ...payload, provider: { data_collection: "deny", zdr: true } }),
         signal: AbortSignal.timeout(20000),
     });
     if (!response.ok) throw new Error(`OpenRouter returned HTTP ${response.status}`);
-    return await response.json() as T;
+    const reader = response.body?.getReader();
+    if (!reader) throw new Error("Missing response body");
+    const chunks: Uint8Array[] = [];
+    let bytes = 0;
+    while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        bytes += value.byteLength;
+        if (bytes > 65536) {
+            await reader.cancel();
+            throw new Error("Response too large");
+        }
+        chunks.push(value);
+    }
+    return JSON.parse(Buffer.concat(chunks).toString("utf8")) as T;
 }
 
 async function generateTitle(apiKey: string, model: string, content: string): Promise<Metadata> {
@@ -83,7 +98,7 @@ async function selectTags(apiKey: string, content: string): Promise<Metadata> {
 
 function report(error: unknown) {
     // Response bodies and exception messages may contain note text or credentials.
-    const message = error instanceof Error && /^OpenRouter returned (HTTP \d+|no title|an empty title|invalid tag decisions)$/.test(error.message)
+    const message = error instanceof Error && /^(OpenRouter returned (HTTP \d+|no title|an empty title|invalid tag decisions)|OpenRouter config must be an owner-only regular file)$/.test(error.message)
         ? error.message : "Note metadata request failed; keeping saved content";
     process.stderr.write(`[Notes] ${message}\n`);
 }
@@ -93,11 +108,19 @@ async function main() {
     if (!content) return;
     const configPath = join(process.env.XDG_CONFIG_HOME || join(homedir(), ".config"), "carbon", "openrouter.json");
     let settings: Settings;
+    let descriptor: number | undefined;
     try {
-        settings = JSON.parse(readFileSync(configPath, "utf8"));
+        // Check and read the same file; nonblocking open also avoids hanging on a FIFO.
+        descriptor = openSync(configPath, constants.O_RDONLY | constants.O_NONBLOCK);
+        const info = fstatSync(descriptor);
+        if (!info.isFile() || info.uid !== process.getuid?.() || (info.mode & 0o077) !== 0)
+            throw new Error("OpenRouter config must be an owner-only regular file");
+        settings = JSON.parse(readFileSync(descriptor, "utf8"));
     } catch (error) {
         if ((error as { code?: string }).code === "ENOENT") return;
-        throw new Error("Could not read carbon/openrouter.json");
+        throw error;
+    } finally {
+        if (descriptor !== undefined) closeSync(descriptor);
     }
     if (!settings || typeof settings.apiKey !== "string" || !settings.apiKey.trim()) return;
     const apiKey = settings.apiKey.trim();

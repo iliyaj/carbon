@@ -27,6 +27,17 @@ ContentPage {
     }
 
     ContentSection {
+        title: qsTr("Notes")
+
+        ConfigSwitch {
+            text: qsTr("Auto Title and Tags via OpenRouter API")
+            checked: ConfigOptions.notes.aiEnabled
+            enabled: !ConfigLoader.firstLoad
+            onCheckedChanged: ConfigLoader.setConfigValueAndSave("notes.aiEnabled", checked)
+        }
+    }
+
+    ContentSection {
         title: "Audio"
 
         ConfigSwitch {

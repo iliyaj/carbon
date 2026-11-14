@@ -65,12 +65,15 @@ Item {
             baseSize: root.fabSize
             implicitWidth: baseSize
             iconText: Notes.generating ? "hourglass_top" : "auto_awesome"
-            enabled: noteList.canGenerate && !Notes.generating
+            enabled: ConfigOptions.notes.aiEnabled && noteList.canGenerate && !Notes.generating
             opacity: enabled ? 1 : 0.4
             Accessible.name: qsTr("Generate title and tags for selected note")
             onClicked: noteList.generateSelected()
 
-            StyledToolTip { content: qsTr("Generate title and tags for selected note") }
+            StyledToolTip {
+                content: ConfigOptions.notes.aiEnabled ? qsTr("Generate title and tags for selected note")
+                    : qsTr("Enable Auto Title and Tags via OpenRouter API in Settings → Services → Notes")
+            }
         }
     }
 

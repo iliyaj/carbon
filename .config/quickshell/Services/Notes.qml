@@ -22,7 +22,7 @@ Singleton {
     }
 
     function generateMetadata(path, text) {
-        if (!path || !parse(text).body.trim())
+        if (!ConfigOptions.notes.aiEnabled || !path || !parse(text).body.trim())
             return
         const job = titleJob.createObject(root, { "filePath": path, "originalText": text })
         if (job)
@@ -124,7 +124,7 @@ Singleton {
 
             // env lets missing Node.js follow the same cleanup path.
             command: ["env", "node", `${Directories.scriptPath}/note-title.mts`]
-            running: true
+            running: ConfigOptions.notes.aiEnabled
             stdinEnabled: true
             onStarted: {
                 write(root.parse(originalText).body)
@@ -132,7 +132,7 @@ Singleton {
             }
             stdout: StdioCollector { id: titleOutput }
             onExited: exitCode => {
-                if (exitCode === 0 && titleOutput.text.trim()) {
+                if (ConfigOptions.notes.aiEnabled && exitCode === 0 && titleOutput.text.trim()) {
                     try {
                         const metadata = JSON.parse(titleOutput.text)
                         const updated = root.applyMetadata(originalText, metadata)
