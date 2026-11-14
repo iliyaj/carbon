@@ -38,7 +38,7 @@ nano ~/.config/hypr/user.env
 
 ### Automatic note titles and tags
 
-Notes save immediately and show a compact title. Click anywhere on a card to select it; only the chevron expands its text. The sparkle button regenerates the selected note's title and tags while retaining existing labels. Each card also has Copy, Open in default app, and Delete actions. To generate English titles and topic tags with OpenRouter, install Node.js 22.18 or newer (`sudo pacman -S --needed nodejs`), then create a private configuration file:
+Notes save immediately and show a compact title, with the most recently updated files first. Click anywhere on a card to select it; only the chevron expands its text. The sparkle button regenerates the selected note's title and tags while retaining existing labels. Each card also has Copy, Open in default app, and Delete actions. To generate English titles and topic tags with OpenRouter, install Node.js 22.18 or newer (`sudo pacman -S --needed nodejs`), then create a private configuration file:
 
 ```bash
 install -d -m 700 ~/.config/carbon

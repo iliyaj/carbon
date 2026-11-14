@@ -178,8 +178,7 @@ Singleton {
         id: folderModel
         nameFilters: ["*.md"]
         showDirs: false
-        sortField: FolderListModel.Name
-        sortReversed: true // newest timestamp first
+        sortField: FolderListModel.Time // most recently updated files first
     }
 
     Process {
