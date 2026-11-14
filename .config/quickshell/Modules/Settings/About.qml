@@ -90,7 +90,7 @@ ContentPage {
             MaterialSymbol {
                 iconSize: 70
                 text: "files"
-                color: Appearance.colors.colOnSecondaryContainer
+                color: Appearance.colors.colOnLayer1
             }
             ColumnLayout {
                 Layout.alignment: Qt.AlignVCenter

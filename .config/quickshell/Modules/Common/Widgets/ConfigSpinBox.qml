@@ -20,7 +20,7 @@ RowLayout {
         Layout.fillWidth: true
         text: root.text
         font.pixelSize: Appearance.font.pixelSize.small
-        color: Appearance.colors.colOnSecondaryContainer
+        color: Appearance.colors.colOnLayer1
     }
 
     StyledSpinBox {

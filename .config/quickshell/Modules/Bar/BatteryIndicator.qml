@@ -47,7 +47,7 @@ Item {
             value: percentage
             size: 26
             secondaryColor: (isLow && !isCharging) ? batteryLowBackground : Appearance.colors.colSecondaryContainer
-            primaryColor: (isLow && !isCharging) ? batteryLowOnBackground : Appearance.m3colors.m3onSecondaryContainer
+            primaryColor: (isLow && !isCharging) ? batteryLowOnBackground : Appearance.colors.colOnLayer1
             fill: (isLow && !isCharging)
 
             MaterialSymbol {
@@ -55,7 +55,7 @@ Item {
                 fill: 1
                 text: "battery_full"
                 iconSize: Appearance.font.pixelSize.normal
-                color: (isLow && !isCharging) ? batteryLowOnBackground : Appearance.m3colors.m3onSecondaryContainer
+                color: (isLow && !isCharging) ? batteryLowOnBackground : Appearance.colors.colOnLayer1
             }
 
         }
@@ -80,7 +80,7 @@ Item {
 
             text: "bolt"
             iconSize: Appearance.font.pixelSize.large
-            color: Appearance.m3colors.m3onSecondaryContainer
+            color: Appearance.colors.colOnLayer1
             visible: opacity > 0 // Only show when charging
             opacity: isCharging ? 1 : 0 // Keep opacity for visibility
             onVisibleChanged: {

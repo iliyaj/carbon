@@ -55,14 +55,14 @@ Item {
             value: activePlayer?.position / activePlayer?.length
             size: 26
             secondaryColor: Appearance.colors.colSecondaryContainer
-            primaryColor: Appearance.m3colors.m3onSecondaryContainer
+            primaryColor: Appearance.colors.colOnLayer1
 
             MaterialSymbol {
                 anchors.centerIn: parent
                 fill: 1
                 text: activePlayer?.isPlaying ? "pause" : "music_note"
                 iconSize: Appearance.font.pixelSize.normal
-                color: Appearance.m3colors.m3onSecondaryContainer
+                color: Appearance.colors.colOnLayer1
             }
 
         }

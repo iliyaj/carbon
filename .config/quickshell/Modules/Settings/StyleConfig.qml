@@ -66,18 +66,12 @@ ContentPage {
                 Layout.fillWidth: true
                 RippleButtonWithIcon {
                     materialIcon: "wallpaper"
+                    mainText: "Choose file"
                     StyledToolTip {
                         content: "Pick wallpaper image on your system"
                     }
                     onClicked: {
                         Quickshell.execDetached([Directories.wallpaperToolPath])
-                    }
-                    mainContentComponent: Component {
-                        StyledText {
-                            font.pixelSize: Appearance.font.pixelSize.small
-                            text: "Choose file"
-                            color: Appearance.colors.colOnSecondaryContainer
-                        }
                     }
                 }
             }
