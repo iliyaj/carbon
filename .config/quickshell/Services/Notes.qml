@@ -70,15 +70,21 @@ Singleton {
             onExited: exitCode => {
                 if (exitCode === 0 && titleOutput.text.trim()) {
                     try {
-                        const title = JSON.parse(titleOutput.text).title
-                        if (typeof title === "string" && title.trim()) {
+                        const metadata = JSON.parse(titleOutput.text)
+                        let updated = originalText
+                        if (typeof metadata.title === "string" && metadata.title.trim())
+                            updated = updated.replace(/^title:.*$/m, () => `title: ${JSON.stringify(metadata.title)}`)
+                        if (Array.isArray(metadata.tags) && metadata.tags.every(tag => typeof tag === "string")) {
+                            const tags = metadata.tags.length ? `tags:\n${metadata.tags.map(tag => `  - ${JSON.stringify(tag)}`).join("\n")}` : "tags: []"
+                            updated = updated.replace("\n---\n", () => `\n${tags}\n---\n`)
+                        }
+                        if (updated !== originalText) {
                             savedNote.reload()
-                            if (savedNote.text() === originalText) {
-                                savedNote.setText(originalText.replace(/^title:.*$/m, () => `title: ${JSON.stringify(title)}`))
-                            }
+                            if (savedNote.text() === originalText)
+                                savedNote.setText(updated)
                         }
                     } catch (error) {
-                        console.warn("[Notes] Could not read generated title")
+                        console.warn("[Notes] Could not read generated note metadata")
                     }
                 }
                 destroy()
