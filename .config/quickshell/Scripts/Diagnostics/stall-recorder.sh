@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 set -u
+umask 077
 
 state_root="${XDG_STATE_HOME:-$HOME/.local/state}/carbon/stall-recorder"
 live_log="$state_root/live.tsv"
@@ -12,6 +13,7 @@ max_captures="${STALL_RECORDER_MAX_CAPTURES:-40}"
 auto_capture_gap="${STALL_RECORDER_AUTO_CAPTURE_GAP:-60}"
 auto_capture="${STALL_RECORDER_AUTO_CAPTURE:-1}"
 startup_grace_seconds="${STALL_RECORDER_STARTUP_GRACE_SECONDS:-15}"
+detail_seconds="${STALL_RECORDER_DETAIL_SECONDS:-30}"
 
 clock_ticks="$(getconf CLK_TCK)"
 page_kib=$(( $(getconf PAGESIZE) / 1024 ))
@@ -28,6 +30,9 @@ Usage: stall-recorder.sh [run|capture|status]
   status   Show the recorder service state and most recent sample
 
 A capture is also taken automatically whenever a probe fails.
+Captures print their directory immediately, then collect 30 seconds of thread
+activity and CPU stacks when perf is available. Set STALL_RECORDER_DETAIL_SECONDS=0
+to disable this follow-up.
 EOF
 }
 
@@ -76,7 +81,14 @@ blocked_tasks() {
 }
 
 shell_pid() {
-    pgrep -x quickshell | head -n 1
+    local pid
+
+    pid="$(timeout 1 systemctl --user show quickshell.service -p MainPID --value 2>/dev/null)"
+    if [[ "$pid" =~ ^[1-9][0-9]*$ ]] && [ -d "/proc/$pid" ]; then
+        printf '%s\n' "$pid"
+    else
+        pgrep -o -u "$UID" -x quickshell
+    fi
 }
 
 shell_blocked_threads() {
@@ -233,7 +245,7 @@ run_recorder() {
         fi
 
         read -r hypr_state hypr_ms hypr_detail < <(probe hyprctl activeworkspace)
-        read -r carbon_state carbon_ms carbon_detail < <(probe qs ipc call carbon ping)
+        read -r carbon_state carbon_ms carbon_detail < <(probe qs ipc --pid "${qs_pid:-0}" call carbon ping)
 
         if probe_failed "$hypr_state" || probe_failed "$carbon_state"; then
             [ "$stall_started_ms" -ne 0 ] || stall_started_ms="$now_ms"
@@ -264,7 +276,7 @@ run_recorder() {
                 [ "$((now_ms - recorder_started_ms))" -ge "$((startup_grace_seconds * 1000))" ]; } &&
             [ "$((now_ms - last_capture_ms))" -ge "$((auto_capture_gap * 1000))" ]; then
             last_capture_ms="$now_ms"
-            capture_state "auto: $hypr_state/$carbon_state" >/dev/null 2>&1 &
+            capture_state "auto: $hypr_state/$carbon_state" 9>&- >/dev/null 2>&1 &
         fi
 
         sample_number=$((sample_number + 1))
@@ -276,19 +288,96 @@ run_recorder() {
     done
 }
 
+thread_snapshot() {
+    local pid="$1" label="$2"
+
+    printf '\n%s (pid %s): PID TID STATE CPU_SECONDS WAIT_CHANNEL THREAD\n' "$label" "${pid:-none}"
+    if [ -n "$pid" ]; then
+        ps -L -p "$pid" -o pid=,lwp=,stat=,cputimes=,wchan:32=,comm=
+    fi
+}
+
+capture_diagnostics() (
+    local capture_dir="$1" qs_pid="$2" hypr_pid="$3"
+    local target_pids="" perf_pid="" perf_status elapsed
+
+    # Manual and automatic captures can overlap; only one samples the desktop.
+    exec 8> "$state_root/diagnostics.lock"
+    if ! flock -n 8; then
+        printf 'Another capture is already collecting detailed diagnostics.\n' > "$capture_dir/perf.log"
+        return
+    fi
+
+    if [ "$detail_seconds" -eq 0 ]; then
+        printf 'Detailed diagnostics disabled (STALL_RECORDER_DETAIL_SECONDS=0).\n' > "$capture_dir/perf.log"
+        return
+    fi
+
+    [ -z "$qs_pid" ] || target_pids="$qs_pid"
+    if [ -n "$hypr_pid" ]; then
+        target_pids="${target_pids:+$target_pids,}$hypr_pid"
+    fi
+
+    if [ -z "$target_pids" ]; then
+        printf 'No Carbon or Hyprland process was available to profile.\n' > "$capture_dir/perf.log"
+    elif ! command -v perf >/dev/null; then
+        printf 'perf is not installed; thread activity is still recorded.\n' > "$capture_dir/perf.log"
+    else
+        # User callchains work without ptrace access; 128 pages avoid dropped stacks.
+        perf record --all-user --user-callchains --no-inherit -m 128 \
+            -e task-clock:u -F 99 --call-graph dwarf,8192 -p "$target_pids" \
+            -o "$capture_dir/cpu.perf" -- sleep "$detail_seconds" \
+            > "$capture_dir/perf.log" 2>&1 &
+        perf_pid=$!
+    fi
+
+    for ((elapsed = 0; elapsed < detail_seconds; elapsed++)); do
+        date --iso-8601=ns
+        thread_snapshot "$qs_pid" Quickshell
+        thread_snapshot "$hypr_pid" Hyprland
+        sleep 1
+    done > "$capture_dir/threads.txt" 2>&1
+
+    if [ -n "$perf_pid" ]; then
+        wait "$perf_pid"
+        perf_status=$?
+        printf '\nperf exit status: %s\n' "$perf_status" >> "$capture_dir/perf.log"
+    fi
+)
+
+capture_desktop() {
+    local query
+
+    date --iso-8601=ns
+    printf '\nCarbon service:\n'
+    timeout 2 systemctl --user show quickshell.service \
+        -p MainPID -p NRestarts -p ExecMainStartTimestamp -p Result
+    for query in activewindow monitors layers; do
+        printf '\nHyprland %s:\n' "$query"
+        timeout 2 hyprctl -j "$query"
+        printf '\nQuery exit status: %s\n' "$?"
+    done
+}
+
 capture_state() {
     local reason="${1:-manual}"
-    local captured_at capture_dir qs_pid
+    local captured_at capture_dir qs_pid hypr_pid detail_pid
 
     mkdir -p "$state_root/captures"
     captured_at="$(date +%Y%m%d-%H%M%S)"
-    capture_dir="$state_root/captures/$captured_at"
-    mkdir -p "$capture_dir"
+    capture_dir="$(mktemp -d "$state_root/captures/$captured_at-XXXXXX")" || return 1
+    printf '%s\n' "$capture_dir"
     qs_pid="$(shell_pid)"
+    hypr_pid="$(pgrep -o -u "$UID" -x Hyprland)"
 
     if [ -f "$live_log" ]; then
         cp "$live_log" "$capture_dir/samples.tsv"
     fi
+
+    # Start sampling before journals and compositor queries can delay collection.
+    capture_diagnostics "$capture_dir" "$qs_pid" "$hypr_pid" &
+    detail_pid=$!
+    capture_desktop > "$capture_dir/desktop-before.txt" 2>&1
 
     {
         date --iso-8601=seconds
@@ -316,19 +405,28 @@ capture_state() {
         printf '\nDisk:\n'
         awk -v pattern="$whole_disk_pattern" '$3 ~ pattern' /proc/diskstats
         printf '\nFailed system services:\n'
-        systemctl list-units --state=failed --no-pager --no-legend
+        timeout 3 systemctl list-units --state=failed --no-pager --no-legend
         printf '\nFailed user services:\n'
-        systemctl --user list-units --state=failed --no-pager --no-legend
+        timeout 3 systemctl --user list-units --state=failed --no-pager --no-legend
         printf '\nBtrfs device errors:\n'
-        btrfs device stats / 2>&1
+        timeout 3 btrfs device stats / 2>&1
     } > "$capture_dir/summary.txt" 2>&1
 
-    journalctl --user --since "-15 minutes" --no-pager > "$capture_dir/journal-user.txt" 2>&1
-    journalctl -k --since "-15 minutes" --no-pager > "$capture_dir/journal-kernel.txt" 2>&1
+    wait "$detail_pid"
+    if [ -f "$live_log" ]; then
+        cp "$live_log" "$capture_dir/samples-after.tsv"
+    fi
+    capture_desktop > "$capture_dir/desktop-after.txt" 2>&1
+    if [ -n "$qs_pid" ]; then
+        timeout 3 qs log --pid "$qs_pid" --no-color --log-times -t 300 \
+            > "$capture_dir/quickshell.txt" 2>&1
+    fi
+    timeout 5 journalctl --user --since "-15 minutes" --no-pager > "$capture_dir/journal-user.txt" 2>&1
+    timeout 5 journalctl -k --since "-15 minutes" --no-pager > "$capture_dir/journal-kernel.txt" 2>&1
+    date --iso-8601=seconds > "$capture_dir/complete.txt"
 
     prune_captures
 
-    printf '%s\n' "$capture_dir"
     if command -v notify-send >/dev/null; then
         notify-send 'Desktop stall captured' "$capture_dir"
     fi
