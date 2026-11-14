@@ -6,6 +6,8 @@ Hyprland does not include a terminal emulator. If you are already inside Hyprlan
 
 ## Install
 
+The Archfit sidebar tab uses the QML module maintained in a separate `archfit-rust` checkout. Keep that checkout beside Carbon, with `../archfit-rust/quickshell/Archfit` available before running the installer. Carbon tracks a relative link to that module; Archfit owns its frontend source and backend service installation.
+
 Git is the only tool needed before cloning. A minimal Arch installation can install it with:
 
 ```bash

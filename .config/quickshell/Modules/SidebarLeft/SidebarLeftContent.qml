@@ -1,6 +1,7 @@
 import qs.Services
 import qs.Modules.Common
 import qs.Modules.Common.Widgets
+import qs.Modules.Archfit
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -8,9 +9,30 @@ import QtQuick.Layouts
 Item {
     id: root
     required property var scopeRoot
+    property int selectedTab: 0
+    property var tabButtonList: [
+        {"icon": "apps", "name": qsTr("Apps")},
+        {"icon": "ecg", "name": qsTr("Archfit")}
+    ]
     anchors.fill: parent
     function focusActiveItem() {
-        appDrawer.forceActiveFocus()
+        if (root.selectedTab === 0)
+            appDrawer.forceActiveFocus()
+        else
+            archfitPanel.forceActiveFocus()
+    }
+    onSelectedTabChanged: focusActiveItem()
+
+    Keys.onPressed: (event) => {
+        if (event.modifiers & Qt.ControlModifier) {
+            if (event.key === Qt.Key_Tab) {
+                root.selectedTab = (root.selectedTab + 1) % root.tabButtonList.length
+                event.accepted = true
+            } else if (event.key === Qt.Key_Backtab) {
+                root.selectedTab = (root.selectedTab - 1 + root.tabButtonList.length) % root.tabButtonList.length
+                event.accepted = true
+            }
+        }
     }
 
     ColumnLayout {
@@ -20,18 +42,28 @@ Item {
         spacing: root.scopeRoot.sidebarPadding
 
         PrimaryTabBar {
-            tabButtonList: [{"icon": "apps", "name": qsTr("Apps")}]
-            externalTrackedTab: 0
-            // PrimaryTabBar calls this callback even when there is only one tab.
-            function onCurrentIndexChanged(index) {}
+            tabButtonList: root.tabButtonList
+            externalTrackedTab: root.selectedTab
+            function onCurrentIndexChanged(index) {
+                root.selectedTab = index
+            }
         }
 
-        AppDrawer {
-            id: appDrawer
+        StackLayout {
             Layout.topMargin: 5
             Layout.fillWidth: true
             Layout.fillHeight: true
-            clip: true
+            currentIndex: root.selectedTab
+
+            AppDrawer {
+                id: appDrawer
+                clip: true
+            }
+
+            ArchfitPanel {
+                id: archfitPanel
+                clip: true
+            }
         }
 
         RippleButton {
