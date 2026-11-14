@@ -25,6 +25,7 @@ globalThis.fetch = async (url, options) => {
     assert.equal(body.model, process.env.EXPECT_MODEL);
     assert.equal(body.messages[1].content, process.env.EXPECT_CONTENT.slice(0, 12000));
     assert.equal(body.max_tokens, 80);
+    assert.deepEqual(body.reasoning, { enabled: false });
     if (process.env.SCENARIO === "network") throw new Error("private-test-key private-note-text");
     return new Response(process.env.SCENARIO === "malformed" ? "private-note-text" : JSON.stringify({
         choices: [{message: {content: process.env.TITLE}}],
@@ -57,7 +58,7 @@ try {
     const valid = run({ title: '“LinkedIn\n video export settings”' });
     assert.equal(valid.status, 0);
     assert.deepEqual(JSON.parse(valid.stdout), { title: "LinkedIn video export settings" });
-    assert.equal(run({ settings: { apiKey: "private-test-key", model: "custom/model" } }).status, 0);
+    assert.equal(run({ settings: { apiKey: "private-test-key", model: "deepseek/deepseek-v4.1-flash-1017" } }).status, 0);
     assert.equal(run({ input: "a".repeat(15000) }).status, 0);
     assert.equal(JSON.parse(run({ title: "a".repeat(120) }).stdout).title.length, 80);
     for (const options of [{ status: 401 }, { status: 429 }, { scenario: "network" }, { scenario: "malformed" }, { title: " " }, { settings: "private-test-key invalid JSON", calls: 0 }]) {

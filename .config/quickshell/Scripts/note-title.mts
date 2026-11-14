@@ -37,6 +37,7 @@ async function main() {
                 { role: "user", content: content.slice(0, 12000) },
             ],
             max_tokens: 80,
+            reasoning: { enabled: false },
             temperature: 0.2,
         }),
         signal: AbortSignal.timeout(20000),
