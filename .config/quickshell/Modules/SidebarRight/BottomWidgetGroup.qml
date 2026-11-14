@@ -200,7 +200,7 @@ Rectangle {
                     property int tabIndex: index
                     property string tabType: modelData.type
                     property int animDistance: 5
-                    property var tabLoader: tabLoader
+                    property alias tabLoader: contentLoader
                     // Opacity: show up only when being animated to
                     opacity: (tabStack.currentIndex === tabItem.tabIndex && tabStack.realIndex === tabItem.tabIndex) ? 1 : 0
                     // Y: starts animating when user selects a different tab
@@ -208,7 +208,7 @@ Rectangle {
                     Behavior on opacity { NumberAnimation { duration: tabStack.animationDuration / 2; easing.type: Easing.OutCubic } }
                     Behavior on y { NumberAnimation { duration: tabStack.animationDuration; easing.type: Easing.OutExpo } }
                     Loader {
-                        id: tabLoader
+                        id: contentLoader
                         anchors.fill: parent
                         sourceComponent: modelData.widget
                         focus: root.selectedTab === tabItem.tabIndex

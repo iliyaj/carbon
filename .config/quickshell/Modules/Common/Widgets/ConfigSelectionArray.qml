@@ -29,8 +29,8 @@ Flow {
                 if (index === 0) {
                     paletteButton.leftmost = true
                 } else {
-                    var prev = root.children[index - 1]
-                    var thisIsOnNewLine = prev && prev.y !== paletteButton.y
+                    const prev = root.children[index - 1]
+                    const thisIsOnNewLine = prev && prev.y !== paletteButton.y
                     paletteButton.leftmost = thisIsOnNewLine
                     prev.rightmost = thisIsOnNewLine
                 }

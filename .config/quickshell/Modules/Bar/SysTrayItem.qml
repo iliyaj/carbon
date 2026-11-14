@@ -2,7 +2,6 @@ import qs.Modules.Common
 import qs.Modules.Common.Functions
 import QtQuick
 import QtQuick.Layouts
-import Quickshell
 import Quickshell.Services.SystemTray
 import Quickshell.Widgets
 import Qt5Compat.GraphicalEffects
@@ -12,7 +11,6 @@ MouseArea {
 
     required property var bar
     required property SystemTrayItem item
-    property bool targetMenuOpen: false
     property int trayItemWidth: Appearance.font.pixelSize.larger
 
     acceptedButtons: Qt.LeftButton | Qt.RightButton
@@ -24,21 +22,13 @@ MouseArea {
             item.activate();
             break;
         case Qt.RightButton:
-            if (item.hasMenu) menu.open();
+            if (item.hasMenu) {
+                const position = root.mapToItem(root.bar.contentItem, 0, root.height)
+                item.display(root.bar, position.x, position.y)
+            }
             break;
         }
         event.accepted = true;
-    }
-
-    QsMenuAnchor {
-        id: menu
-
-        menu: root.item.menu
-        anchor.window: bar
-        anchor.rect.x: root.x + bar.width
-        anchor.rect.y: root.y
-        anchor.rect.height: root.height
-        anchor.edges: Edges.Bottom
     }
 
     IconImage {
