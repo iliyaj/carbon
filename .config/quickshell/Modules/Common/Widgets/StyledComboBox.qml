@@ -8,14 +8,19 @@ import qs.Modules.Common.Widgets
 ComboBox {
     id: root
     implicitHeight: 44
+    opacity: enabled ? 1 : 0.4
 
     background: Rectangle {
         radius: Appearance.rounding.small
-        color: root.hovered
+        color: root.down
+            ? Appearance.colors.colSecondaryContainerActive
+            : root.hovered
             ? Appearance.colors.colSecondaryContainerHover
             : Appearance.colors.colSecondaryContainer
         border.width: root.activeFocus ? 2 : 0
         border.color: Appearance.m3colors.m3primary
+
+        PointingHandInteraction {}
     }
     contentItem: StyledText {
         leftPadding: Appearance.spacing.md
@@ -39,19 +44,39 @@ ComboBox {
         id: optionDelegate
         required property var modelData
         required property int index
+        readonly property bool selected: root.currentIndex === index
         width: ListView.view?.width ?? root.width
         implicitHeight: 42
         highlighted: root.highlightedIndex === index
         contentItem: StyledText {
+            leftPadding: Appearance.spacing.md
+            rightPadding: 36
             text: root.textAt(optionDelegate.index)
-            color: Appearance.colors.colOnLayer2
+            color: optionDelegate.selected
+                ? Appearance.colors.colOnSecondaryContainer
+                : Appearance.colors.colOnLayer2
             elide: Text.ElideRight
+        }
+        indicator: MaterialSymbol {
+            anchors.right: parent.right
+            anchors.rightMargin: Appearance.spacing.md
+            anchors.verticalCenter: parent.verticalCenter
+            text: "check"
+            iconSize: 20
+            color: Appearance.colors.colOnSecondaryContainer
+            visible: optionDelegate.selected
         }
         background: Rectangle {
             radius: Appearance.rounding.small
-            color: optionDelegate.highlighted
-                ? Appearance.colors.colLayer2Hover
-                : "transparent"
+            color: optionDelegate.selected
+                ? optionDelegate.down ? Appearance.colors.colSecondaryContainerActive
+                    : optionDelegate.highlighted || optionDelegate.hovered ? Appearance.colors.colSecondaryContainerHover
+                    : Appearance.colors.colSecondaryContainer
+                : optionDelegate.down ? Appearance.colors.colLayer2Active
+                    : optionDelegate.highlighted || optionDelegate.hovered ? Appearance.colors.colLayer2Hover
+                    : "transparent"
+
+            PointingHandInteraction {}
         }
     }
     popup: Popup {
