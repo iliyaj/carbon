@@ -38,7 +38,7 @@ nano ~/.config/hypr/user.env
 
 ### Automatic note titles
 
-Notes save immediately and show a compact title; click the title to read the full note. To generate titles with OpenRouter, install Node.js 22.18 or newer (`sudo pacman -S --needed nodejs`), then create a private configuration file:
+Notes save immediately and show a compact title; click the title to read the full note. To generate English titles with OpenRouter, install Node.js 22.18 or newer (`sudo pacman -S --needed nodejs`), then create a private configuration file:
 
 ```bash
 install -d -m 700 ~/.config/carbon
