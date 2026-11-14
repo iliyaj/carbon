@@ -41,27 +41,53 @@ ContentPage {
         ContentSubsection {
             title: "Material palette"
             tooltip: "Triadic mixes three accent hues. Gentle uses softer contrast; Strong uses bolder contrast."
-            ConfigSelectionArray {
-                currentValue: ConfigOptions.appearance.palette.type
-                configOptionName: "appearance.palette.type"
-                onSelected: (newValue) => {
-                    ConfigLoader.setConfigValueAndSave("appearance.palette.type", newValue);
-                    Quickshell.execDetached([Directories.wallpaperToolPath, "--noswitch", "--type", newValue]);
-                }
-                options: [
-                    {"value": "auto", "displayName": "Auto"},
-                    {"value": "scheme-content", "displayName": "Content"},
-                    {"value": "scheme-expressive", "displayName": "Expressive"},
-                    {"value": "scheme-fidelity", "displayName": "Fidelity"},
-                    {"value": "scheme-fruit-salad", "displayName": "Fruit Salad"},
-                    {"value": "scheme-monochrome", "displayName": "Monochrome"},
-                    {"value": "scheme-neutral", "displayName": "Neutral"},
-                    {"value": "scheme-rainbow", "displayName": "Rainbow"},
-                    {"value": "scheme-tonal-spot", "displayName": "Tonal Spot"},
-                    {"value": "scheme-triadic", "displayName": "Triadic"},
-                    {"value": "scheme-soft", "displayName": "Gentle"},
-                    {"value": "scheme-bold", "displayName": "Strong"}
+            ColumnLayout {
+                id: paletteSelector
+                Layout.fillWidth: true
+                spacing: Appearance.spacing.xs
+                readonly property list<var> rows: [
+                    [
+                        {"value": "auto", "displayName": "Auto"},
+                        {"value": "scheme-content", "displayName": "Content"},
+                        {"value": "scheme-expressive", "displayName": "Expressive"},
+                        {"value": "scheme-fidelity", "displayName": "Fidelity"},
+                        {"value": "scheme-fruit-salad", "displayName": "Fruit Salad"},
+                        {"value": "scheme-monochrome", "displayName": "Monochrome"}
+                    ],
+                    [
+                        {"value": "scheme-neutral", "displayName": "Neutral"},
+                        {"value": "scheme-rainbow", "displayName": "Rainbow"},
+                        {"value": "scheme-tonal-spot", "displayName": "Tonal Spot"},
+                        {"value": "scheme-triadic", "displayName": "Triadic"},
+                        {"value": "scheme-soft", "displayName": "Gentle"},
+                        {"value": "scheme-bold", "displayName": "Strong"}
+                    ]
                 ]
+                Repeater {
+                    model: paletteSelector.rows
+                    delegate: RowLayout {
+                        id: paletteRow
+                        required property var modelData
+                        Layout.fillWidth: true
+                        spacing: Appearance.spacing.xs
+                        Repeater {
+                            model: paletteRow.modelData
+                            delegate: SelectionGroupButton {
+                                required property var modelData
+                                required property int index
+                                Layout.fillWidth: true
+                                leftmost: index === 0
+                                rightmost: index === paletteRow.modelData.length - 1
+                                buttonText: modelData.displayName
+                                toggled: ConfigOptions.appearance.palette.type === modelData.value
+                                onClicked: {
+                                    ConfigLoader.setConfigValueAndSave("appearance.palette.type", modelData.value);
+                                    Quickshell.execDetached([Directories.wallpaperToolPath, "--noswitch", "--type", modelData.value]);
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
         ContentSubsection {

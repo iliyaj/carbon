@@ -1,3 +1,4 @@
+import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell
@@ -18,6 +19,7 @@ GroupButton {
     rightRadius: (toggled || rightmost) ? Appearance.rounding.small : Appearance.rounding.unsharpenmore
     colBackground: Appearance.colors.colSecondaryContainer
     contentItem: StyledText {
+        horizontalAlignment: Text.AlignHCenter
         color: parent.toggled ? Appearance.colors.colOnPrimary : Appearance.colors.colOnSecondaryContainer
         text: root.buttonText
     }
