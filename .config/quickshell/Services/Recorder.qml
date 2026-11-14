@@ -54,17 +54,17 @@ Scope {
             notify("Recording cancelled", "Could not determine the active monitor")
             return
         }
-        prepareRecording(["-o", monitor], withAudio)
+        prepareRecording(["-o", monitor], withAudio, withAudio ? "mov" : "mp4")
     }
 
-    function startRegion(geometry: string, withAudio: bool): void {
+    function startRegion(geometry: string, withAudio: bool, format: string): void {
         if (stopOrCancel())
             return
         if (geometry.trim().length === 0) {
             notify("Recording cancelled", "No region was provided")
             return
         }
-        prepareRecording(["--geometry", geometry.trim()], withAudio)
+        prepareRecording(["--geometry", geometry.trim()], withAudio, format)
     }
 
     function stopOrCancel(): bool {
@@ -131,13 +131,14 @@ Scope {
         return configured.length > 0 ? configured : (Audio.source?.name ?? "")
     }
 
-    function prepareRecording(captureArguments: var, withAudio: bool): void {
+    function prepareRecording(captureArguments: var, withAudio: bool, format: string): void {
         const videosDirectory = FileUtils.trimFileProtocol(Directories.videos)
         const recordingDirectory = withAudio || captureArguments.includes("--geometry") ? videosDirectory : `${videosDirectory}/debug`
-        outputPath = `${recordingDirectory}/recording_${timestamp()}.${withAudio ? "mov" : "mp4"}`
-        const recorderArguments = ["--pixel-format", withAudio ? "yuv422p" : "yuv420p"]
+        const useMov = format === "mov"
+        outputPath = `${recordingDirectory}/recording_${timestamp()}.${useMov ? "mov" : "mp4"}`
+        const recorderArguments = ["--pixel-format", useMov ? "yuv422p" : "yuv420p"]
         // Resolve on Linux can import DNxHR and MP3 directly from MOV.
-        if (withAudio) {
+        if (useMov) {
             const frameRate = Math.round(Number(Hyprland.focusedMonitor?.lastIpcObject.refreshRate ?? 0))
             if (!Number.isFinite(frameRate) || frameRate <= 0) {
                 notify("Recording cancelled", "Could not determine the monitor refresh rate")
@@ -195,12 +196,17 @@ Scope {
         active: false
         sourceComponent: RegionSelection {
             acceptText: qsTr("Start recording")
+            outputFormats: [
+                { text: qsTr("MP4 · smaller files"), value: "mp4" },
+                { text: qsTr("MOV · DaVinci Resolve"), value: "mov" }
+            ]
             dimensionStep: 2
             screen: Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) ?? Quickshell.screens[0]
             onCancelled: regionChooser.active = false
             onAccepted: geometry => {
+                const format = outputFormat
                 regionChooser.active = false
-                root.startRegion(geometry, false)
+                root.startRegion(geometry, false, format)
             }
         }
     }
@@ -261,7 +267,7 @@ Scope {
         }
 
         function startRegion(geometry: string): void {
-            root.startRegion(geometry, false)
+            root.startRegion(geometry, false, "mp4")
         }
 
         function stop(): void {

@@ -21,6 +21,8 @@ PanelWindow {
     signal cancelled()
 
     property string acceptText: qsTr("Capture screenshot")
+    property var outputFormats: []
+    readonly property string outputFormat: formatPicker.currentValue ?? ""
     property url backgroundSource
     property alias ratioIndex: ratioPicker.currentIndex
     property size initialSize: Qt.size(1080, 1350)
@@ -57,9 +59,7 @@ PanelWindow {
         return /^[1-9]\d{0,4}\s*:\s*[1-9]\d{0,4}$/.test(customRatio.text.trim())
             ? Number(parts[0]) / Number(parts[1]) : 0
     }
-    readonly property bool validInputs: widthInput.acceptableInput && heightInput.acceptableInput
-        && Number(widthInput.text) % dimensionStep === 0 && Number(heightInput.text) % dimensionStep === 0
-        && (ratioPicker.currentIndex !== ratios.length || customRatioValue > 0)
+    readonly property bool validInputs: ratioPicker.currentIndex !== ratios.length || customRatioValue > 0
 
     function aligned(value: real): int {
         return Math.max(dimensionStep, Math.floor(value / dimensionStep) * dimensionStep)
@@ -77,16 +77,6 @@ PanelWindow {
         regionWidth = aligned(w * factor)
         regionHeight = aligned(h * factor)
         moveTo(regionX, regionY)
-    }
-
-    function editSize(value: string, horizontal: bool): void {
-        const number = Number(value)
-        const maximum = horizontal ? maxWidth : maxHeight
-        if (!/^[1-9]\d*$/.test(value) || number > maximum || number % dimensionStep !== 0)
-            return
-        // Typing dimensions is exact; ratio presets constrain mouse resizing only.
-        ratioPicker.currentIndex = 0
-        fitSize(horizontal ? number : regionWidth, horizontal ? regionHeight : number)
     }
 
     function applyRatio(): void {
@@ -139,7 +129,7 @@ PanelWindow {
         anchors.fill: parent
         focus: true
         Keys.onPressed: event => {
-            if (widthInput.activeFocus || heightInput.activeFocus || customRatio.activeFocus) return
+            if (customRatio.activeFocus) return
             const action = ScreenshotPreferences.action(event, root.screenshotMode ? ConfigOptions.screenshot.shortcuts : {}, Qt)
             if (action === "cancel") root.cancelled()
             else if (action === "editText" || action === "commitText") root.confirm()
@@ -367,58 +357,50 @@ PanelWindow {
                 id: controls
                 anchors { left: parent.left; right: parent.right; top: parent.top; margins: 12 }
                 spacing: 8
-                RowLayout {
+                GridLayout {
                     Layout.fillWidth: true
-                    TextField {
-                        id: widthInput
-                        Layout.preferredWidth: 80
-                        text: String(root.regionWidth)
-                        validator: IntValidator { bottom: root.dimensionStep; top: root.maxWidth }
-                        color: Appearance.m3colors.m3onSurface
-                        font.pixelSize: Appearance.font.pixelSize.normal
-                        selectByMouse: true
-                        KeyNavigation.tab: heightInput
-                        KeyNavigation.backtab: heightInput
-                        onTextEdited: root.editSize(text, true)
-                        onAccepted: canvas.forceActiveFocus()
-                        background: Rectangle { radius: 4; color: Appearance.colors.colSurfaceContainer }
-                    }
-                    StyledText { text: "×" }
-                    TextField {
-                        id: heightInput
-                        Layout.preferredWidth: 80
-                        text: String(root.regionHeight)
-                        validator: IntValidator { bottom: root.dimensionStep; top: root.maxHeight }
-                        color: Appearance.m3colors.m3onSurface
-                        font.pixelSize: Appearance.font.pixelSize.normal
-                        selectByMouse: true
-                        KeyNavigation.tab: widthInput
-                        KeyNavigation.backtab: widthInput
-                        onTextEdited: root.editSize(text, false)
-                        onAccepted: canvas.forceActiveFocus()
-                        background: Rectangle { radius: 4; color: Appearance.colors.colSurfaceContainer }
-                    }
-                    ComboBox {
+                    columns: 2
+                    columnSpacing: Appearance.spacing.md
+                    rowSpacing: 8
+
+                    StyledText { text: qsTr("Aspect ratio") }
+                    StyledComboBox {
                         id: ratioPicker
                         Layout.fillWidth: true
                         model: [qsTr("Free"), "4:5", "1:1", "9:16", "16:9", "4:3", "3:2", qsTr("Custom ratio")]
                         currentIndex: 1
                     }
-                }
-                TextField {
-                    id: customRatio
-                    visible: ratioPicker.currentIndex === root.ratios.length
-                    Layout.fillWidth: true
-                    placeholderText: qsTr("Width:height, e.g. 4:5")
-                    color: Appearance.m3colors.m3onSurface
-                    selectByMouse: true
-                    background: Rectangle { radius: 4; color: Appearance.colors.colSurfaceContainer }
+                    StyledText {
+                        visible: customRatio.visible
+                        text: qsTr("Custom ratio")
+                    }
+                    TextField {
+                        id: customRatio
+                        visible: ratioPicker.currentIndex === root.ratios.length
+                        Layout.fillWidth: true
+                        placeholderText: qsTr("Width:height, e.g. 4:5")
+                        color: Appearance.m3colors.m3onSurface
+                        selectByMouse: true
+                        background: Rectangle { radius: 4; color: Appearance.colors.colSurfaceContainer }
+                    }
+                    StyledText {
+                        visible: formatPicker.visible
+                        text: qsTr("Format")
+                    }
+                    StyledComboBox {
+                        id: formatPicker
+                        visible: root.outputFormats.length > 0
+                        Layout.fillWidth: true
+                        model: root.outputFormats
+                        textRole: "text"
+                        valueRole: "value"
+                        currentIndex: 0
+                    }
                 }
                 StyledText {
                     Layout.fillWidth: true
                     text: root.validInputs ? qsTr("Drag to move or select. Arrows move by a pixel; Shift resizes, Ctrl+Shift resizes symmetrically.")
-                        : root.dimensionStep === 2 ? qsTr("Enter even dimensions that fit on this screen.")
-                        : qsTr("Enter pixel dimensions that fit on this screen.")
+                        : qsTr("Enter a valid ratio, e.g. 4:5.")
                     wrapMode: Text.WordWrap
                     font.pixelSize: Appearance.font.pixelSize.small
                 }
