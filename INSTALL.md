@@ -36,6 +36,26 @@ nano ~/.config/hypr/user.env
 
 `hypridle.conf` suspends after 30 minutes. Laptop users should review its power policy before relying on it.
 
+### Automatic note titles
+
+Notes save immediately and show a compact title; click the title to read the full note. To generate titles with OpenRouter, install Node.js 22.18 or newer (`sudo pacman -S --needed nodejs`), then create a private configuration file:
+
+```bash
+install -d -m 700 ~/.config/carbon
+(umask 077; touch ~/.config/carbon/openrouter.json)
+chmod 600 ~/.config/carbon/openrouter.json
+nano ~/.config/carbon/openrouter.json
+```
+
+```json
+{
+  "apiKey": "your OpenRouter API key",
+  "model": "google/gemini-2.5-flash-lite"
+}
+```
+
+Each new note sends up to its first 12,000 characters to OpenRouter and the selected model provider for one title request. The key stays in this local file; do not put it in Carbon's repository. Changes apply to the next saved note without restarting. Existing notes are not sent or rewritten. Without a key, Node.js, or a successful response within 20 seconds, notes keep a short title from their first line. Copy always copies the note body.
+
 ### Nagame display profiles
 
 The installer downloads the pinned Linux x86_64 binary from [Nagame's GitHub release](https://github.com/iliyaj/nagame/releases/tag/v0.0.3), verifies its SHA-256, and installs its example files. Nagame remains inactive until it has a profile for this machine.

@@ -13,8 +13,10 @@ Singleton {
 
     function add(content) {
         const now = new Date()
-        writer.path = `${Directories.notesPath}/${Qt.formatDateTime(now, "yyyy-MM-dd-HHmmss")}.md`
-        writer.setText(`---\ncreated_at: ${now.toISOString()}\n---\n${content}\n`)
+        writer.path = `${Directories.notesPath}/${Qt.formatDateTime(now, "yyyy-MM-dd-HHmmss-zzz")}.md`
+        const text = `---\ncreated_at: ${now.toISOString()}\ntitle: ${JSON.stringify(fallbackTitle(content))}\n---\n${content}\n`
+        writer.setText(text)
+        titleJob.createObject(root, { "filePath": writer.path, "originalText": text })
     }
 
     function remove(path) {
@@ -25,9 +27,71 @@ Singleton {
         const frontMatter = text.match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/)
         const created = frontMatter?.[1].match(/^created_at:\s*(.+?)\s*$/m)
         const createdAt = created ? new Date(created[1]) : null
+        const body = text.slice(frontMatter ? frontMatter[0].length : 0).replace(/\s+$/, "")
+        const titleLine = frontMatter?.[1].match(/^title:\s*(.+?)\s*$/m)
+        let title = titleLine ? titleLine[1] : ""
+        if (title.startsWith('"')) {
+            try {
+                title = JSON.parse(title)
+            } catch (error) {
+                title = ""
+            }
+        }
         return {
             "createdAt": createdAt && !isNaN(createdAt) ? createdAt : null,
-            "body": text.slice(frontMatter ? frontMatter[0].length : 0).replace(/\s+$/, ""),
+            "title": typeof title === "string" && title.trim() ? title.trim() : fallbackTitle(body),
+            "body": body,
+        }
+    }
+
+    function fallbackTitle(content) {
+        const firstLine = content.split(/\r?\n/).find(line => line.trim()) ?? ""
+        const title = firstLine.replace(/^\s*#+\s+/, "").trim()
+        return title.length > 80 ? `${title.slice(0, 77).replace(/\s+$/, "")}…` : title || qsTr("Untitled note")
+    }
+
+    Component {
+        id: titleJob
+
+        Process {
+            id: job
+            required property string filePath
+            required property string originalText
+
+            // env lets missing Node.js follow the same cleanup path.
+            command: ["env", "node", `${Directories.scriptPath}/note-title.mts`]
+            running: true
+            stdinEnabled: true
+            onStarted: {
+                write(root.parse(originalText).body)
+                stdinEnabled = false
+            }
+            stdout: StdioCollector { id: titleOutput }
+            onExited: exitCode => {
+                if (exitCode === 0 && titleOutput.text.trim()) {
+                    try {
+                        const title = JSON.parse(titleOutput.text).title
+                        if (typeof title === "string" && title.trim()) {
+                            savedNote.reload()
+                            if (savedNote.text() === originalText) {
+                                savedNote.setText(originalText.replace(/^title:.*$/m, () => `title: ${JSON.stringify(title)}`))
+                            }
+                        }
+                    } catch (error) {
+                        console.warn("[Notes] Could not read generated title")
+                    }
+                }
+                destroy()
+            }
+
+            property FileView savedNote: FileView {
+                path: job.filePath
+                preload: false
+                blockAllReads: true
+                blockWrites: true
+                atomicWrites: true
+                printErrors: false // The note may have been deleted while the request ran.
+            }
         }
     }
 
@@ -35,6 +99,7 @@ Singleton {
         id: writer
         preload: false
         blockWrites: true
+        atomicWrites: true
     }
 
     FolderListModel {

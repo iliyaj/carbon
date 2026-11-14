@@ -39,6 +39,7 @@ Item {
                     required property string filePath
                     required property date fileModified
                     readonly property var note: Notes.parse(noteFile.text())
+                    property bool expanded: false
                     property bool enableHeightAnimation: false
 
                     Layout.fillWidth: true
@@ -92,12 +93,41 @@ Item {
                             anchors.left: parent.left
                             anchors.right: parent.right
 
+                            RippleButton {
+                                Layout.fillWidth: true
+                                Layout.topMargin: root.notePadding
+                                implicitHeight: titleLayout.implicitHeight + 8
+                                text: noteItem.note.title
+                                onClicked: noteItem.expanded = !noteItem.expanded
+
+                                contentItem: RowLayout {
+                                    id: titleLayout
+                                    spacing: 6
+
+                                    StyledText {
+                                        Layout.fillWidth: true
+                                        Layout.leftMargin: 10
+                                        text: noteItem.note.title
+                                        textFormat: Text.PlainText
+                                        font.bold: true
+                                        wrapMode: Text.Wrap
+                                        maximumLineCount: 2
+                                        elide: Text.ElideRight
+                                    }
+                                    MaterialSymbol {
+                                        Layout.rightMargin: 8
+                                        text: noteItem.expanded ? "expand_less" : "expand_more"
+                                        iconSize: Appearance.font.pixelSize.larger
+                                    }
+                                }
+                            }
                             StyledText {
-                                Layout.fillWidth: true // Needed for wrapping
+                                visible: noteItem.expanded
+                                Layout.fillWidth: true
                                 Layout.leftMargin: 10
                                 Layout.rightMargin: 10
-                                Layout.topMargin: root.notePadding
                                 text: noteItem.note.body
+                                textFormat: Text.PlainText
                                 wrapMode: Text.Wrap
                             }
                             RowLayout {
